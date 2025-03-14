@@ -1,19 +1,22 @@
 // backend/src/config/db.js
-
-import pkg from 'pg';
-import dotenv from 'dotenv';
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const { Pool } = pkg;
+const sequelize = new Sequelize(
+    process.env.POSTGRES_DB, // Nombre de la base de datos
+    process.env.POSTGRES_USER, // Usuario de la base de datos
+    process.env.POSTGRES_PASSWORD, // Contraseña de la base de datos
+    {
+        host: process.env.POSTGRES_HOST, // Host de la base de datos
+        port: process.env.POSTGRES_PORT || 5432, // Puerto de PostgreSQL
+        dialect: "postgres",
+        logging: false, // Para evitar mostrar logs innecesarios en consola
+        dialectOptions: {
+            ssl: process.env.POSTGRES_SSL === "true" ? { require: true, rejectUnauthorized: false } : false,
+        },
+    }
+);
 
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
-});
-
-export { pool };
+export default sequelize;
