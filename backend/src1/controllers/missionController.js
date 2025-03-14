@@ -1,21 +1,29 @@
-import { createMission, getMissionsByCity } from '../models/missionModel.js';
+import supabase from '../config/supabaseClient.js';
 
+// Agregar misión
 export const addMission = async (req, res) => {
-    try {
-        const { title, description, difficulty, city } = req.body;
-        const mission = await createMission(title, description, difficulty, city);
-        res.status(201).json(mission);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al crear misión' });
-    }
+    const { id_usuario, descripcion_mision, ubicacion, dificultad } = req.body;
+
+    const { data, error } = await supabase
+        .from('Historial_Misiones')
+        .insert([{ id_usuario, descripcion_mision, ubicacion, dificultad }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(201).json({ message: 'Misión creada correctamente', data });
 };
 
+// Obtener misiones de un usuario
 export const getMissions = async (req, res) => {
-    try {
-        const { city } = req.params;
-        const missions = await getMissionsByCity(city);
-        res.json(missions);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener misiones' });
-    }
+    const { id_usuario } = req.params;
+
+    const { data, error } = await supabase
+        .from('Historial_Misiones')
+        .select('*')
+        .eq('id_usuario', id_usuario);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json(data);
 };

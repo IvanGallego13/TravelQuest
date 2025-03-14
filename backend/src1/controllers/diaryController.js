@@ -1,21 +1,29 @@
-import { createDiaryEntry, getDiaryEntriesByUser } from '../models/diaryModel.js';
+import supabase from '../config/supabaseClient.js';
 
+// Agregar un diario de viaje
 export const addDiaryEntry = async (req, res) => {
-    try {
-        const { userId, city, content, imageUrl } = req.body;
-        const entry = await createDiaryEntry(userId, city, content, imageUrl);
-        res.status(201).json(entry);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al agregar entrada de diario' });
-    }
+    const { id_usuario, id_ciudad, titulo, descripcion, fecha_viaje } = req.body;
+
+    const { data, error } = await supabase
+        .from('Diario')
+        .insert([{ id_usuario, id_ciudad, titulo, descripcion, fecha_viaje }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(201).json({ message: 'Diario creado correctamente', data });
 };
 
+// Obtener los diarios de un usuario
 export const getUserDiary = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const entries = await getDiaryEntriesByUser(userId);
-        res.json(entries);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener diario' });
-    }
+    const { id_usuario } = req.params;
+
+    const { data, error } = await supabase
+        .from('Diario')
+        .select('*')
+        .eq('id_usuario', id_usuario);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json(data);
 };

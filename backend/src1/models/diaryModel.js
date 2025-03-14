@@ -1,12 +1,21 @@
-export const createDiaryEntry = async (userId, city, content, imageUrl) => {
-    const query = `INSERT INTO diary (user_id, city, content, image_url) VALUES ($1, $2, $3, $4) RETURNING *`;
-    const values = [userId, city, content, imageUrl];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+import supabase from '../config/supabaseClient.js';
+
+export const createDiaryEntry = async (id_usuario, id_ciudad, titulo, descripcion, fecha_viaje) => {
+    const { data, error } = await supabase
+        .from('Diario')
+        .insert([{ id_usuario, id_ciudad, titulo, descripcion, fecha_viaje }])
+        .select();
+
+    if (error) throw error;
+    return data;
 };
 
-export const getDiaryEntriesByUser = async (userId) => {
-    const query = `SELECT * FROM diary WHERE user_id = $1 ORDER BY created_at DESC`;
-    const result = await pool.query(query, [userId]);
-    return result.rows;
+export const getDiaryEntriesByUser = async (id_usuario) => {
+    const { data, error } = await supabase
+        .from('Diario')
+        .select('*')
+        .eq('id_usuario', id_usuario);
+
+    if (error) throw error;
+    return data;
 };

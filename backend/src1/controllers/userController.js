@@ -1,22 +1,30 @@
-import { createUser, getUserById } from '../models/userModel.js';
+import supabase from '../config/supabaseClient.js';
 
+// Registrar usuario
 export const registerUser = async (req, res) => {
-    try {
-        const { id, email, name } = req.body;
-        const newUser = await createUser(id, email, name);
-        res.status(201).json(newUser);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al registrar usuario' });
-    }
+    const { nombre, correo, contraseña, foto_perfil, ultima_ubicacion, nivel, estado } = req.body;
+
+    const { data, error } = await supabase
+        .from('Usuario')
+        .insert([{ nombre, correo, contraseña, foto_perfil, ultima_ubicacion, nivel, estado }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(201).json({ message: 'Usuario registrado correctamente', data });
 };
 
+// Obtener usuario por ID
 export const getUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await getUserById(id);
-        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener usuario' });
-    }
+    const { id_usuario } = req.params;
+
+    const { data, error } = await supabase
+        .from('Usuario')
+        .select('*')
+        .eq('id_usuario', id_usuario)
+        .single();
+
+    if (error) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    res.json(data);
 };

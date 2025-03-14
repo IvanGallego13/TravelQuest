@@ -1,14 +1,22 @@
-import { pool } from '../config/db.js';
+import supabase from '../config/supabaseClient.js';
 
-export const createUser = async (id, email, name) => {
-    const query = `INSERT INTO users (id, email, name) VALUES ($1, $2, $3) RETURNING *`;
-    const values = [id, email, name];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+export const createUser = async (nombre, correo, contraseña, foto_perfil, ultima_ubicacion, nivel, estado) => {
+    const { data, error } = await supabase
+        .from('Usuario')
+        .insert([{ nombre, correo, contraseña, foto_perfil, ultima_ubicacion, nivel, estado }])
+        .select();
+
+    if (error) throw error;
+    return data;
 };
 
-export const getUserById = async (id) => {
-    const query = `SELECT * FROM users WHERE id = $1`;
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
+export const getUserById = async (id_usuario) => {
+    const { data, error } = await supabase
+        .from('Usuario')
+        .select('*')
+        .eq('id_usuario', id_usuario)
+        .single();
+
+    if (error) throw error;
+    return data;
 };
