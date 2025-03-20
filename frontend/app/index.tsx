@@ -1,14 +1,15 @@
-import { Button, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
-export default function Index(){
-    return(
-        <View>
-            <Text className="text-red-500">Hola</Text>
-            <Button 
-                title="Presionar" 
-                onPress={() => alert("¡Botón presionado!")} 
-            />
-        </View>
-        
-    );
+export default function Index() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+    </View>
+  );
 }
