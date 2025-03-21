@@ -58,4 +58,7 @@ export const getCityFromName = async (req, res) => {
         res.status(500).json({ error: "Error en el servidor." });
     }
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> backend-api
