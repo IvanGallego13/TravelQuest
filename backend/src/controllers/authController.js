@@ -1,13 +1,14 @@
-// backend/src/controllers/authController.js
-
 import supabase from '../config/supabaseClient.js';
 
-// Registro de usuario con Supabase Auth
+/**
+ * Registro de usuario con Supabase Auth
+ */
 export const signUp = async (req, res) => {
     const { email, password, nombre } = req.body;
 
     // Crear usuario en Supabase Auth
     const { data, error } = await supabase.auth.signUp({ email, password });
+
     if (error) return res.status(400).json({ error: error.message });
 
     // Guardar usuario en la base de datos
@@ -21,7 +22,9 @@ export const signUp = async (req, res) => {
     res.status(201).json({ message: 'Usuario registrado', user: userData });
 };
 
-// Inicio de sesión con Supabase Auth
+/**
+ * Inicio de sesión con Supabase Auth
+ */
 export const signIn = async (req, res) => {
     const { email, password } = req.body;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -31,16 +34,26 @@ export const signIn = async (req, res) => {
     res.json({ message: 'Inicio de sesión exitoso', data });
 };
 
-// Verificar sesión de usuario
+/**
+ * Verificar sesión de usuario con token de Supabase
+ */
 export const getUserSession = async (req, res) => {
-    const { data, error } = await supabase.auth.getUser();
+    const token = req.header('Authorization')?.split(' ')[1]; // Extrae el token de Bearer
 
-    if (error) return res.status(401).json({ error: 'No hay sesión activa' });
+    if (!token) {
+        return res.status(401).json({ error: 'No hay sesión activa' });
+    }
+
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error) return res.status(401).json({ error: 'Token inválido o expirado' });
 
     res.json({ user: data });
 };
 
-// Cerrar sesión
+/**
+ * Cerrar sesión de usuario
+ */
 export const signOut = async (req, res) => {
     const { error } = await supabase.auth.signOut();
     if (error) return res.status(400).json({ error: error.message });
