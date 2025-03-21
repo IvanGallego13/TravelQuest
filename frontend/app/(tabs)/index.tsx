@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { Redirect } from "expo-router";
+import {Text, View } from "react-native";
 
 export default function Index() {
   return (
@@ -9,7 +10,8 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text className="bg-red-700">Edit app/index.tsx to edit this screen.</Text>
+      <Text className="bg-red-700">soy el indice</Text>
+      <Redirect href={"./Login"}/>
     </View>
   );
 }
