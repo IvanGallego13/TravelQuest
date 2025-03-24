@@ -1,5 +1,4 @@
-import { Redirect } from "expo-router";
-import {Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 export default function Index() {
   return (
@@ -10,8 +9,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text className="bg-red-700">soy el indice</Text>
-      <Redirect href={"./Login"}/>
+      <Text className="color to-black">crear misiones y diario de viaje</Text>
     </View>
   );
 }

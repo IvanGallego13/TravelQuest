@@ -9,7 +9,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text className="color to-black">crear</Text>
+      <Text className="color to-black">Uno</Text>
     </View>
   );
 }

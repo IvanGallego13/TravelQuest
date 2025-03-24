@@ -8,10 +8,12 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 
 
+
 export default function TabLayout(){
     return(
-        <Tabs
-             screenOptions={{
+        
+      <Tabs
+        screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -21,23 +23,44 @@ export default function TabLayout(){
             position: 'absolute',
           },
           default: {},
-        }),
-      }}>
-               <Tabs.Screen
+          }),
+        }}>
+        <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="crear"
-        options={{
           title: 'Crear',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
+        }}
+        />
+        <Tabs.Screen
+          name="diario"
+          options={{
+            title: 'diario',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="misiones"
+          options={{
+            title: 'misiones',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="airplane" color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="usuario"
+          options={{
+            title: 'usuario',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          }}
+        />
+      {/*Pantallas que no se mostraran en el menú inferior de navegación*/}
+       <Tabs.Screen
+        name="detalles/uno"
+        options={{
+          href: null, 
         }}
       />
 
-        </Tabs>
+    </Tabs>
     );
 }
