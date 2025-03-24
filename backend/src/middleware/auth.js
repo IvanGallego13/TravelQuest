@@ -1,8 +1,9 @@
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Crear cliente de Supabase
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 /**
  * Registra un nuevo usuario en Supabase Auth
@@ -10,14 +11,14 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANO
  * @param {string} password
  * @returns {Object} Usuario autenticado o error
  */
-const registerUser = async (email, password) => {
-    const { user, error } = await supabase.auth.signUp({ email, password });
+export const registerUser = async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
         throw new Error(error.message);
     }
 
-    return user;
+    return data;
 };
 
 /**
@@ -26,7 +27,7 @@ const registerUser = async (email, password) => {
  * @param {string} password
  * @returns {Object} Token de sesión o error
  */
-const loginUser = async (email, password) => {
+export const loginUser = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -41,7 +42,7 @@ const loginUser = async (email, password) => {
  * @param {string} token
  * @returns {Object} Usuario o null
  */
-const getUserFromToken = async (token) => {
+export const getUserFromToken = async (token) => {
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error) {
@@ -50,5 +51,3 @@ const getUserFromToken = async (token) => {
 
     return data.user;
 };
-
-module.exports = { registerUser, loginUser, getUserFromToken };

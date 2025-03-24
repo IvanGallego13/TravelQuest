@@ -1,6 +1,6 @@
-const { getUserFromToken } = require('../config/auth');
+import { getUserFromToken } from './auth.js';
 
-const authMiddleware = async (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
     const token = req.header('Authorization');
 
     if (!token) {
@@ -21,5 +21,3 @@ const authMiddleware = async (req, res, next) => {
         return res.status(401).json({ message: 'Error al validar el token.' });
     }
 };
-
-module.exports = { authMiddleware };

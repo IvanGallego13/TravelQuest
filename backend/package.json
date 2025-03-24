@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "axios": "^1.8.3",
@@ -6,6 +7,9 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "openai": "^4.89.0",
     "pg": "^8.14.1",
@@ -14,7 +18,12 @@
     "sharp": "^0.33.5"
   },
   "devDependencies": {
-    "eslint": "^9.22.0",
+    "eslint": "^8.56.0",
     "nodemon": "^3.1.9"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "lint": "eslint src/**/*.js"
   }
 }
