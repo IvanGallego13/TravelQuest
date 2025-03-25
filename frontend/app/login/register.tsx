@@ -18,7 +18,7 @@ export default function Register() {
   // Esta función se llama cuando el usuario pulsa el botón de registro
   const handleRegister = async () => {
     await register(); // Simulamos el registro del usuario, y marcamos como autenticado
-    router.replace("../localizacion"); // Redirigimos al layout principal tras registrarse
+    router.replace("../(tabs)/crear"); // Redirigimos al layout principal tras registrarse
 };
   //función para registrar
   /* const handleRegister = async () => {

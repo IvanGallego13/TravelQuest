@@ -18,7 +18,7 @@ export default function Login() {
   // Esta función se ejecuta cuando el usuario hace clic en el botón "Iniciar sesión"
   const handleLogin = async () => {
     await login(); // Llama a la función `login` para iniciar sesión (puede guardar token, actualizar estado, etc.)
-    router.replace("./localizacion"); // Una vez logueado, redirige al layout principal que contiene las pestañas
+    router.replace("./(tabs)/crear"); // Una vez logueado, redirige al layout principal que contiene las pestañas
   };
   // Esta función se ejecuta cuando el usuario quiere registrarse
   const goToRegister = () => {
