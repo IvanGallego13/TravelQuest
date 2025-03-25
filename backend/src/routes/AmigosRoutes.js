@@ -1,21 +1,22 @@
-const express = require('express');
+import express from 'express';
+import { amigosController } from '../controllers/amigosController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const amigoController = require('../controllers/amigoController');
-const authMiddleware = require('../middleware/authMiddleware');
 
 // 🟢 Obtener lista de amigos
-router.get('/', authMiddleware, amigoController.getAllFriends);
+router.get('/', authMiddleware, amigosController.getAllFriends);
 
 // 🔵 Obtener un amigo por ID
-router.get('/:id', authMiddleware, amigoController.getFriendById);
+router.get('/:id', authMiddleware, amigosController.getFriendById);
 
 // 🟠 Enviar solicitud de amistad
-router.post('/', authMiddleware, amigoController.sendFriendRequest);
+router.post('/', authMiddleware, amigosController.sendFriendRequest);
 
 // 🟡 Aceptar solicitud de amistad
-router.put('/:id/accept', authMiddleware, amigoController.acceptFriendRequest);
+router.put('/:id/accept', authMiddleware, amigosController.acceptFriendRequest);
 
 // 🔴 Eliminar un amigo
-router.delete('/:id', authMiddleware, amigoController.deleteFriend);
+router.delete('/:id', authMiddleware, amigosController.deleteFriend);
 
-module.exports = router;
+export default router;
