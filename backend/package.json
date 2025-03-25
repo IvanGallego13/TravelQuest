@@ -1,11 +1,18 @@
 {
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/supabase-js": "^2.39.3",
     "axios": "^1.8.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-fileupload": "^1.4.5",
     "express-validator": "^7.2.1",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.14.1",
     "pg-hstore": "^2.3.4",
