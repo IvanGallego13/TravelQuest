@@ -1,83 +1,107 @@
 import supabase from '../config/supabaseClient.js';
 
-/**
- * Enviar solicitud de amistad (POST /amigos)
- */
-export const sendFriendRequest = async (req, res) => {
-    const { id_usuario_amigo, id_usuario_king } = req.body;
+export const amigosController = {
+    /**
+     * Enviar solicitud de amistad (POST /amigos)
+     */
+    sendFriendRequest: async (req, res) => {
+        try {
+            const { id_usuario_amigo, id_usuario_king } = req.body;
 
-    const { data, error } = await supabase
-        .from('Amigos')
-        .insert([{ id_usuario_amigo, id_usuario_king, aceptado: false }])
-        .select();
+            const { data, error } = await supabase
+                .from('Amigos')
+                .insert([{ id_usuario_amigo, id_usuario_king, aceptado: false }])
+                .select();
 
-    if (error) return res.status(500).json({ error: error.message });
+            if (error) throw error;
 
-    res.status(201).json({ message: 'Solicitud de amistad enviada', data });
-};
+            res.status(201).json({ message: 'Solicitud de amistad enviada', data });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
 
-/**
- * Aceptar solicitud de amistad (PUT /amigos/:id/accept)
- */
-export const acceptFriendRequest = async (req, res) => {
-    const { id } = req.params;
+    /**
+     * Aceptar solicitud de amistad (PUT /amigos/:id/accept)
+     */
+    acceptFriendRequest: async (req, res) => {
+        try {
+            const { id } = req.params;
 
-    const { data, error } = await supabase
-        .from('Amigos')
-        .update({ aceptado: true })
-        .eq('id_amigo', id)
-        .select();
+            const { data, error } = await supabase
+                .from('Amigos')
+                .update({ aceptado: true })
+                .eq('id_amigo', id)
+                .select();
 
-    if (error) return res.status(500).json({ error: error.message });
+            if (error) throw error;
 
-    res.json({ message: 'Solicitud de amistad aceptada', data });
-};
+            res.json({ message: 'Solicitud de amistad aceptada', data });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
 
-/**
- * Eliminar amistad (DELETE /amigos/:id)
- */
-export const deleteFriend = async (req, res) => {
-    const { id } = req.params;
+    /**
+     * Eliminar amistad (DELETE /amigos/:id)
+     */
+    deleteFriend: async (req, res) => {
+        try {
+            const { id } = req.params;
 
-    const { error } = await supabase
-        .from('Amigos')
-        .delete()
-        .eq('id_amigo', id);
+            const { error } = await supabase
+                .from('Amigos')
+                .delete()
+                .eq('id_amigo', id);
 
-    if (error) return res.status(500).json({ error: error.message });
+            if (error) throw error;
 
-    res.json({ message: 'Amigo eliminado correctamente' });
-};
+            res.json({ message: 'Amigo eliminado correctamente' });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
 
-/**
- * Obtener lista de amigos (GET /amigos)
- */
-export const getAllFriends = async (req, res) => {
-    const userId = req.user?.id;
+    /**
+     * Obtener lista de amigos (GET /amigos)
+     */
+    getAllFriends: async (req, res) => {
+        try {
+            const userId = req.user?.id;
 
-    const { data, error } = await supabase
-        .from('Amigos')
-        .select('*')
-        .or(`id_usuario_amigo.eq.${userId},id_usuario_king.eq.${userId}`);
+            const { data, error } = await supabase
+                .from('Amigos')
+                .select('*')
+                .or(`id_usuario_amigo.eq.${userId},id_usuario_king.eq.${userId}`);
 
-    if (error) return res.status(500).json({ error: error.message });
+            if (error) throw error;
 
-    res.json(data);
-};
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
 
-/**
- * Obtener un amigo por ID (GET /amigos/:id)
- */
-export const getFriendById = async (req, res) => {
-    const { id } = req.params;
+    /**
+     * Obtener un amigo por ID (GET /amigos/:id)
+     */
+    getFriendById: async (req, res) => {
+        try {
+            const { id } = req.params;
 
-    const { data, error } = await supabase
-        .from('Amigos')
-        .select('*')
-        .eq('id_amigo', id)
-        .single();
+            const { data, error } = await supabase
+                .from('Amigos')
+                .select('*')
+                .eq('id_amigo', id)
+                .single();
 
-    if (error) return res.status(404).json({ error: 'Amigo no encontrado' });
+            if (error) {
+                return res.status(404).json({ message: 'Amigo no encontrado' });
+            }
 
-    res.json(data);
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    }
 };
