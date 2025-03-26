@@ -18,18 +18,19 @@ export default function Dificultad() {
 
   return (
     <View className="flex-1 bg-[#F4EDE0] px-6 pt-10 justify-start">
-      <Text className="text-black font-bold text-lg mb-6">Nivel de dificultad</Text>
+      
+      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-10">Nivel de dificultad</Text>
 
-      <View className="space-y-4">
+      <View>
         <TouchableOpacity
-          className="bg-[#C76F40] py-4 rounded-xl items-center"
+          className="bg-[#C76F40] py-4 rounded-xl items-center mb-5"
           onPress={() => seleccionarDificultad("fácil")}
         >
           <Text className="text-white font-semibold text-base">Fácil</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-[#699D81] py-4 rounded-xl items-center"
+          className="bg-[#699D81] py-4 rounded-xl items-center mb-5"
           onPress={() => seleccionarDificultad("media")}
         >
           <Text className="text-white font-semibold text-base">Media</Text>

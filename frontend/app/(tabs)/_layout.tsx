@@ -91,7 +91,7 @@ export default function TabLayout(){
           }}
         />
         <Tabs.Screen
-          name="2descripcion"
+          name="misiones/2descripcion"
           options={{
             href: null, 
           }}
