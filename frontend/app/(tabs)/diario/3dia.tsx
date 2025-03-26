@@ -1,43 +1,86 @@
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function DiaDetalle() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { idDia } = useLocalSearchParams();
 
-  // Simulación de los datos de un día (en una app real, se recuperaría de la base de datos)
+  // Simulación de los datos de un día (luego se reemplaza por datos reales desde backend)
   const dia = {
-    id,
+    id: idDia,
     titulo: "Día Seleccionado",
     descripcion: "Descripción que hace el usuario de su día.",
-    imagen: require("@/assets/images/icon.png"), // Reemplazar con la imagen correspondiente
+    imagen: require("@/assets/images/icon.png"),
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#F4EDE0] px-4 py-6">
-      {/* Botón de volver */}
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-6 left-4 z-10">
-        <Text className="text-[#699D81] text-2xl">&#60;</Text>
-      </TouchableOpacity>
+    <View className="flex-1 bg-[#F4EDE0] relative">
+      {/* DECORACIÓN DE FONDO */}
 
-      <Text className="text-lg font-bold mb-4 mt-10">{dia.titulo}</Text>
-
+      {/* Brújula arriba derecha */}
       <Image
-        source={dia.imagen}
-        resizeMode="contain"
-        className="w-full h-48 bg-gray-300 rounded-md mb-4"
+        source={require("@/assets/images/brujula.png")}
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          width: 60,
+          height: 60,
+          opacity: 0.2,
+          transform: [{ rotate: "-15deg" }],
+        }}
       />
 
-      <Text className="text-base font-bold mb-1 text-black">Texto del día</Text>
-      <Text className="text-black mb-6">{dia.descripcion}</Text>
+      {/* Maleta abajo derecha */}
+      <Image
+        source={require("@/assets/images/maleta.png")}
+        style={{
+          position: "absolute",
+          bottom: 10,
+          right: 10,
+          width: 70,
+          height: 70,
+          opacity: 0.2,
+        }}
+      />
 
-      <TouchableOpacity
-        className="bg-[#C76F40] px-4 py-3 rounded-md self-start"
-        onPress={() => {}}
-      >
-        <Text className="text-white font-bold">Editar día</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      {/* CONTENIDO PRINCIPAL */}
+      <ScrollView contentContainerStyle={{ padding: 24 }}>
+
+        {/* Botón volver */}
+        <TouchableOpacity onPress={() => router.back()} className="mb-4 self-start">
+          <Ionicons name="arrow-back" size={28} color="#699D81" />
+        </TouchableOpacity>
+
+        {/* Título del día */}
+        <Text className="text-lg font-bold text-black mb-4">{dia.titulo}</Text>
+
+        {/* Imagen del día */}
+        <Image
+          source={dia.imagen}
+          resizeMode="cover"
+          className="w-full h-48 rounded-xl mb-4 bg-gray-300"
+        />
+
+        {/* Descripción del día */}
+        <Text className="text-base font-bold mb-1 text-black">Texto del día</Text>
+        <Text className="text-black mb-6">{dia.descripcion}</Text>
+
+        {/* Botón para editar */}
+        <TouchableOpacity
+          className="bg-[#C76F40] px-4 py-3 rounded-xl self-start"
+          onPress={() =>
+            router.push({
+              pathname: "/crear/2.2entradaDiario",
+              params: { idDia: dia.id }, // <- pasamos el id del día actual
+            })
+          }
+        >
+          <Text className="text-white font-bold">Editar día</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 }
 

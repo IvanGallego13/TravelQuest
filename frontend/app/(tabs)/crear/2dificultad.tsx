@@ -1,36 +1,47 @@
-import { Text, View, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
-export default function GenerarMision() {
+export default function Dificultad() {
   const router = useRouter();
 
-  const goToMisionGenerada = ()=>{
-    router.push("/crear/3misionGenerada");
+  const seleccionarDificultad = (nivel: "fácil" | "media" | "difícil") => {
+    // Aquí puedes guardar en Zustand o pasar por parámetros la dificultad
+    // o hacer un fetch al backend para generar misión si ya está implementado
+    console.log("Dificultad seleccionada:", nivel);
+
+    // Simulación de navegación al generar misión
+    router.push({
+      pathname: "./3misionGenerada",
+      params: { dificultad: nivel },
+    });
   };
 
-   return (
-    <View className="flex-1 items-center justify-center space-y-4">
-      <Text className="text-xl font-bold mb-4">Selecciona una dificultad</Text>
-      <TouchableOpacity
-        className="px-6 py-4 rounded-xl w-full items-center"
-        onPress={() => goToMisionGenerada()}
-        style={{ backgroundColor: "#699D81" }}>
-        <Text className="text-white text-lg font-semibold">Fácil</Text>
-      </TouchableOpacity>
+  return (
+    <View className="flex-1 bg-[#F4EDE0] px-6 pt-10 justify-start">
+      <Text className="text-black font-bold text-lg mb-6">Nivel de dificultad</Text>
 
-      <TouchableOpacity
-        className="px-6 py-4 rounded-xl w-full items-center"
-        onPress={() => goToMisionGenerada()}
-        style={{ backgroundColor: "#C76F40" }}>
-        <Text className="text-white text-lg font-semibold">Media</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="px-6 py-4 rounded-xl w-full items-center"
-        onPress={() => goToMisionGenerada()}
-        style={{ backgroundColor: "#C76F40" }}>
-        <Text className="text-white text-lg font-semibold">Difícil</Text>
-      </TouchableOpacity>
+      <View className="space-y-4">
+        <TouchableOpacity
+          className="bg-[#C76F40] py-4 rounded-xl items-center"
+          onPress={() => seleccionarDificultad("fácil")}
+        >
+          <Text className="text-white font-semibold text-base">Fácil</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="bg-[#699D81] py-4 rounded-xl items-center"
+          onPress={() => seleccionarDificultad("media")}
+        >
+          <Text className="text-white font-semibold text-base">Media</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="bg-[#C76F40] py-4 rounded-xl items-center"
+          onPress={() => seleccionarDificultad("difícil")}
+        >
+          <Text className="text-white font-semibold text-base">Difícil</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-    
   );
 }

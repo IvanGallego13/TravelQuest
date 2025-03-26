@@ -26,28 +26,28 @@ export default function TabLayout(){
           }),
         }}>
         <Tabs.Screen
-        name="index"
+        name="crear/index"
         options={{
           title: 'Crear',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
         }}
         />
         <Tabs.Screen
-          name="diario"
+          name="diario/diario"
           options={{
             title: 'diario',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
           }}
         />
         <Tabs.Screen
-          name="misiones"
+          name="misiones/misiones"
           options={{
             title: 'misiones',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="airplane" color={color} />,
           }}
         />
         <Tabs.Screen
-          name="usuario"
+          name="usuario/usuario"
           options={{
             title: 'usuario',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
@@ -55,11 +55,59 @@ export default function TabLayout(){
         />
       {/*Pantallas que no se mostraran en el menú inferior de navegación*/}
        <Tabs.Screen
-        name="detalles/uno"
+        name="crear/2dificultad"
         options={{
           href: null, 
         }}
       />
+      <Tabs.Screen
+        name="crear/2.2entradaDiario"
+        options={{
+          href: null, 
+        }}
+      />
+      <Tabs.Screen
+        name="crear/3misionGenerada"
+        options={{
+          href: null, 
+        }}
+      />
+      <Tabs.Screen
+        name="diario/2ciudad"
+        options={{
+          href: null, 
+        }}
+      />
+      <Tabs.Screen
+        name="diario/3dia"
+        options={{
+          href: null, 
+        }}
+      />
+        <Tabs.Screen
+          name="misiones"
+          options={{
+            href: null, 
+          }}
+        />
+        <Tabs.Screen
+          name="2descripcion"
+          options={{
+            href: null, 
+          }}
+        />
+        <Tabs.Screen
+          name="usuario"
+          options={{
+            href: null, 
+          }}
+        />
+        <Tabs.Screen
+          name="2ranking"
+          options={{
+            href: null, 
+          }}
+        />
 
     </Tabs>
     );
