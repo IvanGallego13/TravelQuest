@@ -106,7 +106,7 @@ export default function CrearDiario({ ciudad, fecha }: Props) {
         placeholderTextColor="#999"
         value={description}
         onChangeText={setDescription}
-        className="border border-[#699D81] rounded-xl p-4 mb-6 text-black"
+        className="bg-white border-[2px] border-[#699D81] rounded-xl p-4 mb-6 text-black"
       />
 
       <TouchableOpacity

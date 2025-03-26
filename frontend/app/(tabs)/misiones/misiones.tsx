@@ -73,7 +73,7 @@ export default function ListaMisiones() {
         }}
       />
 
-      <ScrollView className="px-4 pt-10">
+      <ScrollView className="px-4 pt-20">
         <Text className="text-lg font-bold text-black mb-4">
           Historial de Misiones
         </Text>

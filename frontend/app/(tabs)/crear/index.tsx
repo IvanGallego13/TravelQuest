@@ -15,9 +15,9 @@ export default function OpcionesDeCrear() {
   };
 
   return (
-    <View className="flex-1 px-6 pt-12 space-y-6 bg-[#F4EDE0]">
+    <View className="flex-1 px-6 pt-12 bg-[#F4EDE0] ">
       {/* Ciudad */}
-      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-2">
+      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-10">
        {/* {ciudad} */} Salamanca
       </Text>
 
@@ -27,9 +27,9 @@ export default function OpcionesDeCrear() {
       </View>
 
       {/* Botones */}
-      <View className="space-y-4 mt-6">
+      <View className="mt-10">
         <TouchableOpacity
-          className="w-full items-center px-6 py-4 rounded-xl bg-[#C76F40]"
+          className="w-full items-center px-6 py-4 rounded-xl bg-[#C76F40] mb-5"
           onPress={irASeleccionDificultad}
         >
           <Text className="text-white text-lg font-semibold">Comenzar una misión</Text>
