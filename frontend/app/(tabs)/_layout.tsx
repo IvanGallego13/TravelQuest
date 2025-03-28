@@ -13,18 +13,21 @@ export default function TabLayout(){
     return(
         
       <Tabs
-        screenOptions={{
+      screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-          }),
-        }}>
+        tabBarActiveTintColor: '#ffffff',     // ✅ Iconos activos blancos
+        tabBarInactiveTintColor: '#ffffff',   // ✅ Iconos inactivos también blancos
+        tabBarStyle: {
+          backgroundColor: '#C76F40',         // ✅ Terracota
+          height: 75,                         // ✅ Más altura
+          borderTopWidth: 0,                 // Elimina borde superior si lo hubiera
+          paddingBottom: 10,
+          paddingTop: 10,
+        },
+      }}
+    >
         <Tabs.Screen
         name="crear/index"
         options={{
@@ -103,7 +106,7 @@ export default function TabLayout(){
           }}
         />
         <Tabs.Screen
-          name="2ranking"
+          name="usuario/2ranking"
           options={{
             href: null, 
           }}
