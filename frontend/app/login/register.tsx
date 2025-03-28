@@ -1,76 +1,115 @@
-
-import { useRouter } from "expo-router";// Importamos el hook para navegación entre pantallas
-import { useAuth } from "@/hooks/useAuth";// Importamos el hook de autenticación que contiene la lógica de login y register
-import { View, Text, TextInput, Alert, Button } from "react-native";// Componentes de React Native
 import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 
-// Este es el componente principal que representa la pantalla de registro
 export default function Register() {
-  
-  const { register } = useAuth();// Extraemos la función `register` desde el hook de autenticación
-  const router = useRouter();// Instancia del router para redireccionar al usuario después del registro
+  const { register } = useAuth();
+  const router = useRouter();
 
-    // Estados para guardar los valores introducidos por el usuario
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+  const [usuario, setUsuario] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
 
-  // Esta función se llama cuando el usuario pulsa el botón de registro
   const handleRegister = async () => {
-    await register(); // Simulamos el registro del usuario, y marcamos como autenticado
-    router.replace("../(tabs)/crear"); // Redirigimos al layout principal tras registrarse
-};
-  //función para registrar
-  /* const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert("Campos incompletos", "Por favor, completa todos los campos.");
+    // ✅ Validación básica
+    if (!usuario || !password || !confirmPassword) {
+      Alert.alert("Campos incompletos", "Por favor rellena todos los campos.");
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Las contraseñas no coinciden.");
+      Alert.alert("Contraseña", "Las contraseñas no coinciden.");
       return;
     }
 
-    await register(); // Aquí podrías enviar también `email` y `password` al backend
-    router.replace("../localizacion");
-  };*/
+    if (modoPrueba) {
+      // ✅ MODO PRUEBA
+      await register(); // No se guarda token aún
+      router.replace("/(tabs)/crear"); // Va directo al flujo principal
+      return;
+    }
 
-  
+    try {
+      // ✅ MODO REAL (cuando el backend esté listo)
+      const res = await fetch("https://tu-backend.com/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, password }),
+      });
 
-  // Interfaz de usuario para el registro
+      if (!res.ok) throw new Error("Error en el registro");
+
+      const data = await res.json();
+      await register(data.token); // Guarda sesión
+      router.replace("/(tabs)/crear");
+    } catch (error) {
+      Alert.alert("Error", "No se pudo completar el registro");
+      console.error(error);
+    }
+  };
+
   return (
-    <View className="flex-1 items-center justify-center">
-      <Text>Pantalla de Registro</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-[#F4EDE0] justify-center px-6"
+    >
+      {/* Logo y título */}
+      <View className="flex-row justify-center items-center mb-10">
+        <Image
+          source={require("@/assets/images/logo.png")}
+          className="w-10 h-10 mr-2"
+        />
+        <Text className="text-2xl font-bold text-black">TravelQuest</Text>
+      </View>
 
-       {/* Input de Email */}
-       <TextInput
-        placeholder="Correo electrónico"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        className="border border-gray-300 rounded px-4 py-2 w-full"
-      />
-        {/* Input de Contraseña */}
+      {/* Usuario */}
+      <Text className="text-black font-semibold mb-1">Usuario:</Text>
       <TextInput
-        placeholder="Contraseña"
+        value={usuario}
+        onChangeText={setUsuario}
+        placeholder="Tu usuario"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+
+      {/* Contraseña */}
+      <Text className="text-black font-semibold mb-1">Contraseña:</Text>
+      <TextInput
         value={password}
         onChangeText={setPassword}
+        placeholder="Contraseña"
         secureTextEntry
-        className="border border-gray-300 rounded px-4 py-2 w-full"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
       />
 
-      {/* Confirmación de contraseña */}
+      {/* Confirmar contraseña */}
+      <Text className="text-black font-semibold mb-1">Repite la contraseña:</Text>
       <TextInput
-        placeholder="Confirmar contraseña"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+        placeholder="Repite tu contraseña"
         secureTextEntry
-        className="border border-gray-300 rounded px-4 py-2 w-full"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
       />
-      {/* Botón para iniciar el proceso de registro */}
-      <Button title="Registrarse" onPress={handleRegister} />
-    </View>
+
+      {/* Botón de registro */}
+      <TouchableOpacity
+        onPress={handleRegister}
+        className="bg-[#C76F40] py-3 rounded-xl items-center"
+      >
+        <Text className="text-white font-semibold text-base">Registrarse</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   );
 }
+

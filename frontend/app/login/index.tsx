@@ -1,40 +1,110 @@
-// Importa el hook `useRouter` que permite hacer redirecciones entre pantallas
+import { useState } from "react";
 import { useRouter } from "expo-router";
-
-// Importa el hook `useAuth`, donde gestionas el login, logout y estado de autenticación del usuario
 import { useAuth } from "@/hooks/useAuth";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 
-// Componentes básicos de React Native para crear la interfaz
-import { View, Button, Text } from "react-native";
-
-// Componente principal que representa la pantalla de Login
 export default function Login() {
-  // Extraemos la función login del hook personalizado de autenticación
-  const { login } = useAuth();
-
-  // Creamos una instancia del router para poder redirigir manualmente a otras pantallas
+  const { login } = useAuth(); // se asume que login(token) guarda la sesión
   const router = useRouter();
 
-  // Esta función se ejecuta cuando el usuario hace clic en el botón "Iniciar sesión"
+  const [usuario, setUsuario] = useState("");
+  const [password, setPassword] = useState("");
+  const [modoPrueba, setModoPrueba] = useState(true); // 🔁 activa/desactiva conexión real
+
   const handleLogin = async () => {
-    await login(); // Llama a la función `login` para iniciar sesión (puede guardar token, actualizar estado, etc.)
-    router.replace("./(tabs)/crear"); // Una vez logueado, redirige al layout principal que contiene las pestañas
+    if (!usuario || !password) {
+      Alert.alert("Campos vacíos", "Debes completar ambos campos.");
+      return;
+    }
+
+    if (modoPrueba) {
+      //MODO PRUEBA SIN BACKEND
+      await login(); // usa tu mock de login
+      router.replace("./(tabs)/crear");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://tu-backend.com/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ usuario, password }),
+      });
+
+      if (!res.ok) throw new Error("Credenciales inválidas");
+
+      const data = await res.json();
+      await login(data.token); // si tu contexto lo soporta
+      router.replace("./(tabs)/crear");
+    } catch (err) {
+      Alert.alert("Error", "No se pudo iniciar sesión");
+      console.error(err);
+    }
   };
-  // Esta función se ejecuta cuando el usuario quiere registrarse
+
   const goToRegister = () => {
-    router.push("/login/register"); // Navega a la pantalla de registro
+    router.push("/login/register");
   };
 
-  // Renderiza la interfaz de usuario de la pantalla Login
   return (
-    <View className="flex-1 items-center justify-center  bg-yellow-200 min-h-screen">
-      
-      <Text>Login Screen</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-[#F4EDE0] justify-center px-6"
+    >
+      {/* Logo y título */}
+      <View className="flex-row justify-center items-center mb-10">
+        <Image
+          source={require("@/assets/images/logo.png")}
+          className="w-10 h-10 mr-2"
+        />
+        <Text className="text-2xl font-bold text-black">TravelQuest</Text>
+      </View>
 
-      {/* Botón que dispara el proceso de login */}
-      <Button title="Iniciar sesión" onPress={handleLogin} />
-      {/* Botón para ir a la pantalla de registro */}
-      <Button title="Crear cuenta" onPress={goToRegister} />
-    </View>
+      {/* Inputs */}
+      <Text className="text-black font-semibold mb-1">Usuario:</Text>
+      <TextInput
+        value={usuario}
+        onChangeText={setUsuario}
+        placeholder="Tu usuario"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+
+      <Text className="text-black font-semibold mb-1">Contraseña:</Text>
+      <TextInput
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholder="Tu contraseña"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
+      />
+
+      {/* Botón de login */}
+      <TouchableOpacity
+        onPress={handleLogin}
+        className="bg-[#C76F40] py-3 rounded-xl mb-3 items-center"
+      >
+        <Text className="text-white font-semibold text-base">Iniciar sesión</Text>
+      </TouchableOpacity>
+
+      {/* Botón para registrarse */}
+      <TouchableOpacity
+        onPress={goToRegister}
+        className="bg-[#C76F40] py-3 rounded-xl items-center"
+      >
+        <Text className="text-white font-semibold text-base">Registrarse</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   );
 }
+
