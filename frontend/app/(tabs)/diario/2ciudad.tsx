@@ -1,5 +1,5 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons"; // Íconos decorativos
 import { useEffect, useState } from "react";
 
@@ -12,7 +12,7 @@ type Dia = {
 
 export default function CiudadDetalle() {
   const router = useRouter();
-  const { idDiario } = useLocalSearchParams(); // Recibimos el ID real del diario
+  const { idDiario, ciudad, imagen } = useLocalSearchParams(); // Recibimos el ID real del diario, la ciudad y la imagen.
   const [dias, setDias] = useState<Dia[]>([]);
 
   // Simulación de carga de días desde una "API"
@@ -35,8 +35,21 @@ export default function CiudadDetalle() {
 
   return (
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 py-6">
-      {/* Título */}
-      <Text className="text-lg font-bold mb-4">Ciudad Seleccionada</Text>
+      {/* Ciudad + imagen */}
+      <View className="mb-6">
+        <Text className="text-xl font-bold text-black mb-2">{ciudad}</Text>
+        {imagen ? (
+          <Image
+            source={{ uri: imagen as string }}
+            className="w-full h-40 rounded-xl"
+            resizeMode="cover"
+          />
+        ) : (
+    <View className="w-full h-40 bg-gray-300 rounded-xl items-center justify-center">
+      <Text className="text-gray-700">Sin imagen de ciudad</Text>
+    </View>
+  )}
+</View>
 
       {/* Lista de días */}
       {dias.map((dia) => (

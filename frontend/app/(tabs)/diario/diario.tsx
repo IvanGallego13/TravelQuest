@@ -41,9 +41,17 @@ export default function DiarioIndex() {
   }, []);
 
   // Navegación al detalle del diario de una ciudad
-  const irADetalleCiudad = (id: string) => {
-    router.push(`../diario/2ciudad?idDiario=${id}`);
+  const irADetalleCiudad = (id: string, ciudad: string, imagen?: string) => {
+    router.push({
+      pathname: "../diario/2ciudad",
+      params: {
+        idDiario: id,
+        ciudad,
+        imagen: imagen ?? "",
+      },
+    });
   };
+  
 
   return (
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-8">
@@ -57,7 +65,7 @@ export default function DiarioIndex() {
         diarios.map((diario) => (
           <TouchableOpacity
             key={diario.id}
-            onPress={() => irADetalleCiudad(diario.id)}
+            onPress={() => irADetalleCiudad(diario.id, diario.ciudad, diario.imagen)}
             className="bg-white mb-4 p-3 rounded-xl border-2 border-[#699D81]"
           >
             <View className="flex-row space-x-4 items-center">
