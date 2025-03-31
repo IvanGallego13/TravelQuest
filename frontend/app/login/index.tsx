@@ -29,7 +29,7 @@ export default function Login() {
     if (modoPrueba) {
       //MODO PRUEBA SIN BACKEND
       await login(); // usa tu mock de login
-      router.replace("./(tabs)/crear");
+      router.replace("./localizacion");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function Login() {
 
       const data = await res.json();
       await login(data.token); // si tu contexto lo soporta
-      router.replace("./(tabs)/crear");
+      router.replace("./localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");
       console.error(err);

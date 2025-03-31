@@ -1,12 +1,14 @@
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
+import { useUbicacion } from "@/hooks/useUbicacion";
 
-interface Props {
-  ciudad: string; // ciudad obtenida por geolocalización
-}
+
+
 
 export default function OpcionesDeCrear() {
   const router = useRouter();
+  const { ubicacion } = useUbicacion();
+  
   const irASeleccionDificultad = ()=>{
     router.push("./crear/2dificultad");
   };
@@ -18,12 +20,24 @@ export default function OpcionesDeCrear() {
     <View className="flex-1 px-6 pt-12 bg-[#F4EDE0] ">
       {/* Ciudad */}
       <Text className="text-xl font-bold text-black border-b border-gray-400 mb-10">
-       {/* {ciudad} */} Salamanca
+      {ubicacion?.ciudad || "Ubicación..."}
       </Text>
 
-      {/* Mapa (placeholder visual) */}
-      <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center">
-        <Text className="text-gray-700">Mapa de la ciudad con Google Maps</Text>
+      {/* Mapa (placeholder visual) 
+      {ubicacion?.imagen ? (
+        <Image
+          source={{ uri: ubicacion.imagen }}
+          className="w-full h-48 rounded-xl mb-4"
+          resizeMode="cover"
+        />
+      ) : (
+        <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-4">
+          <Text className="text-gray-700">Cargando imagen de la ciudad...</Text>
+        </View>
+      )}*/}
+         {/*Sustituto temporal mientras no hay imagen */}
+      <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-4">
+        <Text className="text-gray-700">Mapa de la ciudad (opcional)</Text>
       </View>
 
       {/* Botones */}
