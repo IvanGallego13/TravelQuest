@@ -1,5 +1,6 @@
 import { generateMission } from '../ia/generateMission.js';
 import supabase from '../config/supabaseClient.js';
+import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
 
 /**
  * Genera y agrega una nueva misión para un usuario usando OpenAI
@@ -191,4 +192,52 @@ export const deleteMission = async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     res.json({ message: 'Misión eliminada correctamente' });
+};
+
+export const validarImagenMision = async (req, res) => {
+    try {
+        const { misionId } = req.params;
+        const { imageUrl } = req.body;
+        const user_id = req.user.id;
+
+        // Obtener la misión y sus keywords
+        const { data: mision, error: misionError } = await supabase
+            .from('misiones')
+            .select('*')
+            .eq('id', misionId)
+            .single();
+
+        if (misionError) throw misionError;
+
+        // Validar la imagen
+        const isValid = await validateImageByLabels(imageUrl, mision.keywords);
+
+        if (isValid) {
+            // Actualizar el estado de la misión
+            const { error: updateError } = await supabase
+                .from('misiones_usuarios')
+                .update({ 
+                    estado: 'completada',
+                    imagen_url: imageUrl,
+                    fecha_completada: new Date().toISOString()
+                })
+                .eq('mision_id', misionId)
+                .eq('user_id', user_id);
+
+            if (updateError) throw updateError;
+
+            res.json({ 
+                success: true, 
+                message: 'Misión completada correctamente' 
+            });
+        } else {
+            res.status(400).json({ 
+                success: false, 
+                message: 'La imagen no cumple con los requisitos de la misión' 
+            });
+        }
+    } catch (error) {
+        console.error('Error al validar imagen de misión:', error);
+        res.status(500).json({ error: error.message });
+    }
 };

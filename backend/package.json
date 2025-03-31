@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "@google-cloud/vision": "^5.1.0",
     "@supabase/supabase-js": "^2.39.3",
     "axios": "^1.8.3",
     "cors": "^2.8.5",

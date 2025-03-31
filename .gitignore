@@ -39,3 +39,8 @@ pids
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Google Cloud
+config/fourth-ability-455408-h2-1e611bfbfec8.json
+config/fourth-ability.json
+config/google-vision-key.json

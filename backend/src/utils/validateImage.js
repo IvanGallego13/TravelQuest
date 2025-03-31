@@ -1,31 +1,38 @@
-import vision from '@google-cloud/vision';
+import client from './visionClient.js';
 
-// Cargar las credenciales de Google Cloud
-const client = new vision.ImageAnnotatorClient();
-
-const validateImage = async (imagePath) => {
+export async function validateImageByLabels(imageUrl, expectedKeywords) {
     try {
-        // Llamada a la API de Google Vision
-        const [result] = await client.labelDetection(imagePath);
-        const labels = result.labelAnnotations;
+        const [result] = await client.labelDetection(imageUrl);
+        const labels = result.labelAnnotations || [];
 
-        // Analizar las etiquetas detectadas en la imagen
-        if (labels.length === 0) {
-            throw new Error('No se detectaron etiquetas en la imagen.');
-        }
+        console.log('Etiquetas detectadas:', labels.map(l => l.description));
 
-        // Filtrar etiquetas relevantes para la misión
-        const relevantLabels = labels.map((label) => label.description.toLowerCase());
-        console.log('Etiquetas detectadas:', relevantLabels);
+        // Validación con score mínimo de 0.7
+        const matched = labels.some(label => 
+            label.score >= 0.7 && 
+            expectedKeywords.some(keyword => 
+                label.description?.toLowerCase().includes(keyword.toLowerCase())
+            )
+        );
 
-        // Aquí puedes comparar las etiquetas de la imagen con las misiones generadas
-        // Ejemplo: Si la misión es "Tomar una foto del Alcázar de Toledo" y las etiquetas detectadas incluyen "Alcázar"
-        return relevantLabels.some((label) => label.includes('alcázar'));
-
+        return matched;
     } catch (error) {
-        console.error('Error al validar la imagen:', error);
-        throw new Error('No se pudo validar la imagen.');
+        console.error('Error al validar imagen:', error);
+        throw error;
     }
-};
+}
 
-export default validateImage;
+export async function getImageLabels(imageUrl) {
+    try {
+        const [result] = await client.labelDetection(imageUrl);
+        const labels = result.labelAnnotations || [];
+        
+        return labels.map(label => ({
+            description: label.description,
+            score: label.score
+        }));
+    } catch (error) {
+        console.error('Error al obtener etiquetas:', error);
+        throw error;
+    }
+}

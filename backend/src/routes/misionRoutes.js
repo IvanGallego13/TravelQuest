@@ -1,21 +1,35 @@
-const express = require('express');
+import express from 'express';
+import { 
+    getAllMisiones, 
+    getMisionById, 
+    createMision, 
+    updateMision, 
+    deleteMision,
+    validarImagenMision
+} from '../controllers/misionController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const misionController = require('../controllers/misionController');
-const authMiddleware = require('../middleware/authMiddleware');
+
+// Todas las rutas requieren autenticación
+router.use(authMiddleware);
 
 // 🟢 Obtener todas las misiones
-router.get('/', authMiddleware, misionController.getAllMissions);
+router.get('/', getAllMisiones);
 
 // 🔵 Obtener una misión por ID
-router.get('/:id', authMiddleware, misionController.getMissionById);
+router.get('/:id', getMisionById);
 
 // 🟠 Crear una nueva misión
-router.post('/', authMiddleware, misionController.createMission);
+router.post('/', createMision);
 
 // 🟡 Actualizar una misión
-router.put('/:id', authMiddleware, misionController.updateMission);
+router.put('/:id', updateMision);
 
 // 🔴 Eliminar una misión
-router.delete('/:id', authMiddleware, misionController.deleteMission);
+router.delete('/:id', deleteMision);
 
-module.exports = router;
+// Nueva ruta para validar imágenes
+router.post('/:misionId/validar-imagen', validarImagenMision);
+
+export default router;
