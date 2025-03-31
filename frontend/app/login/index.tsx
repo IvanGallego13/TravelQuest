@@ -29,7 +29,7 @@ export default function Login() {
     if (modoPrueba) {
       //MODO PRUEBA SIN BACKEND
       await login(); // usa tu mock de login
-      router.replace("./localizacion");
+      router.replace("../login/localizacion");
       return;
     }
 
