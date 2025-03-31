@@ -52,7 +52,7 @@ export default function Register() {
 
       const data = await res.json();
       await register(data.token); // Guarda sesión
-      router.replace("./localizacion");
+      router.replace("../login/localizacion");
     } catch (error) {
       Alert.alert("Error", "No se pudo completar el registro");
       console.error(error);
