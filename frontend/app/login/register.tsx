@@ -36,7 +36,7 @@ export default function Register() {
     if (modoPrueba) {
       // ✅ MODO PRUEBA
       await register(); // No se guarda token aún
-      router.replace("/(tabs)/crear"); // Va directo al flujo principal
+      router.replace("./localizacion"); // Va directo al flujo principal
       return;
     }
 
@@ -52,7 +52,7 @@ export default function Register() {
 
       const data = await res.json();
       await register(data.token); // Guarda sesión
-      router.replace("/(tabs)/crear");
+      router.replace("./localizacion");
     } catch (error) {
       Alert.alert("Error", "No se pudo completar el registro");
       console.error(error);
