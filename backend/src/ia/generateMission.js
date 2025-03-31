@@ -67,8 +67,8 @@ export const generateMission = async (city, difficulty) => {
     }
 
     try {
-        // Obtener el modelo (usando Gemini 2.0 Flash que tiene capa gratuita)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        // Obtener el modelo (usando Gemini 1.5 Flash-8B que tiene una capa gratuita más generosa)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
 
         // Crear el prompt
         const prompt = createMissionPrompt(city, difficulty);
@@ -80,7 +80,10 @@ export const generateMission = async (city, difficulty) => {
         
         // Devolver la misión generada
         return {
-            descripcion
+            descripcion,
+            puntos: DIFFICULTY_LEVELS[difficulty].points,
+            tiempoLimite: DIFFICULTY_LEVELS[difficulty].timeLimit,
+            dificultad: difficulty
         };
 
     } catch (error) {
