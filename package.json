@@ -4,6 +4,9 @@
   "description": "**Desarrollado por:**\r - **Iván Gallego** 👨‍💻\r - **Blanca Civieta** 👩‍💻\r - **Patxi** 👨‍💻\r - **Iván Sala** 👨‍💻",
   "main": "index.js",
   "scripts": {
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +19,9 @@
   "bugs": {
     "url": "https://github.com/IvanGallego13/TravelQuest/issues"
   },
-  "homepage": "https://github.com/IvanGallego13/TravelQuest#readme"
+  "homepage": "https://github.com/IvanGallego13/TravelQuest#readme",
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
 }
+
