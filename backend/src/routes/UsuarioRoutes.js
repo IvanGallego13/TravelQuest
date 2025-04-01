@@ -1,27 +1,28 @@
-const express = require('express');
+import express from 'express';
+import { userController } from '../controllers/userController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const usuarioController = require('../controllers/usuarioController');
-const authMiddleware = require('../middleware/authMiddleware'); // Middleware para autenticación
 
 // 🟢 Registro de usuario
-router.post('/register', usuarioController.registerUser);
+router.post('/register', userController.registerUser);
 
 // 🔵 Login de usuario
-router.post('/login', usuarioController.loginUser);
+router.post('/login', userController.loginUser);
 
 // 🟠 Obtener perfil del usuario autenticado
-router.get('/profile', authMiddleware, usuarioController.getUserProfile);
+router.get('/profile', authMiddleware, userController.getUserProfile);
 
 // 🔵 Obtener todos los usuarios (solo admin)
-router.get('/', authMiddleware, usuarioController.getAllUsers);
+router.get('/', authMiddleware, userController.getAllUsers);
 
 // 🟡 Obtener usuario por ID
-router.get('/:id', authMiddleware, usuarioController.getUserById);
+router.get('/:id', authMiddleware, userController.getUserById);
 
 // 🟣 Actualizar usuario (autenticado o admin)
-router.put('/:id', authMiddleware, usuarioController.updateUser);
+router.put('/:id', authMiddleware, userController.updateUser);
 
 // 🔴 Eliminar usuario (admin o usuario propio)
-router.delete('/:id', authMiddleware, usuarioController.deleteUser);
+router.delete('/:id', authMiddleware, userController.deleteUser);
 
-module.exports = router;
+export default router;

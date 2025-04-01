@@ -1,21 +1,31 @@
-const express = require('express');
+import express from 'express';
+import { 
+    createDiario, 
+    getAllDiarios, 
+    getDiariosByLocation,
+    updateDiario, 
+    deleteDiario 
+} from '../controllers/diarioController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const diarioController = require('../controllers/diarioController');
-const authMiddleware = require('../middleware/authMiddleware');
 
-// 🟢 Obtener todos los diarios de un usuario
-router.get('/', authMiddleware, diarioController.getAllDiarios);
+// Todas las rutas requieren autenticación
+router.use(authMiddleware);
 
-// 🔵 Obtener un diario por ID
-router.get('/:id', authMiddleware, diarioController.getDiarioById);
+// Obtener todas las entradas agrupadas por localización
+router.get('/', getAllDiarios);
 
-// 🟠 Crear un nuevo diario
-router.post('/', authMiddleware, diarioController.createDiario);
+// Obtener entradas por localización
+router.get('/ciudad/:ciudad', getDiariosByLocation);
 
-// 🟡 Actualizar un diario
-router.put('/:id', authMiddleware, diarioController.updateDiario);
+// Crear nueva entrada
+router.post('/', createDiario);
 
-// 🔴 Eliminar un diario
-router.delete('/:id', authMiddleware, diarioController.deleteDiario);
+// Actualizar entrada
+router.put('/:id', updateDiario);
 
-module.exports = router;
+// Eliminar entrada
+router.delete('/:id', deleteDiario);
+
+export default router;
