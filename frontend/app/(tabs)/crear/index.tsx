@@ -6,7 +6,6 @@ import MapView, { Marker } from "react-native-maps";
 
 export default function OpcionesDeCrear() {
   const router = useRouter();
-  
   const { ubicacion } = useUbicacion();
   
   const irASeleccionDificultad = ()=>{
@@ -16,7 +15,7 @@ export default function OpcionesDeCrear() {
     router.push("./crear/2.2entradaDiario");
   };
   return (
-    <View className="flex-1 px-6 pt-12 space-y-6 bg-[#F4EDE0]">
+    <View className="flex-1 px-6 pt-12 bg-[#F4EDE0]">
       {/* Ciudad */}
       <Text className="text-xl font-bold text-black border-b border-gray-400 mb-6">
         {ubicacion?.ciudad || "Ubicación..."}
@@ -52,9 +51,7 @@ export default function OpcionesDeCrear() {
   
       {/* Botones */}
       <View className="mt-10">
-      <View className="mt-10">
         <TouchableOpacity
-          className="w-full items-center px-6 py-4 rounded-xl bg-[#C76F40] mb-5"
           className="w-full items-center px-6 py-4 rounded-xl bg-[#C76F40] mb-5"
           onPress={irASeleccionDificultad}
         >
