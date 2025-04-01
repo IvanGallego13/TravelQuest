@@ -1,17 +1,6 @@
 import { useState } from "react";
-import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
 import {
   View,
   Text,
@@ -26,10 +15,6 @@ import {
 export default function Login() {
   const { login } = useAuth(); // se asume que login(token) guarda la sesión
   const router = useRouter();
-
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // 🔁 activa/desactiva conexión real
 
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
