@@ -21,10 +21,19 @@ export default function Login() {
   const [modoPrueba, setModoPrueba] = useState(true); // 🔁 activa/desactiva conexión real
 
   const handleLogin = async () => {
-    if (!usuario || !password) {
-      Alert.alert("Campos vacíos", "Debes completar ambos campos.");
+    if (!usuario.trim() && !password.trim()) {
+      Alert.alert("Campos vacíos", "Debes ingresar tu usuario y contraseña.");
       return;
     }
+    if (!usuario.trim()) {
+      Alert.alert("Usuario requerido", "Por favor, introduce tu nombre de usuario.");
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert("Contraseña requerida", "Por favor, introduce tu contraseña.");
+      return;
+    }
+    
 
     if (modoPrueba) {
       //MODO PRUEBA SIN BACKEND

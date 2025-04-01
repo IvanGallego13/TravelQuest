@@ -22,42 +22,58 @@ export default function Register() {
   const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
 
   const handleRegister = async () => {
-    // ✅ Validación básica
     if (!usuario || !password || !confirmPassword) {
       Alert.alert("Campos incompletos", "Por favor rellena todos los campos.");
       return;
     }
-
+  
+    // 📧 Validación de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(usuario)) {
+      Alert.alert("Correo inválido", "Introduce un correo electrónico válido.");
+      return;
+    }
+  
+    // 🔐 Validación de contraseña segura
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert(
+        "Contraseña débil",
+        "Debe tener al menos 8 caracteres, una mayúscula, un número y un símbolo especial (como ! @ # $ % & * ?)."
+      );
+      return;
+    }
+  
     if (password !== confirmPassword) {
       Alert.alert("Contraseña", "Las contraseñas no coinciden.");
       return;
     }
-
+  
     if (modoPrueba) {
-      // ✅ MODO PRUEBA
-      await register(); // No se guarda token aún
-      router.replace("./localizacion"); // Va directo al flujo principal
+      await register(); // Modo simulación
+      router.replace("./localizacion");
       return;
     }
-
+  
+    // 🔁 Registro real (futuro)
     try {
-      // ✅ MODO REAL (cuando el backend esté listo)
       const res = await fetch("https://tu-backend.com/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, password }),
       });
-
+  
       if (!res.ok) throw new Error("Error en el registro");
-
+  
       const data = await res.json();
-      await register(data.token); // Guarda sesión
+      await register(data.token);
       router.replace("../login/localizacion");
     } catch (error) {
       Alert.alert("Error", "No se pudo completar el registro");
       console.error(error);
     }
   };
+  
 
   return (
     <KeyboardAvoidingView

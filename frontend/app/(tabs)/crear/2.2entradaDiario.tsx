@@ -2,19 +2,30 @@ import { Text, View, TouchableOpacity, TextInput, Image, Alert } from "react-nat
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useUbicacion } from "@/hooks/useUbicacion";
+
 
 interface Props {
   ciudad?: string;
   fecha?: string;
 }
 
-export default function CrearDiario({ ciudad, fecha }: Props) {
+export default function CrearDiario(){
   const [description, setDescription] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const { idDia } = useLocalSearchParams(); // <-- si existe, es edición de día
+  const { ubicacion } = useUbicacion();
+
+   // Usa props, Zustand o valor por defecto
+   const ciudadFinal = ubicacion?.ciudad || "Ciudad desconocida";
+   const today = new Date();
+   const fechaFinal = `${today.getDate().toString().padStart(2, "0")}/${(today.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${today.getFullYear()}`;
+
 
   const handleImagePick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -53,9 +64,9 @@ export default function CrearDiario({ ciudad, fecha }: Props) {
         // Caso: entrada nueva (se creará diario/día si no existe)
         url = "https://tu-backend.com/api/diario";
         body = {
-          ciudad,
-          fecha,
-          descripcion: description,
+          ciudad : ciudadFinal,
+          fecha : fechaFinal,
+          description: description,
           imagen: imagenUrl,
         };
       }
@@ -83,7 +94,7 @@ export default function CrearDiario({ ciudad, fecha }: Props) {
   return (
     <View className="flex-1 bg-[#F4EDE0] px-6 pt-10">
       <Text className="text-black font-bold text-lg mb-4">
-        {idDia ? "Añadir entrada al día" : `${ciudad}  ${fecha}`}
+        {idDia ? "Añadir entrada al día" : `${ciudadFinal}  ${fechaFinal}`}
       </Text>
 
       <TouchableOpacity

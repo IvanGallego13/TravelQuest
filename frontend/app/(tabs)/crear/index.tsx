@@ -1,8 +1,7 @@
 import { Text, View, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useUbicacion } from "@/hooks/useUbicacion";
-
-
+import MapView, { Marker } from "react-native-maps";
 
 
 export default function OpcionesDeCrear() {
@@ -15,31 +14,41 @@ export default function OpcionesDeCrear() {
   const irAEditarDiario =()=>{
     router.push("./crear/2.2entradaDiario");
   };
-
   return (
-    <View className="flex-1 px-6 pt-12 bg-[#F4EDE0] ">
+    <View className="flex-1 px-6 pt-12 bg-[#F4EDE0]">
       {/* Ciudad */}
-      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-10">
-      {ubicacion?.ciudad || "Ubicación..."}
+      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-6">
+        {ubicacion?.ciudad || "Ubicación..."}
       </Text>
-
-      {/* Mapa (placeholder visual) 
-      {ubicacion?.imagen ? (
-        <Image
-          source={{ uri: ubicacion.imagen }}
-          className="w-full h-48 rounded-xl mb-4"
-          resizeMode="cover"
-        />
+  
+      {/* Mapa ilustrativo con Marker */}
+      {ubicacion?.latitude && ubicacion?.longitude ? (
+        <MapView
+          style={{ height: 200, borderRadius: 12, marginBottom: 24 }}
+          region={{
+            latitude: ubicacion.latitude,
+            longitude: ubicacion.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+          scrollEnabled={false}
+          zoomEnabled={false}
+          pitchEnabled={false}
+          rotateEnabled={false}
+        >
+          <Marker
+            coordinate={{
+              latitude: ubicacion.latitude,
+              longitude: ubicacion.longitude,
+            }}
+          />
+        </MapView>
       ) : (
-        <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-4">
-          <Text className="text-gray-700">Cargando imagen de la ciudad...</Text>
+        <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-6">
+          <Text className="text-gray-700">Cargando mapa...</Text>
         </View>
-      )}*/}
-         {/*Sustituto temporal mientras no hay imagen */}
-      <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-4">
-        <Text className="text-gray-700">Mapa de la ciudad (opcional)</Text>
-      </View>
-
+      )}
+  
       {/* Botones */}
       <View className="mt-10">
         <TouchableOpacity
@@ -48,7 +57,7 @@ export default function OpcionesDeCrear() {
         >
           <Text className="text-white text-lg font-semibold">Comenzar una misión</Text>
         </TouchableOpacity>
-
+  
         <TouchableOpacity
           className="w-full items-center px-6 py-4 rounded-xl bg-[#699D81]"
           onPress={irAEditarDiario}
@@ -57,6 +66,6 @@ export default function OpcionesDeCrear() {
         </TouchableOpacity>
       </View>
     </View>
-  );
-    
+  );  
+  
 }
