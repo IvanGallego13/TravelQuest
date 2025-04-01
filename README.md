@@ -1,10 +1,10 @@
 # TravelQuest
 
 **Desarrollado por:**
-- **Iván Gallego** 👨‍💻
-- **Blanca Civieta** 👩‍💻
-- **Patxi** 👨‍💻
-- **Iván Sala** 👨‍💻
+- **Iván Gallego Orts** 👨‍💻
+- **Blanca Civieta Bermejo** 👩‍💻
+- **Patxi Bercial Seminario** 👨‍💻
+- **Iván Sala Fantoba** 👨‍💻
 
 ## Descripción del Proyecto
 
