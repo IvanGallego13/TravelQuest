@@ -6,10 +6,18 @@ import { supabase } from '../config/supabase.js';
 export const register = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const { data, error } = await supabase.auth.signUp({ email, password });
 
-        if (error) throw error;
-        res.status(201).json(data);
+        // 1. Crear cuenta
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) throw signUpError;
+
+        // 2. Iniciar sesión automáticamente
+        const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        if (loginError) throw loginError;
+
+        // 3. Enviar token (esto es lo que el frontend espera)
+        res.status(201).json({ token: data.session.access_token });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

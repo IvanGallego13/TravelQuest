@@ -14,24 +14,24 @@ import {
 
 export default function Register() {
 
-  const [usuario, setUsuario] = useState("");
+  const [email, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
+  const [modoPrueba, setModoPrueba] = useState(false); // Cambiar a false para usar backend
   const { register } = useAuth();
   const router = useRouter();
 
  
 
   const handleRegister = async () => {
-    if (!usuario || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
       Alert.alert("Campos incompletos", "Por favor rellena todos los campos.");
       return;
     }
   
     // 📧 Validación de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(usuario)) {
+    if (!emailRegex.test(email)) {
       Alert.alert("Correo inválido", "Introduce un correo electrónico válido.");
       return;
     }
@@ -62,7 +62,7 @@ export default function Register() {
       const res = await fetch("https://tu-backend.com/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, password }),
+        body: JSON.stringify({ email, password }),
       });
   
       if (!res.ok) throw new Error("Error en el registro");
@@ -94,7 +94,7 @@ export default function Register() {
       {/* Usuario */}
       <Text className="text-black font-semibold mb-1">Usuario:</Text>
       <TextInput
-        value={usuario}
+        value={email}
         onChangeText={setUsuario}
         placeholder="Tu usuario"
         className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
