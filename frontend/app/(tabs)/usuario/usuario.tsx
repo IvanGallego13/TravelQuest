@@ -1,6 +1,9 @@
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
 
 // Simulación de datos del usuario
 const logros = [
@@ -14,6 +17,9 @@ const misiones = [
   { id: 2, nombre: "Misión 2", puntos: 90 },
   { id: 3, nombre: "Misión 3", puntos: 70 },
 ];
+const [mostrarMenu, setMostrarMenu] = useState(false);
+const { logout } = useAuth();
+
 /*const [logros, setLogros] = useState([]);
 const [misiones, setMisiones] = useState([]);
 
@@ -39,6 +45,38 @@ export default function Usuario() {
   const router = useRouter();
 
   return (
+    <View className="flex-1 bg-[#F4EDE0] relative pt-10 px-4">
+    {/* Botón de ajustes arriba a la derecha */}
+    <View className="absolute top-10 right-4 z-10">
+      <TouchableOpacity onPress={() => setMostrarMenu(!mostrarMenu)}>
+        <Ionicons name="settings-outline" size={28} color="#699D81" />
+      </TouchableOpacity>
+
+      {/* Menú desplegable */}
+      {mostrarMenu && (
+        <View className="mt-2 bg-white rounded-xl border border-gray-300 shadow-md">
+          <TouchableOpacity
+            onPress={() => {
+              setMostrarMenu(false);
+              router.push("./usuario/editar");
+            }}
+            className="px-4 py-3 border-b border-gray-200"
+          >
+            <Text className="text-black">Editar perfil</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setMostrarMenu(false);
+              logout(); // cerrar sesión
+            }}
+            className="px-4 py-3"
+          >
+            <Text className="text-red-600 font-semibold">Cerrar sesión</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-10">
       {/* 📸 Avatar + Nivel + Ranking */}
       <View className="items-center mb-4">
@@ -98,5 +136,6 @@ export default function Usuario() {
         </View>
       </View>
     </ScrollView>
+  </View>
   );
 }

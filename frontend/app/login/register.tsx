@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { apiFetch } from "@/lib/api";
 import {
   View,
   Text,
@@ -14,10 +15,11 @@ import {
 
 export default function Register() {
 
-  const [email, setUsuario] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nombreUsuario, setNombreUsuario] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(false); // Cambiar a false para usar backend
+  const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
   const { register } = useAuth();
   const router = useRouter();
 
@@ -36,7 +38,7 @@ export default function Register() {
       return;
     }
   
-    // 🔐 Validación de contraseña segura
+    //  Validación de contraseña segura
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     if (!passwordRegex.test(password)) {
       Alert.alert(
@@ -57,12 +59,16 @@ export default function Register() {
       return;
     }
   
-    // 🔁 Registro real (futuro)
+    // 🔁 Registro real
     try {
-      const res = await fetch("https://tu-backend.com/api/register", {
+      const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          username:nombreUsuario,
+        }),
       });
   
       if (!res.ok) throw new Error("Error en el registro");
@@ -91,12 +97,19 @@ export default function Register() {
         <Text className="text-2xl font-bold text-black">TravelQuest</Text>
       </View>
 
-      {/* Usuario */}
-      <Text className="text-black font-semibold mb-1">Usuario:</Text>
+      {/* Email */}
+      <Text className="text-black font-semibold mb-1">Email:</Text>
       <TextInput
         value={email}
-        onChangeText={setUsuario}
-        placeholder="Tu usuario"
+        onChangeText={setEmail}
+        placeholder="Tu email"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+      <Text className="text-black font-semibold mb-1">Nombre de usuario:</Text>
+      <TextInput
+        value={nombreUsuario}
+        onChangeText={setNombreUsuario}
+        placeholder="Ej. ivangallego13"
         className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
       />
       {/* Contraseña */}

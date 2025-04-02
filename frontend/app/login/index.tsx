@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { apiFetch } from "@/lib/api";
 import {
   View,
   Text,
@@ -18,49 +19,56 @@ export default function Login() {
 
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // 🔁 activa/desactiva conexión real
-
+  const [modoPrueba, setModoPrueba] = useState(true); // activa/desactiva conexión real
+  
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
-      Alert.alert("Campos vacíos", "Debes ingresar tu usuario y contraseña.");
+      Alert.alert("Campos vacíos", "Debes ingresar tu correo y contraseña.");
       return;
     }
     if (!usuario.trim()) {
-      Alert.alert("Usuario requerido", "Por favor, introduce tu nombre de usuario.");
+      Alert.alert("Correo requerido", "Por favor, introduce tu correo electrónico.");
       return;
     }
     if (!password.trim()) {
       Alert.alert("Contraseña requerida", "Por favor, introduce tu contraseña.");
       return;
     }
-    
-
+  
     if (modoPrueba) {
-      //MODO PRUEBA SIN BACKEND
-      await login(); // usa tu mock de login
-      router.replace("../login/localizacion");
+      await login(); // Modo prueba
+      router.replace("./localizacion");
       return;
     }
-
+  
     try {
-      const res = await fetch("https://tu-backend.com/api/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ usuario, password }),
+        body: JSON.stringify({
+          email: usuario, // usa "email" para coincidir con el backend
+          password,
+        }),
       });
-
-      if (!res.ok) throw new Error("Credenciales inválidas");
-
+  
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText);
+      }
+  
       const data = await res.json();
-      await login(data.token); // si tu contexto lo soporta
+      await login(data.token); // almacena el token recibido
       router.replace("./localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");
       console.error(err);
     }
   };
+  
+
+ 
 
   const goToRegister = () => {
     router.push("/login/register");

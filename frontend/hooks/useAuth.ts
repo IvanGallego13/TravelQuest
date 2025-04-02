@@ -25,7 +25,7 @@ export function useAuth() {
     checkToken();
   }, []);
 
-  // ✅ Función de login real
+  // Función de login real
   const login = async (token?: string) => {
     if (token) {
       await SecureStore.setItemAsync(TOKEN_KEY, token);
@@ -33,7 +33,7 @@ export function useAuth() {
     setIsLoggedIn(true);
   };
 
-  // ✅ Función de registro real (misma lógica que login)
+  // Función de registro real (misma lógica que login)
   const register = async (token?: string) => {
     if (token) {
       await SecureStore.setItemAsync(TOKEN_KEY, token);
@@ -41,7 +41,7 @@ export function useAuth() {
     setIsLoggedIn(true);
   };
 
-  // ✅ Cierra sesión y elimina token
+  // Cierra sesión y elimina token
   const logout = async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     setIsLoggedIn(false);
