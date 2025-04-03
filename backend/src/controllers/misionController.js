@@ -1,5 +1,5 @@
 import { generateMission } from '../ia/generateMission.js';
-import supabase from '../config/supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
 
 /**
@@ -194,7 +194,7 @@ export const deleteMission = async (req, res) => {
     res.json({ message: 'Misión eliminada correctamente' });
 };
 
-export const validarImagenMision = async (req, res) => {
+export const validarImagenMission = async (req, res) => {
     try {
         const { misionId } = req.params;
         const { imageUrl } = req.body;

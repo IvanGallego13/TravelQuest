@@ -1,4 +1,4 @@
-import supabase from '../config/supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 import { registerUser, loginUser, getUserFromToken } from '../middleware/auth.js';
 
 export const userController = {

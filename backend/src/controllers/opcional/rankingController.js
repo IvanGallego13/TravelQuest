@@ -1,4 +1,4 @@
-import supabase from '../../config/supabaseClient.js';
+import { supabase } from '../../config/supabaseClient.js';
 
 // Definir los niveles de dificultad y sus puntos (manteniendo consistencia con generateMission.js)
 const DIFFICULTY_POINTS = {

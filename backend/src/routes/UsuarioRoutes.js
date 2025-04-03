@@ -1,7 +1,6 @@
 import express from 'express';
-import { userController } from '../controllers/userController.js';
+import { userController } from '../controllers/usuarioController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-
 const router = express.Router();
 
 // 🟢 Registro de usuario

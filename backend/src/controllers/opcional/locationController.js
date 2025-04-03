@@ -1,5 +1,5 @@
 // backend/src/controllers/locationController.js
-import supabase from "../config/dbConfig.js";
+import { supabase } from "../../config/supabaseClient.js";
 import axios from "axios";
 
 // API Key de OpenCage (o Google Geocoding API)
