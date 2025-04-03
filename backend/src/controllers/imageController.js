@@ -1,34 +1,43 @@
-import supabase from '../config/supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Subir una imagen a Supabase Storage
+ * Sube una imagen a Supabase Storage
  */
 export const uploadImage = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ error: 'No se ha enviado ninguna imagen.' });
+            return res.status(400).json({ error: 'No se ha proporcionado ninguna imagen' });
         }
 
-        const { originalname, buffer, mimetype } = req.file;
-        const fileExt = originalname.split('.').pop();
-        const fileName = `uploads/${uuidv4()}.${fileExt}`;
-        const bucket = process.env.SUPABASE_BUCKET;
+        const file = req.file;
+        const fileExt = file.originalname.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${req.user.id}/${fileName}`;
 
-        // Subir imagen a Supabase Storage
+        // Subir la imagen a Supabase Storage
         const { data, error } = await supabase.storage
-            .from(bucket)
-            .upload(fileName, buffer, { contentType: mimetype });
+            .from('images')
+            .upload(filePath, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true
+            });
 
         if (error) throw error;
 
-        // Obtener URL pública
-        const publicURL = `${process.env.SUPABASE_URL}/storage/v1/object/public/${bucket}/${fileName}`;
+        // Obtener la URL pública de la imagen
+        const { data: { publicUrl } } = supabase.storage
+            .from('images')
+            .getPublicUrl(filePath);
 
-        return res.json({ message: 'Imagen subida correctamente', url: publicURL });
+        res.status(200).json({
+            message: 'Imagen subida correctamente',
+            url: publicUrl
+        });
+
     } catch (error) {
         console.error('Error al subir la imagen:', error);
-        res.status(500).json({ error: 'Error subiendo la imagen.' });
+        res.status(500).json({ error: 'Error al subir la imagen' });
     }
 };
 
