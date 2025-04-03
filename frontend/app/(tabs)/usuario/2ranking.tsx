@@ -1,6 +1,8 @@
 import { View, Text, Image, FlatList, ScrollView } from "react-native";
 import { useState, useEffect } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import  FontAwesome5  from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';// Íconos decorativos
+import * as React from 'react';
 
 // Simulación de usuario actual (estos datos vendrán del backend luego)
 const usuarioActual = {

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import * as React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
@@ -32,28 +32,28 @@ export default function TabLayout(){
         name="crear/index"
         options={{
           title: 'Crear',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
+          tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
         }}
         />
         <Tabs.Screen
           name="diario/diario"
           options={{
             title: 'diario',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="calendar" color={color} />,
           }}
         />
         <Tabs.Screen
           name="misiones/misiones"
           options={{
             title: 'misiones',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="airplane" color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="airplane" color={color} />,
           }}
         />
         <Tabs.Screen
           name="usuario/usuario"
           options={{
             title: 'usuario',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+            tabBarIcon: ({ color }: { color: string }) => <IconSymbol size={28} name="person.fill" color={color} />,
           }}
         />
       {/*Pantallas que no se mostraran en el menú inferior de navegación*/}

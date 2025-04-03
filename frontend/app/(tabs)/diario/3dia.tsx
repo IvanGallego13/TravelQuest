@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as React from "react";
 
 export default function DiaDetalle() {
   const router = useRouter();

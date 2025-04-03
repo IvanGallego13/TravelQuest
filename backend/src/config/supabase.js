@@ -10,4 +10,4 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Las variables de entorno SUPABASE_URL y SUPABASE_KEY son requeridas');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey); 
+export const supabase = createClient(supabaseUrl, supabaseKey);

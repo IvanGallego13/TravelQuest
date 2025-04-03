@@ -3,6 +3,7 @@ import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useUbicacion } from "@/hooks/useUbicacion";
+import React from "react";
 
 
 interface Props {
@@ -102,7 +103,7 @@ export default function CrearDiario(){
         className="bg-gray-300 h-40 rounded-xl justify-center items-center mb-6"
       >
         {imageUri ? (
-          <Image source={{ uri: imageUri }} className="w-full h-full rounded-xl" />
+          <Image source={{ uri: imageUri }} className="w-full h-full rounded-xl" style={{ width: '100%', height: '100%', borderRadius: 12 }} />
         ) : (
           <Text className="text-gray-700 text-center">
             Al pulsar opción de hacer foto o subirla

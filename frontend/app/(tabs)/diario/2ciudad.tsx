@@ -1,7 +1,9 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons"; // Íconos decorativos
+import  FontAwesome5  from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';// Íconos decorativos
 import { useEffect, useState } from "react";
+import * as React from 'react';
 
 // Tipo Día para simular mejor la estructura real
 type Dia = {

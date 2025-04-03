@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as React from 'react';
 
 //Simulación de datos reales
 const datosSimulados = {

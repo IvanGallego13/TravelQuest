@@ -1,8 +1,10 @@
 import { useState, useCallback } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from '@expo/vector-icons/Ionicons';
+// First install the package with: npm install @expo/vector-icons
 import { useFocusEffect } from "@react-navigation/native"; // Hook que detecta si el usuario deja la pantalla
+import * as React from "react";
 
 export default function Mision() {
   const router = useRouter();

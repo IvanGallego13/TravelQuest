@@ -2,6 +2,7 @@ import { Text, View, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useUbicacion } from "@/hooks/useUbicacion";
 import MapView, { Marker } from "react-native-maps";
+import * as React from "react";
 
 
 export default function OpcionesDeCrear() {

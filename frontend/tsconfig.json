@@ -1,6 +1,8 @@
+//ASI es como tiene que estar para que no tenga errores de ejecutar
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "jsx": "react",
     "strict": true,
     "paths": {
       "@/*": [

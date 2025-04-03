@@ -1,10 +1,12 @@
+
 import { Redirect } from "expo-router";
 import { useAuth } from "../hooks/useAuth";
+import React from "react";
 
 export default function Index() {
-  const { isLoggedIn } = useAuth();
+  const { session } = useAuth();
 
-  if (isLoggedIn) {
+  if (session) {
     return <Redirect href="./(tabs)/crear" />;
   } else {
     return <Redirect href="./login" />;

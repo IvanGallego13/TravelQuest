@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import  FontAwesome5  from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';// Íconos decorativos
+import * as React from 'react';
 
 // Tipo de diario (puedes ampliarlo luego)
 type Diario = {

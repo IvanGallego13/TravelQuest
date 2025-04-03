@@ -1,7 +1,9 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import  FontAwesome5  from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';// Íconos decorativos
+import * as React from 'react';
 
 // Tipo misión
 type Mision = {

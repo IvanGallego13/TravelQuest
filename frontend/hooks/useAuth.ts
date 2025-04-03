@@ -1,58 +1,41 @@
-import { useState, useEffect } from "react";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
+//Ejemplo de como pedir para la base de datos(Se puede quitar)
 
-const TOKEN_KEY = "travelquest_token";
+import { useState, useEffect } from 'react';
+
+
+import { supabase } from '../utils/supabase';
+import { Session } from '@supabase/supabase-js';
 
 export function useAuth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Al iniciar la app, verificamos si hay un token guardado
   useEffect(() => {
-    const checkToken = async () => {
-      if (Platform.OS === "web") {
-        setIsLoggedIn(false);
-        setLoading(false);
-        return;
-      }
-
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      setIsLoggedIn(!!token);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setLoading(false);
-    };
+    });
 
-    checkToken();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // ✅ Función de login real
-  const login = async (token?: string) => {
-    if (token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    }
-    setIsLoggedIn(true);
-  };
-
-  // ✅ Función de registro real (misma lógica que login)
-  const register = async (token?: string) => {
-    if (token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    }
-    setIsLoggedIn(true);
-  };
-
-  // ✅ Cierra sesión y elimina token
-  const logout = async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    setIsLoggedIn(false);
-  };
-
   return {
-    isLoggedIn,
+    session,
     loading,
-    login,
-    logout,
-    register,
+    signIn: (email: string, password: string) => 
+      supabase.auth.signInWithPassword({ email, password }),
+    signUp: (email: string, password: string) => 
+      supabase.auth.signUp({ email, password }),
+    signOut: () => supabase.auth.signOut(),
   };
 }
 

@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import * as React from 'react';
 
 export default function Dificultad() {
   const router = useRouter();

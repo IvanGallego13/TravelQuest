@@ -1,6 +1,8 @@
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import  FontAwesome5  from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';// Íconos decorativos
 import { useRouter } from "expo-router";
+import * as React from 'react';
 
 // Simulación de datos del usuario
 const logros = [
