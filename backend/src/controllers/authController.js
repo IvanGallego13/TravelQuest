@@ -125,3 +125,67 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Obtiene la URL de autorización para iniciar el proceso de OAuth con Google
+ */
+export const googleAuthUrl = async (req, res) => {
+  try {
+    const redirectTo = req.query.redirectTo || process.env.FRONTEND_URL + '/login/localizacion';
+    
+    // Generar URL para OAuth con Google
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo
+      }
+    });
+
+    if (error) throw error;
+    
+    res.json({ authUrl: data.url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Procesa el callback de OAuth y devuelve un token de sesión
+ */
+export const oauthCallback = async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    // Este endpoint se utilizará para procesar el código recibido tras la autenticación OAuth
+    // Supabase maneja esto automáticamente a través de la URL de redirección
+    // Aquí solo verificamos la sesión actual
+    
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) throw error;
+    
+    if (!data.session) {
+      return res.status(401).json({ error: "No se pudo establecer la sesión" });
+    }
+    
+    // Verificar si el usuario existe en la tabla profiles
+    const userId = data.session.user.id;
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
+      
+    // Si no existe un perfil, crear uno con un username predeterminado
+    if (profileError && profileError.code === 'PGRST116') {
+      const defaultUsername = `user_${userId.substring(0, 8)}`;
+      await supabase
+        .from("profiles")
+        .insert([{ id: userId, username: defaultUsername }]);
+    }
+    
+    res.json({ token: data.session.access_token });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -11,7 +11,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from "react-native";
+import * as WebBrowser from 'expo-web-browser';
+import { AntDesign } from '@expo/vector-icons';
+import { initiateOAuth } from "@/lib/socialAuth";
 
 export default function Login() {
   const { login } = useAuth(); // se asume que login(token) guarda la sesión
@@ -19,7 +23,7 @@ export default function Login() {
 
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // activa/desactiva conexión real
+  const [modoPrueba, setModoPrueba] = useState(false); // activa/desactiva conexión real
   
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
@@ -67,8 +71,34 @@ export default function Login() {
     }
   };
   
+  const handleSocialLogin = async (provider: 'Google') => {
+    try {
+      if (modoPrueba) {
+        Alert.alert("Modo Prueba", `Iniciando sesión con ${provider} en modo prueba.`);
+        await login(); // Modo prueba
+        router.replace("/login/localizacion");
+        return;
+      }
 
- 
+      // Mostrar indicador de carga
+      Alert.alert("Conectando", `Iniciando sesión con ${provider}...`);
+      
+      // Iniciar el proceso OAuth con el proveedor correspondiente
+      const token = await initiateOAuth(provider.toLowerCase() as 'google');
+      
+      if (token) {
+        // Si se obtuvo un token, establecer la sesión y redirigir
+        await login(token);
+        router.replace("/login/localizacion");
+      } else {
+        // Si no se obtuvo un token, mostrar error
+        Alert.alert("Error", `No se pudo completar el inicio de sesión con ${provider}`);
+      }
+    } catch (error: any) {
+      console.error(`Error al iniciar sesión con ${provider}:`, error);
+      Alert.alert("Error", `No se pudo iniciar sesión con ${provider}: ${error.message || 'Error desconocido'}`);
+    }
+  };
 
   const goToRegister = () => {
     router.push("/login/register");
@@ -114,14 +144,43 @@ export default function Login() {
         <Text className="text-white font-semibold text-base">Iniciar sesión</Text>
       </TouchableOpacity>
 
+      {/* Separador */}
+      <View className="flex-row items-center my-4">
+        <View className="flex-1 h-0.5 bg-gray-300" />
+        <Text className="mx-4 text-gray-500">O continuar con</Text>
+        <View className="flex-1 h-0.5 bg-gray-300" />
+      </View>
+
+      {/* Botones de inicio de sesión social */}
+      <TouchableOpacity
+        onPress={() => handleSocialLogin('Google')}
+        className="bg-white py-3 rounded-xl mb-4 items-center flex-row justify-center"
+        style={styles.socialButton}
+      >
+        <AntDesign name="google" size={20} color="#DB4437" />
+        <Text className="text-black font-semibold text-base ml-2">Google</Text>
+      </TouchableOpacity>
+
       {/* Botón para registrarse */}
       <TouchableOpacity
         onPress={goToRegister}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
+        className="bg-[#C76F40] py-3 rounded-xl items-center mt-2"
       >
         <Text className="text-white font-semibold text-base">Registrarse</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  socialButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  }
+});
 
