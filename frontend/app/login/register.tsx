@@ -61,9 +61,6 @@ export default function Register() {
   
     // 🔁 Registro real
     try {
-      console.log("🔎 API_URL:", process.env.EXPO_PUBLIC_API_URL);
-      console.log("📡 URL final:", `${process.env.EXPO_PUBLIC_API_URL}/api/auth/register`);
-
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,14 +70,16 @@ export default function Register() {
           username:nombreUsuario,
         }),
       });
-  
-      if (!res.ok) throw new Error("Error en el registro");
-  
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null); 
+        Alert.alert("Registro fallido", errorData?.error || "Error desconocido");
+        return;
+      }
       const data = await res.json();
       await register(data.token);
       router.replace("../login/localizacion");
     } catch (error) {
-      console.error("🧨 Error en el frontend:", error);
       Alert.alert("Error", "No se pudo completar el registro");
       console.error(error);
     }
