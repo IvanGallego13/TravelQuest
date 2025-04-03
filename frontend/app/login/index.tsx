@@ -37,7 +37,7 @@ export default function Login() {
   
     if (modoPrueba) {
       await login(); // Modo prueba
-      router.replace("./localizacion");
+      router.replace("/login/localizacion");
       return;
     }
   

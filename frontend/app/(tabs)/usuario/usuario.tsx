@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,8 +17,7 @@ const misiones = [
   { id: 2, nombre: "Misión 2", puntos: 90 },
   { id: 3, nombre: "Misión 3", puntos: 70 },
 ];
-const [mostrarMenu, setMostrarMenu] = useState(false);
-const { logout } = useAuth();
+
 
 /*const [logros, setLogros] = useState([]);
 const [misiones, setMisiones] = useState([]);
@@ -43,6 +42,8 @@ export default function Usuario() {
   const totalMisiones = misiones.reduce((acc, m) => acc + m.puntos, 0);
   const nivel = totalLogros + totalMisiones;
   const router = useRouter();
+  const [mostrarMenu, setMostrarMenu] = useState(false);
+  const { logout } = useAuth();
 
   return (
     <View className="flex-1 bg-[#F4EDE0] relative pt-10 px-4">
@@ -54,28 +55,52 @@ export default function Usuario() {
 
       {/* Menú desplegable */}
       {mostrarMenu && (
-        <View className="mt-2 bg-white rounded-xl border border-gray-300 shadow-md">
-          <TouchableOpacity
-            onPress={() => {
-              setMostrarMenu(false);
-              router.push("./usuario/editar");
-            }}
-            className="px-4 py-3 border-b border-gray-200"
-          >
-            <Text className="text-black">Editar perfil</Text>
-          </TouchableOpacity>
+  <View className="absolute top-14 right-4 bg-white rounded-xl border border-gray-300 shadow-md z-10 w-56">
 
-          <TouchableOpacity
-            onPress={() => {
-              setMostrarMenu(false);
-              logout(); // cerrar sesión
-            }}
-            className="px-4 py-3"
-          >
-            <Text className="text-red-600 font-semibold">Cerrar sesión</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+    {/* Cabecera del menú */}
+    <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
+      <Ionicons name="settings-outline" size={20} color="#699D81" />
+      <Text className="text-black font-semibold ml-2">Ajustes</Text>
+    </View>
+
+    {/* Opción: Editar perfil */}
+    <TouchableOpacity
+      onPress={() => {
+        setMostrarMenu(false);
+        router.push("/usuario/editar");
+      }}
+      className="flex-row items-center px-4 py-3 border-b border-gray-200"
+    >
+      <MaterialIcons name="edit" size={20} color="#000" />
+      <Text className="text-black ml-2">Editar perfil</Text>
+    </TouchableOpacity>
+
+    {/* Opción: Cerrar sesión */}
+    <TouchableOpacity
+      onPress={() => {
+        setMostrarMenu(false);
+        logout();
+      }}
+      className="flex-row items-center px-4 py-3 border-b border-gray-200"
+    >
+      <Ionicons name="lock-closed-outline" size={20} color="#C76F40" />
+      <Text className="text-[#C76F40] ml-2 font-semibold">Cerrar sesión</Text>
+    </TouchableOpacity>
+
+    {/* Opción: Sobre TravelQuest */}
+    <TouchableOpacity
+      onPress={() => {
+        setMostrarMenu(false);
+        router.push("/usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
+      }}
+      className="flex-row items-center px-4 py-3"
+    >
+      <Ionicons name="information-circle-outline" size={20} color="#000" />
+      <Text className="text-black ml-2">Sobre TravelQuest</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
     </View>
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-10">
       {/* 📸 Avatar + Nivel + Ranking */}
