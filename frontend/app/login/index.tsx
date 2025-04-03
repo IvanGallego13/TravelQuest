@@ -60,7 +60,7 @@ export default function Login() {
   
       const data = await res.json();
       await login(data.token); // almacena el token recibido
-      router.replace("./localizacion");
+      router.replace("/login/localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");
       console.error(err);
