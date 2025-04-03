@@ -2,8 +2,12 @@
   "name": "travelquest",
   "version": "1.0.0",
   "description": "**Desarrollado por:**\r - **Iván Gallego** 👨‍💻\r - **Blanca Civieta** 👩‍💻\r - **Patxi** 👨‍💻\r - **Iván Sala** 👨‍💻",
-  "main": "index.js",
+  "main": "App.js",
   "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
     "dev:frontend": "cd frontend && npm start",
     "dev:backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
@@ -21,7 +25,16 @@
   },
   "homepage": "https://github.com/IvanGallego13/TravelQuest#readme",
   "devDependencies": {
-    "concurrently": "^8.0.0"
+    "@types/react": "~18.3.12",
+    "concurrently": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.10",
+    "@expo/vector-icons": "^14.0.4",
+    "@react-navigation/bottom-tabs": "^7.3.1",
+    "@react-navigation/native": "^7.0.17",
+    "@rnmapbox/maps": "^10.1.37",
+    "axios": "^1.8.4"
   }
 }
-
