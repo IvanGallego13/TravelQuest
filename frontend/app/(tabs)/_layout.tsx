@@ -111,6 +111,18 @@ export default function TabLayout(){
             href: null, 
           }}
         />
+        <Tabs.Screen
+          name="usuario/editar"
+          options={{
+            href: null, 
+          }}
+        />
+        <Tabs.Screen
+          name="usuario/editar-avatar"
+          options={{
+            href: null, 
+          }}
+        />
 
     </Tabs>
     );
