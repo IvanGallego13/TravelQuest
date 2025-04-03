@@ -19,7 +19,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
+  const [modoPrueba, setModoPrueba] = useState(false); // Cambiar a false para usar backend
   const { register } = useAuth();
   const router = useRouter();
 
@@ -61,6 +61,9 @@ export default function Register() {
   
     // 🔁 Registro real
     try {
+      console.log("🔎 API_URL:", process.env.EXPO_PUBLIC_API_URL);
+      console.log("📡 URL final:", `${process.env.EXPO_PUBLIC_API_URL}/api/auth/register`);
+
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +80,7 @@ export default function Register() {
       await register(data.token);
       router.replace("../login/localizacion");
     } catch (error) {
+      console.error("🧨 Error en el frontend:", error);
       Alert.alert("Error", "No se pudo completar el registro");
       console.error(error);
     }

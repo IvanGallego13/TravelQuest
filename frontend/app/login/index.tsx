@@ -19,7 +19,7 @@ export default function Login() {
 
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // activa/desactiva conexión real
+  const [modoPrueba, setModoPrueba] = useState(false); // activa/desactiva conexión real
   
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
