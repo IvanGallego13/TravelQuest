@@ -5,7 +5,7 @@ import {
   createChat, 
   updateChat, 
   deleteChat 
-} from '../controllers/chatController.js';
+} from '../controllers/opcional/chatController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

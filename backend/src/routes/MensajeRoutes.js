@@ -1,18 +1,19 @@
-const express = require('express');
+import express from 'express';
+import * as mensajeController from '../controllers/opcional/mensajeController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const mensajeController = require('../controllers/mensajeController');
-const authMiddleware = require('../middleware/authMiddleware');
 
-// 🟢 Obtener todos los mensajes entre usuarios
-router.get('/', authMiddleware, mensajeController.getAllMessages);
-
-// 🔵 Obtener un mensaje por ID
-router.get('/:id', authMiddleware, mensajeController.getMessageById);
+// 🟢 Obtener mensajes entre dos usuarios
+router.get('/:id_emisor/:id_receptor', authMiddleware, mensajeController.getMessages);
 
 // 🟠 Enviar un nuevo mensaje
 router.post('/', authMiddleware, mensajeController.sendMessage);
 
-// 🔴 Eliminar un mensaje
-router.delete('/:id', authMiddleware, mensajeController.deleteMessage);
+// 🔵 Marcar mensaje como leído
+router.put('/:id_mensaje/read', authMiddleware, mensajeController.markMessageAsRead);
 
-module.exports = router;
+// 🔴 Eliminar un mensaje
+router.delete('/:id_mensaje', authMiddleware, mensajeController.deleteMessage);
+
+export default router;

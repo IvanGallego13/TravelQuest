@@ -1,4 +1,4 @@
-import supabase from '../config/supabaseClient.js';
+import { supabase } from '../../config/supabaseClient.js';
 
 /**
  * Enviar mensaje entre usuarios
