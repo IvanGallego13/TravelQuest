@@ -41,7 +41,11 @@ export const register = async (req, res) => {
     }
 
     // 4. Devolver token
-    res.status(201).json({ token: loginData.session.access_token });
+    res.status(201).json({
+      token: loginData.session.access_token, 
+      userId: loginData.user.id 
+    });
+
   } catch (error) {
     console.error("❌ Error en el registro:", error.message || error);
     res.status(500).json({ error: error.message || "Error inesperado en el servidor" });
@@ -64,7 +68,10 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: "Sesión no válida" });
         }
         //Devolver token
-        res.json({ token: data.session.access_token });
+        res.json({ 
+          token: data.session.access_token,
+          userId: data.user.id
+         });
 
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -59,7 +59,7 @@ export default function Register() {
       return;
     }
   
-    // 🔁 Registro real
+    //  Registro real
     try {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
@@ -77,7 +77,7 @@ export default function Register() {
         return;
       }
       const data = await res.json();
-      await register(data.token);
+      await register(data.token, data.userId);
       router.replace("../login/localizacion");
     } catch (error) {
       Alert.alert("Error", "No se pudo completar el registro");

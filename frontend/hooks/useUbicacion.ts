@@ -6,6 +6,7 @@ type Ubicacion = {
   latitude: number;
   longitude: number;
   imagen: string;
+  cityId: number;
 };
 
 type UbicacionStore = {

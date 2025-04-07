@@ -36,7 +36,7 @@ export default function Login() {
     }
   
     if (modoPrueba) {
-      await login(); // Modo prueba
+      await login("modo_prueba_token"); // Modo prueba
       router.replace("/login/localizacion");
       return;
     }
@@ -59,7 +59,7 @@ export default function Login() {
       }
   
       const data = await res.json();
-      await login(data.token); // almacena el token recibido
+      await login(data.token, data.userId); // almacena el token recibido
       router.replace("/login/localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");

@@ -8,7 +8,7 @@ const LOGROS = {
         nombre: 'Primera parada',
         descripcion: 'Visita tu primera ciudad',
         categoria: 'exploracion',
-        puntos: 100,
+        puntos: 10,
         icono: '🗺️'
     },
     TROTAMUNDOS: {
@@ -16,7 +16,7 @@ const LOGROS = {
         nombre: 'Trotamundos',
         descripcion: 'Explora 5 ciudades distintas',
         categoria: 'exploracion',
-        puntos: 500,
+        puntos: 50,
         icono: '🗺️'
     },
     CIUDADANO_MUNDO: {
@@ -24,7 +24,7 @@ const LOGROS = {
         nombre: 'Ciudadano del mundo',
         descripcion: 'Explora 15 ciudades en total',
         categoria: 'exploracion',
-        puntos: 1500,
+        puntos: 150,
         icono: '🗺️'
     },
     MAPA_COMPLETO: {
@@ -32,7 +32,7 @@ const LOGROS = {
         nombre: 'Mapa completo',
         descripcion: 'Completa todas las misiones de una ciudad',
         categoria: 'exploracion',
-        puntos: 1000,
+        puntos: 100,
         icono: '🗺️'
     },
 
@@ -42,7 +42,7 @@ const LOGROS = {
         nombre: 'Primer paso',
         descripcion: 'Completa tu primera misión',
         categoria: 'misiones',
-        puntos: 50,
+        puntos: 10,
         icono: '🪂'
     },
     MISION_FACIL: {
@@ -50,7 +50,7 @@ const LOGROS = {
         nombre: 'Reto inicial',
         descripcion: 'Completa una misión de dificultad fácil',
         categoria: 'misiones',
-        puntos: 100,
+        puntos: 10,
         icono: '🪂'
     },
     MISION_MEDIA: {
@@ -58,7 +58,7 @@ const LOGROS = {
         nombre: 'En marcha',
         descripcion: 'Completa una misión de dificultad normal',
         categoria: 'misiones',
-        puntos: 200,
+        puntos: 20,
         icono: '🪂'
     },
     MISION_DIFICIL: {
@@ -66,7 +66,7 @@ const LOGROS = {
         nombre: 'Misión Imposible',
         descripcion: 'Completa una misión de dificultad difícil',
         categoria: 'misiones',
-        puntos: 300,
+        puntos: 30,
         icono: '🪂'
     },
     DIEZ_MISIONES: {
@@ -74,7 +74,7 @@ const LOGROS = {
         nombre: 'Subiendo de nivel',
         descripcion: 'Completa 10 misiones',
         categoria: 'misiones',
-        puntos: 1000,
+        puntos: 100,
         icono: '🪂'
     },
     CIEN_MISIONES: {
@@ -82,7 +82,7 @@ const LOGROS = {
         nombre: 'Leyenda viajera',
         descripcion: 'Completa 100 misiones',
         categoria: 'misiones',
-        puntos: 10000,
+        puntos: 1000,
         icono: '🪂'
     },
     MARATON_MISIONES: {
@@ -90,7 +90,7 @@ const LOGROS = {
         nombre: 'Maratón viajera',
         descripcion: 'Completa 5 misiones en un mismo día',
         categoria: 'misiones',
-        puntos: 500,
+        puntos: 50,
         icono: '🪂'
     },
 
@@ -100,7 +100,7 @@ const LOGROS = {
         nombre: 'Mochilero',
         descripcion: 'Completa tu primer viaje',
         categoria: 'viajes',
-        puntos: 200,
+        puntos: 20,
         icono: '📒'
     },
     CINCO_VIAJES: {
@@ -108,7 +108,7 @@ const LOGROS = {
         nombre: 'Explorador experto',
         descripcion: 'Realiza 5 viajes completos',
         categoria: 'viajes',
-        puntos: 1000,
+        puntos: 100,
         icono: '📒'
     },
     DIEZ_VIAJES_PLANIFICADOS: {
@@ -116,7 +116,7 @@ const LOGROS = {
         nombre: 'Planificador',
         descripcion: 'Agrega fechas y duración a 10 viajes',
         categoria: 'viajes',
-        puntos: 800,
+        puntos: 80,
         icono: '📒'
     },
 
@@ -126,7 +126,7 @@ const LOGROS = {
         nombre: 'Primer recuerdo',
         descripcion: 'Sube una foto a tu diario',
         categoria: 'diario',
-        puntos: 50,
+        puntos: 5,
         icono: '📸'
     },
     HISTORIA_LARGA: {
@@ -134,7 +134,7 @@ const LOGROS = {
         nombre: 'Historias que inspiran',
         descripcion: 'Escribe una entrada de más de 500 caracteres',
         categoria: 'diario',
-        puntos: 100,
+        puntos: 10,
         icono: '📸'
     },
     TREINTA_ENTRADAS: {
@@ -142,7 +142,7 @@ const LOGROS = {
         nombre: 'Viajero crónico',
         descripcion: 'Sube 30 entradas en total',
         categoria: 'diario',
-        puntos: 500,
+        puntos: 50,
         icono: '📸'
     },
     RACHA_DIARIA: {
@@ -150,7 +150,7 @@ const LOGROS = {
         nombre: 'Una por día',
         descripcion: 'Agrega una entrada diaria durante al menos 5 días seguidos',
         categoria: 'diario',
-        puntos: 300,
+        puntos: 30,
         icono: '📸'
     },
 
