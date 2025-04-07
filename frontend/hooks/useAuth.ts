@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { useAuthStore } from "@/store/auth";
 
 const TOKEN_KEY = "travelquest_token";
 
@@ -26,24 +27,31 @@ export function useAuth() {
   }, []);
 
   // Función de login real
-  const login = async (token?: string) => {
+  const login = async (token?: string, userId?: string) => {
     if (token) {
       await SecureStore.setItemAsync(TOKEN_KEY, token);
+    }
+    if(userId){
+      useAuthStore.getState().setUserId(userId);
     }
     setIsLoggedIn(true);
   };
 
-  // Función de registro real (misma lógica que login)
-  const register = async (token?: string) => {
+  // Función de registro real 
+  const register = async (token?: string, userId?: string) => {
     if (token) {
       await SecureStore.setItemAsync(TOKEN_KEY, token);
     }
+    if (userId) {
+      useAuthStore.getState().setUserId(userId);
+    }  
     setIsLoggedIn(true);
   };
 
   // Cierra sesión y elimina token
   const logout = async () => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    useAuthStore.getState().clearUser();
     setIsLoggedIn(false);
   };
 

@@ -2,54 +2,157 @@ import { generateMission } from '../ia/generateMission.js';
 import { supabase } from '../config/supabaseClient.js';
 import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
 
+
+export const updateUserMissionStatus = async (req, res) => {
+    try {
+      const userId = req.user.id; // viene desde el token gracias a `authMiddleware`
+      const missionId = parseInt(req.params.missionId);
+      const { status, image_url, completed_at } = req.body;
+  
+      if (!["accepted", "completed", "discarded"].includes(status)) {
+        return res.status(400).json({ message: "Estado no válido" });
+      }
+  
+      // Buscar la misión del usuario
+      const { data: existing, error: findError } = await supabase
+        .from("user_missions")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("mission_id", missionId)
+        .maybeSingle();
+  
+      if (findError) throw findError;
+      if (!existing) {
+        return res.status(404).json({ message: "Misión no asignada al usuario" });
+      }
+  
+      const updateFields = {
+        status,
+      };
+  
+      if (image_url) updateFields.image_url = image_url;
+      if (status === "completed" && completed_at) {
+        updateFields.completed_at = completed_at;
+      }
+  
+      const { error: updateError } = await supabase
+        .from("user_missions")
+        .update(updateFields)
+        .eq("user_id", userId)
+        .eq("mission_id", missionId);
+  
+      if (updateError) throw updateError;
+  
+      res.status(200).json({ message: "Misión actualizada correctamente" });
+    } catch (error) {
+      console.error("❌ Error al actualizar misión:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  };
+  
 /**
  * Genera y agrega una nueva misión para un usuario usando OpenAI
  */
 export const generateNewMission = async (req, res) => {
     try {
-        const { ciudad, dificultad } = req.body;
+        const { userId, cityId, difficulty } = req.body;
         
-        if (!ciudad || !dificultad) {
+        if (!userId|| !cityId || !difficulty) {
             return res.status(400).json({ 
-                message: 'La ciudad y la dificultad son requeridas' 
+                message: 'El id usuario, la ciudad y la dificultad son requeridas' 
             });
         }
 
-        // Validar que la dificultad sea válida
-        if (!['facil', 'medio', 'dificil'].includes(dificultad)) {
-            return res.status(400).json({
-                message: 'La dificultad debe ser: facil, medio o dificil'
-            });
-        }
+        // 1. Obtener nombre de ciudad
+    const { data: cityData, error: cityError } = await supabase
+    .from("cities")
+    .select("name")
+    .eq("id", cityId)
+    .single();
 
-        // Generar la misión usando OpenAI
-        const missionData = await generateMission(ciudad, dificultad);
+  if (cityError || !cityData?.name) {
+    return res.status(400).json({ message: "Ciudad no encontrada" });
+  }
 
-        // Guardar la misión en la base de datos
-        const { data, error } = await supabase
-            .from('Historial_Misiones')
-            .insert([{
-                id_usuario: req.user.id,
-                descripcion_mision: missionData.descripcion,
-                ubicacion: ciudad,
-                dificultad: dificultad,
-                completada: false
-            }])
-            .select();
+  const nombreCiudad = cityData.name;
 
-        if (error) throw error;
+  // 2. Buscar misiones existentes en esa ciudad y dificultad
+  const { data: existingMissions, error: findError } = await supabase
+    .from("missions")
+    .select("*")
+    .eq("city_id", cityId)
+    .eq("difficulty", difficulty);
 
-        res.status(201).json({ 
-            message: 'Misión generada y creada correctamente', 
-            data 
-        });
+  if (findError) throw findError;
 
-    } catch (error) {
-        res.status(500).json({ 
-            message: 'Error al generar la misión',
-            error: error.message 
-        });
+  let mission = null;
+
+  // 3. Buscar una misión que el usuario aún no haya hecho
+  if (existingMissions && existingMissions.length > 0) {
+    for (const m of existingMissions) {
+      const { data: relation, error: relationError } = await supabase
+        .from("user_missions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("mission_id", m.id)
+        .not("status", "eq", "discarded")
+        .maybeSingle();
+
+      if (relationError) throw relationError;
+
+      if (!relation) {
+        mission = m; // primera misión que no haya hecho
+        break;
+      }
     }
+  }
+
+  // 4. Si no encontramos una misión disponible → generamos con IA
+  if (!mission) {
+    const iaResult = await generateMission(nombreCiudad, difficulty);
+
+    const { data: newMission, error: createError } = await supabase
+      .from("missions")
+      .insert([
+        {
+          city_id: cityId,
+          title: iaResult.titulo,
+          description: iaResult.descripcion,
+          difficulty: difficulty,
+        },
+      ])
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    mission = newMission;
+  }
+
+  // 5. Asignamos la misión (ahora sí sabemos que es nueva para el usuario)
+  const { error: assignError } = await supabase
+    .from("user_missions")
+    .insert([
+      {
+        user_id: userId,
+        mission_id: mission.id,
+      },
+    ]);
+
+  if (assignError) throw assignError;
+
+  // 6. Devolvemos la misión generada
+  res.status(201).json({
+    id: mission.id,
+    title: mission.title,
+    description: mission.description,
+    difficulty: mission.difficulty,
+    city: nombreCiudad,
+  });
+} catch (error) {
+  console.error("❌ Error al generar misión:", error.message);
+  res.status(500).json({ message: "Error al generar misión", error: error.message });
+}
 };
 
 /**

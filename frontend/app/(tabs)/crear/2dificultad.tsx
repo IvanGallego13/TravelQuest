@@ -1,19 +1,67 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { useRouter, useLocalSearchParams} from "expo-router";
+import React from 'react';
+import { useAuthStore } from "@/store/auth";
+import { apiFetch } from "@/lib/api";
+
 
 export default function Dificultad() {
   const router = useRouter();
+  const { cityId } = useLocalSearchParams();
+  const userId = useAuthStore((state) => state.userId);
 
-  const seleccionarDificultad = (nivel: "fácil" | "media" | "difícil") => {
-    // Aquí puedes guardar en Zustand o pasar por parámetros la dificultad
-    // o hacer un fetch al backend para generar misión si ya está implementado
-    console.log("Dificultad seleccionada:", nivel);
+  const dificultadNumerica = {
+    fácil: 1,
+    media: 3,
+    difícil: 5,
+  };
 
-    // Simulación de navegación al generar misión
-    router.push({
-      pathname: "./3misionGenerada",
-      params: { dificultad: nivel },
-    });
+  const seleccionarDificultad = async (nivel: "fácil" | "media" | "difícil") => {
+   
+    if (!userId) {
+      Alert.alert("Error", "Usuario no identificado.");
+      return;
+    }
+
+    if (!cityId) {
+      Alert.alert("Error", "Ciudad no especificada.");
+      return;
+    }
+
+    const dificultad = dificultadNumerica[nivel];
+
+    try {
+      const res = await apiFetch("/api/missions/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cityId: Number(cityId),
+          userId,
+          difficulty: dificultad,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+
+      const mission = await res.json();
+
+      // Navegar a misión generada
+      router.push({
+        pathname: "./3misionGenerada",
+        params: {
+          missionId: mission.id.toString(),
+          title: mission.title,
+          description: mission.description,
+        },
+      });
+    } catch (err) {
+      console.error("Error generando misión:", err);
+      Alert.alert("Error", "No se pudo generar la misión.");
+    }
+ 
   };
 
   return (
