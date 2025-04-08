@@ -10,6 +10,7 @@ import {
     validarImagenMission
 } from '../controllers/misionController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
+import { updateUserMissionStatus } from '../controllers/misionController.js';
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.put('/:id', updateMission);
 router.put('/:id/status', updateMissionStatus);
 router.delete('/:id', deleteMission);
 router.post('/:id/validar-imagen', validarImagenMission);
+router.patch('/usuario/:missionId', updateUserMissionStatus);
 
 export default router;

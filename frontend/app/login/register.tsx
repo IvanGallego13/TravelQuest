@@ -19,7 +19,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // Cambiar a false para usar backend
+  const [modoPrueba, setModoPrueba] = useState(false); // Cambiar a false para usar backend
   const { register } = useAuth();
   const router = useRouter();
 
@@ -59,7 +59,7 @@ export default function Register() {
       return;
     }
   
-    // 🔁 Registro real
+    //  Registro real
     try {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
@@ -70,11 +70,14 @@ export default function Register() {
           username:nombreUsuario,
         }),
       });
-  
-      if (!res.ok) throw new Error("Error en el registro");
-  
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null); 
+        Alert.alert("Registro fallido", errorData?.error || "Error desconocido");
+        return;
+      }
       const data = await res.json();
-      await register(data.token);
+      await register(data.token, data.userId);
       router.replace("../login/localizacion");
     } catch (error) {
       Alert.alert("Error", "No se pudo completar el registro");

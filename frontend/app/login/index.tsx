@@ -19,7 +19,7 @@ export default function Login() {
 
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [modoPrueba, setModoPrueba] = useState(true); // activa/desactiva conexión real
+  const [modoPrueba, setModoPrueba] = useState(false); // activa/desactiva conexión real
   
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
@@ -36,8 +36,8 @@ export default function Login() {
     }
   
     if (modoPrueba) {
-      await login(); // Modo prueba
-      router.replace("./localizacion");
+      await login("modo_prueba_token"); // Modo prueba
+      router.replace("/login/localizacion");
       return;
     }
   
@@ -59,8 +59,8 @@ export default function Login() {
       }
   
       const data = await res.json();
-      await login(data.token); // almacena el token recibido
-      router.replace("./localizacion");
+      await login(data.token, data.userId); // almacena el token recibido
+      router.replace("/login/localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");
       console.error(err);

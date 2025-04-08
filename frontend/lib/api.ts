@@ -1,6 +1,6 @@
-import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
 
-const API_URL = Constants.expoConfig?.extra?.API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export async function apiFetch(
   endpoint: string,
@@ -8,11 +8,24 @@ export async function apiFetch(
 ): Promise<Response> {
   const url = `${API_URL}${endpoint}`;
 
+  const token = await SecureStore.getItemAsync("travelquest_token");
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
   try {
-    const res = await fetch(url, options);
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    });
+
     return res;
   } catch (error) {
     console.error("Error al llamar a la API:", error);
     throw error;
   }
 }
+
