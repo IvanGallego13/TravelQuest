@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, Image } from "react-native";
+import { Text, View, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useUbicacion } from "@/hooks/useUbicacion";
 import MapView, { Marker } from "react-native-maps";
@@ -9,8 +9,16 @@ export default function OpcionesDeCrear() {
   const { ubicacion } = useUbicacion();
   
   const irASeleccionDificultad = ()=>{
-    router.push("./crear/2dificultad");
+    if (!ubicacion?.cityId) {
+      Alert.alert("Error", "No se ha detectado ninguna ciudad.");
+      return;
+    }
+    router.push({
+      pathname: "/(tabs)/crear/2dificultad",
+      params: { cityId: ubicacion.cityId.toString() },
+    });
   };
+  
   const irAEditarDiario =()=>{
     router.push("./crear/2.2entradaDiario");
   };
