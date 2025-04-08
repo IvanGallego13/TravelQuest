@@ -3,11 +3,15 @@ import { useRouter, useLocalSearchParams} from "expo-router";
 import React from 'react';
 import { useAuthStore } from "@/store/auth";
 import { apiFetch } from "@/lib/api";
+import { useUbicacion } from "@/hooks/useUbicacion";
 
 
 export default function Dificultad() {
   const router = useRouter();
-  const { cityId } = useLocalSearchParams();
+  const { cityId: paramCityId } = useLocalSearchParams();
+  const { ubicacion } = useUbicacion();
+
+  const cityId = paramCityId ?? ubicacion?.cityId;
   const userId = useAuthStore((state) => state.userId);
 
   const dificultadNumerica = {
@@ -31,7 +35,9 @@ export default function Dificultad() {
     const dificultad = dificultadNumerica[nivel];
 
     try {
-      const res = await apiFetch("/api/missions/generate", {
+      console.log("Payload:", { cityId, userId, difficulty: dificultad });
+
+      const res = await apiFetch("/misiones/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,7 +65,11 @@ export default function Dificultad() {
       });
     } catch (err) {
       console.error("Error generando misión:", err);
-      Alert.alert("Error", "No se pudo generar la misión.");
+      const errorMessage = err instanceof Error
+      ? err.message
+      : "No se pudo generar la misión.";
+  
+      Alert.alert("Error", errorMessage);
     }
  
   };

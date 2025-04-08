@@ -61,7 +61,7 @@ export default function Register() {
   
     //  Registro real
     try {
-      const res = await apiFetch("/api/auth/register", {
+      const res = await apiFetch("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
