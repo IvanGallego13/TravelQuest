@@ -2,6 +2,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+
 //Simulación de datos reales
 const datosSimulados = {
   titulo: "Misión Título",

@@ -42,10 +42,30 @@ export default function Mision() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!missionResponse && !imageUri) {
       Alert.alert("Misión vacía", "Agrega al menos una respuesta o imagen.");
       return;
+    }
+     // Validar imagen si hay una
+    if (imageUri) {
+      try {
+        const res = await apiFetch(`/api/misiones/${missionId}/validate-image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: imageUri }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          Alert.alert("Imagen no válida", err.message || "La imagen no es adecuada para esta misión.");
+          return;
+        }
+      } catch (error) {
+        console.error("Error en validación de imagen", error);
+        Alert.alert("Error", "No se pudo validar la imagen.");
+        return;
+      }
     }
     sendToBackend("completed");
   };
