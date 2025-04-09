@@ -9,58 +9,51 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 // Definir los niveles de dificultad y sus características
 const DIFFICULTY_LEVELS = {
     "facil": {
-        description: "Lugares turísticos principales y fácilmente accesibles",
+        description: "Monumentos o lugares turísticos accesibles y populares.",
         points: 100,
         timeLimit: 60 // minutos
     },
     "media": {
-        description: "Lugares históricos menos conocidos y estatuas",
+        description: "Exploración de estatuas, obras de arte o edificios históricos menos conocidos.",
         points: 200,
         timeLimit: 90
     },
     "dificil": {
-        description: "Detalles ocultos y curiosidades poco evidentes",
+        description: "Descubrimiento de detalles ocultos o curiosidades poco evidentes en la ciudad.",
         points: 300,
         timeLimit: 120
     }
 };
 
-/**
- * Crea un prompt detallado para generar la misión basado en la ciudad y dificultad.
- * @param {string} city - Nombre de la ciudad
- * @param {string} difficulty - Nivel de dificultad
- * @returns {string} Prompt generado
- */
-const createMissionPrompt = (city, difficulty) => {
+
+const createMissionPrompt = (city, difficultyKey) => {
+    const nivel = DIFFICULTY_LEVELS[difficultyKey];
     return `
-    Actúa como un experto en historia y cultura de ${city}. Genera una misión de exploración urbana que cumpla con los siguientes criterios:
+    Eres un experto en historia local y turismo cultural. Genera una misión única para explorar la ciudad de ${city}. 
 
-    1. Nivel de dificultad: ${difficulty} (${DIFFICULTY_LEVELS[difficulty].description})
-    2. La misión debe incluir una descripción detallada que contenga:
-       * Qué debe hacer el usuario específicamente
-       * Contexto histórico del lugar
-       * Instrucciones específicas sobre qué buscar o fotografiar
-       * Una pista para ayudar a completar la misión
-       * Ubicación específica donde realizar la misión
+  Nivel de dificultad: ${difficultyKey.toUpperCase()} - ${nivel.description}
 
-    3. La misión debe ser:
-       * Educativa y culturalmente relevante
-       * Segura y accesible
-       * Realizable en ${DIFFICULTY_LEVELS[difficulty].timeLimit} minutos
-       * Verificable mediante una fotografía
+  Instrucciones:
+- Incluye una **descripción detallada pero directa y de 8 líneas máximo** de la misión.
+- Describe **qué buscar o fotografiar**.
+- Proporciona una **pista creativa** para facilitar la misión.
+- Indica una **zona o punto geográfico específico** dentro de la ciudad.
 
-    IMPORTANTE: Responde SOLO con la descripción detallada, sin incluir ningún otro campo o formato JSON. La descripción debe ser un texto continuo que integre naturalmente todos los elementos requeridos.
-    `;
+  Importante:
+- Responde solo con un **bloque de texto continuo**, sin formato JSON.
+- La misión debe poder completarse con una sola fotografía clara y representativa.
+- Debe poder realizarse en aprox. ${nivel.timeLimit} minutos.
+- Sé claro, cultural y divertido.
+
+Ejemplo de formato esperado:
+"Explora el casco histórico de Toledo y busca el escudo tallado en piedra escondido en la fachada lateral del Ayuntamiento..."
+
+¡Adelante!`;
 };
 
-/**
- * Genera una misión personalizada usando la API de Google Gemini.
- * @param {string} city - Nombre de la ciudad
- * @param {string} difficulty - Nivel de dificultad
- * @returns {Promise<Object>} Datos de la misión generada
- */
-export const generateMission = async (city, difficulty) => {
-    difficulty = difficulty.toLowerCase();
+
+export const generateMission = async (city, difficultyRaw) => {
+   const difficulty = difficultyRaw.toLowerCase();
     
     if (!DIFFICULTY_LEVELS[difficulty]) {
         throw new Error(`Nivel de dificultad no válido. Debe ser uno de: ${Object.keys(DIFFICULTY_LEVELS).join(', ')}`);
@@ -68,7 +61,7 @@ export const generateMission = async (city, difficulty) => {
 
     try {
         // Obtener el modelo (usando Gemini 1.5 Flash-8B que tiene una capa gratuita más generosa)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Crear el prompt
         const prompt = createMissionPrompt(city, difficulty);
@@ -76,14 +69,21 @@ export const generateMission = async (city, difficulty) => {
         // Generar la respuesta
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const descripcion = response.text();
+        const description = response.text();
+
+        const displayNames = {
+            facil: "Fácil",
+            media: "Media",
+            dificil: "Difícil",
+          };
         
         // Devolver la misión generada
         return {
-            descripcion,
+            titulo: `Misión ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} en ${city}`,
+            descripcion: description.trim(),
             puntos: DIFFICULTY_LEVELS[difficulty].points,
             tiempoLimite: DIFFICULTY_LEVELS[difficulty].timeLimit,
-            dificultad: difficulty
+            dificultad: difficulty,
         };
 
     } catch (error) {

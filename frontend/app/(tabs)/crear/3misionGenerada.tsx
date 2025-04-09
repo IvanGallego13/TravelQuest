@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { apiFetch } from "@/lib/api"; // tu helper para llamadas al backend
@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api"; // tu helper para llamadas al backend
 export default function Mision() {
   const router = useRouter();
   const { missionId, title, description } = useLocalSearchParams();
-  const [missionResponse, setMissionResponse] = useState("");
+  //const [missionResponse, setMissionResponse] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [completada, setCompletada] = useState(false);
 
@@ -23,10 +23,10 @@ export default function Mision() {
       if (status === "completed") {
         body.completed_at = new Date().toISOString();
         body.image_url = imageUri;
-        body.response = missionResponse;
+        //body.response = missionResponse;
       }
 
-      const res = await apiFetch(`/api/misiones/usuario/${numericMissionId}`, {
+      const res = await apiFetch(`/misiones/usuario/${numericMissionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -43,14 +43,14 @@ export default function Mision() {
   };
 
   const handleSubmit = async () => {
-    if (!missionResponse && !imageUri) {
+    if (!imageUri) {
       Alert.alert("Misión vacía", "Agrega al menos una respuesta o imagen.");
       return;
     }
      // Validar imagen si hay una
     if (imageUri) {
       try {
-        const res = await apiFetch(`/api/misiones/${missionId}/validate-image`, {
+        const res = await apiFetch(`/misiones/${missionId}/validate-image`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image_url: imageUri }),
@@ -103,83 +103,76 @@ export default function Mision() {
   };
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] px-6 pt-10">
+    <View className="flex-1 bg-[#F4EDE0] pt-10">
       {/* Volver */}
       <TouchableOpacity onPress={handleBack} className="absolute top-10 left-4 z-10">
         <Ionicons name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
 
-      <Text className="text-black font-bold text-lg mb-4 text-center">
-        {title ?? "Misión sin título"}
-      </Text>
-
-      <Text className="text-black mb-4">
-        {description ?? "Descripción no disponible"}
-      </Text>
-
-      <TextInput
-        multiline
-        placeholder="Aquí responde a la misión"
-        placeholderTextColor="#444"
-        value={missionResponse}
-        onChangeText={setMissionResponse}
-        className="border border-[#699D81] rounded-xl p-4 mb-6 text-black"
-        style={{ minHeight: 100 }}
-      />
-
-      <View className="bg-gray-200 rounded-xl items-center justify-center p-6 mb-6">
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, marginBottom: 10 }} />
-        ) : (
-          <Image
-            source={require("@/assets/images/icon.png")}
-            style={{ width: 40, height: 40, marginBottom: 10 }}
-          />
-        )}
-
-        <Text className="text-gray-600 text-center mb-2">
-          Al pulsar, opción de hacer foto o subirla
+      <ScrollView className="flex-1 px-6">
+        <Text className="text-black font-bold text-lg mb-4 text-center">
+          {title ?? "Misión sin título"}
         </Text>
 
-        <View className="flex-row gap-4">
+        
+        <Text className="text-black mb-4">
+          {description ?? "Descripción no disponible"}
+        </Text>
+        
+        <View className="bg-gray-200 rounded-xl items-center justify-center p-6 mb-6">
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, marginBottom: 10 }} />
+          ) : (
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={{ width: 40, height: 40, marginBottom: 10 }}
+            />
+          )}
+
+          <Text className="text-gray-600 text-center mb-2">
+            Al pulsar, opción de hacer foto o subirla
+          </Text>
+
+          <View className="flex-row gap-4">
+            <TouchableOpacity
+              className="bg-[#699D81] px-3 py-2 rounded-md"
+              onPress={handleTakePhoto}
+            >
+              <Text className="text-white text-sm">Tomar foto</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="bg-[#C76F40] px-3 py-2 rounded-md"
+              onPress={handlePickImage}
+            >
+              <Text className="text-white text-sm">Subir imagen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View className="space-y-3 pb-10">
           <TouchableOpacity
-            className="bg-[#699D81] px-3 py-2 rounded-md"
-            onPress={handleTakePhoto}
+            className="bg-[#699D81] py-3 rounded-xl items-center"
+            onPress={handleDiscard}
           >
-            <Text className="text-white text-sm">Tomar foto</Text>
+            <Text className="text-white font-semibold text-base">Descartar misión</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="bg-[#C76F40] px-3 py-2 rounded-md"
-            onPress={handlePickImage}
+            className="bg-[#C76F40] py-3 rounded-xl items-center"
+            onPress={handleSubmit}
           >
-            <Text className="text-white text-sm">Subir imagen</Text>
+            <Text className="text-white font-semibold text-base">Enviar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-[#699D81] py-3 rounded-xl items-center"
+            onPress={handleSaveForLater}
+          >
+            <Text className="text-white font-semibold text-base">Guardar para más tarde</Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      <View className="space-y-3">
-        <TouchableOpacity
-          className="bg-[#699D81] py-3 rounded-xl items-center"
-          onPress={handleDiscard}
-        >
-          <Text className="text-white font-semibold text-base">Descartar misión</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="bg-[#C76F40] py-3 rounded-xl items-center"
-          onPress={handleSubmit}
-        >
-          <Text className="text-white font-semibold text-base">Enviar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="bg-[#699D81] py-3 rounded-xl items-center"
-          onPress={handleSaveForLater}
-        >
-          <Text className="text-white font-semibold text-base">Guardar para más tarde</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );  
 }
