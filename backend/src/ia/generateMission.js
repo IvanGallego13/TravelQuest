@@ -13,7 +13,7 @@ const DIFFICULTY_LEVELS = {
         points: 100,
         timeLimit: 60 // minutos
     },
-    "medio": {
+    "media": {
         description: "Lugares históricos menos conocidos y estatuas",
         points: 200,
         timeLimit: 90

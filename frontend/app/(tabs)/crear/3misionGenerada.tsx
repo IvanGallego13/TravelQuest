@@ -181,6 +181,6 @@ export default function Mision() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  );  
 }
 
