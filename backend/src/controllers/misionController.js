@@ -4,6 +4,10 @@ import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js
 
 
 export const updateUserMissionStatus = async (req, res) => {
+  console.log("🔒 ID de usuario recibido en req.user.id:", req.user?.id);
+  console.log("📦 Mission ID param:", req.params.missionId);
+  console.log("📦 Body recibido:", req.body);
+
     try {
       const userId = req.user.id; // viene desde el token gracias a `authMiddleware`
       const missionId = parseInt(req.params.missionId);
