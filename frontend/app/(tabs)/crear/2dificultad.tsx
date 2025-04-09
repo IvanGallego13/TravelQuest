@@ -15,12 +15,12 @@ export default function Dificultad() {
   const userId = useAuthStore((state) => state.userId);
 
   const dificultadNumerica = {
-    fácil: 1,
+    facil: 1,
     media: 3,
-    difícil: 5,
+    dificil: 5,
   };
 
-  const seleccionarDificultad = async (nivel: "fácil" | "media" | "difícil") => {
+  const seleccionarDificultad = async (nivel: "facil" | "media" | "dificil") => {
    
     if (!userId) {
       Alert.alert("Error", "Usuario no identificado.");
@@ -32,10 +32,8 @@ export default function Dificultad() {
       return;
     }
 
-    const dificultad = dificultadNumerica[nivel];
-
     try {
-      console.log("Payload:", { cityId, userId, difficulty: dificultad });
+      console.log("Payload:", { cityId, userId, nivel});
 
       const res = await apiFetch("/misiones/generate", {
         method: "POST",
@@ -43,7 +41,7 @@ export default function Dificultad() {
         body: JSON.stringify({
           cityId: Number(cityId),
           userId,
-          difficulty: dificultad,
+          difficulty: nivel.toLowerCase(),
         }),
       });
 
@@ -82,7 +80,7 @@ export default function Dificultad() {
       <View>
         <TouchableOpacity
           className="bg-[#C76F40] py-4 rounded-xl items-center mb-5"
-          onPress={() => seleccionarDificultad("fácil")}
+          onPress={() => seleccionarDificultad("facil")}
         >
           <Text className="text-white font-semibold text-base">Fácil</Text>
         </TouchableOpacity>
@@ -96,7 +94,7 @@ export default function Dificultad() {
 
         <TouchableOpacity
           className="bg-[#C76F40] py-4 rounded-xl items-center"
-          onPress={() => seleccionarDificultad("difícil")}
+          onPress={() => seleccionarDificultad("dificil")}
         >
           <Text className="text-white font-semibold text-base">Difícil</Text>
         </TouchableOpacity>
