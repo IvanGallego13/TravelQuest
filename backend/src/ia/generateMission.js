@@ -26,33 +26,41 @@ const DIFFICULTY_LEVELS = {
 };
 
 
-const createMissionPrompt = (city, difficultyKey) => {
+const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     const nivel = DIFFICULTY_LEVELS[difficultyKey];
+
+    const listaObjetos = objetosPrevios.length
+    ? `Evita utilizar estos objetos ya usados por el usuario: ${objetosPrevios.map(obj => `"${obj}"`).join(", ")}.`
+    : "";
+
     return `
     Eres un experto en historia local y turismo cultural. Genera una misión única para explorar la ciudad de ${city}. 
 
-  Nivel de dificultad: ${difficultyKey.toUpperCase()} - ${nivel.description}
+    Nivel de dificultad: ${difficultyKey.toUpperCase()} - ${nivel.description}
+    ${listaObjetos}
 
-  Instrucciones:
-- Incluye una **descripción detallada pero directa y de 8 líneas máximo** de la misión.
-- Describe **qué buscar o fotografiar**.
-- Proporciona una **pista creativa** para facilitar la misión.
-- Indica una **zona o punto geográfico específico** dentro de la ciudad.
+    Devuelve la misión en formato JSON con estas claves:
 
-  Importante:
-- Responde solo con un **bloque de texto continuo**, sin formato JSON.
-- La misión debe poder completarse con una sola fotografía clara y representativa.
-- Debe poder realizarse en aprox. ${nivel.timeLimit} minutos.
-- Sé claro, cultural y divertido.
+    {
+    "title": "Máximo 8 palabras",
+    "description": "Descripción clara de máximo 8 líneas",
+    "keywords": ["palabra1", "palabra2", ...], // Entre 3 y 6 palabras clave visuales,
+    "nombre_objeto": "Nombre del objeto específico que debe fotografiarse (ej: estatua de Cervantes, escudo del Ayuntamiento, rosetón de la Catedral)"
+    }
 
-Ejemplo de formato esperado:
-"Explora el casco histórico de Toledo y busca el escudo tallado en piedra escondido en la fachada lateral del Ayuntamiento..."
+    IMPORTANTE:
+    - Devuelve SOLO el JSON, sin explicación adicional.
+    - En el campo 'descripion' describe que buscar para fotografiar, una pista creativa para facilitar la misión, una zona geografica dentro de la ciudad, al final pon algo muy corto, alentador, dinamico y divertido
+    - El campo 'nombre_objeto' debe ser una frase corta y clara, que identifique con precisión qué hay que fotografiar.
+    - 'keywords' debe contener palabras claves relacionadas con ese objeto visual.
+    - Asegúrate de que la misión no sea genérica, sino específica y visualmente verificable.
+    - La misión debe poder completarse con una sola fotografía clara y representativa.
+    - Duración aproximada: ${nivel.timeLimit} minutos.
+    `;
+    };
 
-¡Adelante!`;
-};
 
-
-export const generateMission = async (city, difficultyRaw) => {
+export const generateMission = async (city, difficultyRaw, objetosPrevios = []) => {
    const difficulty = difficultyRaw.toLowerCase();
     
     if (!DIFFICULTY_LEVELS[difficulty]) {
@@ -64,14 +72,51 @@ export const generateMission = async (city, difficultyRaw) => {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Crear el prompt
-        const prompt = createMissionPrompt(city, difficulty);
+        const prompt = createMissionPrompt(city, difficulty,objetosPrevios);
 
         // Generar la respuesta
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const description = response.text();
+        const raw = response.text().trim();
 
-        const displayNames = {
+        console.log("🧠 Respuesta cruda de la IA:\n", raw);
+
+        // Limpiar delimitadores de markdown tipo ```json o ```
+        const cleaned = raw.replace(/```(json)?/g, "").trim();
+
+        console.log("🧹 JSON limpio:\n", cleaned);
+
+        const match = cleaned.match(/\{[\s\S]*\}/); // encuentra el primer bloque {...}
+        if (!match){
+            console.error("⚠️ No se encontró bloque JSON en:\n", cleaned);
+            throw new Error("No se encontró bloque JSON en el texto de la IA");
+        }    
+
+        // Intentar parsear el JSON
+        let json;
+        try {
+            json = JSON.parse(match[0]);
+            if (!json.title || !json.description || !json.nombre_objeto || !Array.isArray(json.keywords)) {
+                throw new Error("La IA devolvió datos incompletos");
+            }
+        } catch (e) {
+        console.error("❌ Error al parsear la respuesta de la IA:", response.text());
+        console.error("🔍 Contenido fallido:\n", match[0]);
+        throw new Error("La IA no devolvió un JSON válido.");
+        }
+
+        // Devolver misión formateada
+        return {
+        titulo: json.title,
+        descripcion: json.description,
+        keywords: json.keywords,
+        nombre_objeto: json.nombre_objeto,
+        puntos: DIFFICULTY_LEVELS[difficulty].points,
+        tiempoLimite: DIFFICULTY_LEVELS[difficulty].timeLimit,
+        dificultad: difficulty,
+        };
+
+        /*const displayNames = {
             facil: "Fácil",
             media: "Media",
             dificil: "Difícil",
@@ -84,9 +129,11 @@ export const generateMission = async (city, difficultyRaw) => {
             puntos: DIFFICULTY_LEVELS[difficulty].points,
             tiempoLimite: DIFFICULTY_LEVELS[difficulty].timeLimit,
             dificultad: difficulty,
-        };
+        };*/
 
     } catch (error) {
         throw new Error(`Error al generar la misión: ${error.message}`);
     }
 }; 
+
+  

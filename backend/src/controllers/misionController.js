@@ -117,7 +117,6 @@ export const generateNewMission = async (req, res) => {
             .select("id")
             .eq("user_id", userId)
             .eq("mission_id", m.id)
-            .not("status", "eq", "discarded")
             .maybeSingle();
 
           if (relationError) throw relationError;
@@ -131,27 +130,61 @@ export const generateNewMission = async (req, res) => {
 
       // 4. Si no encontramos una misión disponible → generamos con IA
       if (!mission) {
-        const iaResult = await generateMission(nombreCiudad, difficulty);
+         // 4.1 Obtener todas las misiones del usuario con sus nombre_objeto
+        const { data: userMissions, error: userMissionsError } = await supabase
+        .from("user_missions")
+        .select("missions(nombre_objeto)")
+        .eq("user_id", userId);
 
-        const { data: newMission, error: createError } = await supabase
-          .from("missions")
-          .insert([
-            {
-              city_id: cityId,
-              title: iaResult.titulo,
-              description: iaResult.descripcion,
-              difficulty: dificultadValor,
-            },
-          ])
-          .select()
-          .single();
+        if (userMissionsError) throw userMissionsError;
 
-        if (createError) throw createError;
+        // 4.2 Extraer lista de nombre_objeto, eliminando nulos o vacíos
+        const objetosPrevios = userMissions
+          .map(entry => entry.missions?.nombre_objeto)
+          .filter(obj => !!obj);
 
-        mission = newMission;
+        // 4.3 Generar misión con IA pasándole los objetos ya usados
+        let iaResult;
+        try{
+          iaResult = await generateMission(nombreCiudad, difficulty, objetosPrevios);
+          // Validar que la respuesta de la IA tenga todo lo necesario
+          if (
+            !iaResult.titulo ||
+            !iaResult.descripcion ||
+            !iaResult.nombre_objeto ||
+            !Array.isArray(iaResult.keywords)
+          ) 
+          {
+            throw new Error("La misión generada es incompleta o inválida.");
+          }
+          const { data: newMission, error: createError } = await supabase
+            .from("missions")
+            .insert([
+              {
+                city_id: cityId,
+                title: iaResult.titulo,
+                description: iaResult.descripcion,
+                difficulty: dificultadValor,
+                keywords: iaResult.keywords,
+                nombre_objeto: iaResult.nombre_objeto,
+              },
+            ])
+            .select()
+            .single();
+
+          if (createError) throw createError;
+
+          mission = newMission;
+          
+        } catch (iaError) {
+          console.error("❌ Error al generar misión con IA:", iaError.message);
+          return res.status(500).json({
+            message: "La IA no pudo generar una misión válida. Intenta de nuevo.",
+          });
+        }  
       }
 
-      // 5. Asignamos la misión (ahora sí sabemos que es nueva para el usuario)
+      // 5. Asignamos la misión
       const { error: assignError } = await supabase
         .from("user_missions")
         .insert([
@@ -266,13 +299,13 @@ export const validateMissionImage = async (req, res) => {
             .select('*')
             .eq('id', missionId)
             .single();
-
-        if (missionError) throw missionError;
+        //descomentar para validación verdadera
+        /*if (missionError) throw missionError;
         if (!mission?.keywords) {
           return res.status(400).json({ message: "La misión no tiene palabras clave para validar." });
         }
         // Validar la imagen
-        //const isValid = await validateImageByLabels(image_url, mission.keywords);
+        const isValid = await validateImageByLabels(image_url, mission.keywords);*/
         //modo prueba valida siempre a true
         const isValid = true;
 

@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation  } from "@react-navigation/native";
 import { apiFetch } from "@/lib/api"; // tu helper para llamadas al backend
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
+
 
 export default function Mision() {
   const router = useRouter();
@@ -98,6 +99,35 @@ export default function Mision() {
       };
     }, [completada, estadoManual])
   );
+  const navigation = useNavigation();
+
+useEffect(() => {
+  const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+    if (completada || estadoManual) return;
+
+    event.preventDefault();
+
+    Alert.alert(
+      "¿Descartar misión?",
+      "Si sales ahora, la misión se marcará como descartada.",
+      [
+        { text: "Cancelar", style: "cancel", onPress: () => {} },
+        {
+          text: "Descartar y salir",
+          style: "destructive",
+          onPress: () => {
+            setEstadoManual("discarded");
+            sendToBackend("discarded");
+            navigation.dispatch(event.data.action); // Continúa navegación
+          },
+        },
+      ]
+    );
+  });
+
+  return unsubscribe;
+}, [navigation, completada, estadoManual]);
+
 
   const handleTakePhoto = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
