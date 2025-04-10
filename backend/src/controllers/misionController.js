@@ -35,7 +35,6 @@ export const updateUserMissionStatus = async (req, res) => {
       };
   
       if (image_url) updateFields.image_url = image_url;
-      if (response) updateFields.response = response;
       if (status === "completed" && completed_at) {
         updateFields.completed_at = completed_at;
       }
@@ -60,7 +59,7 @@ export const updateUserMissionStatus = async (req, res) => {
  * Genera y asigna una nueva misión al usuario
  */
 export const generateNewMission = async (req, res) => {
-  console.log("📥 [generateNewMission] Body recibido:", req.body);
+  console.log("1 [generateNewMission] Body recibido:", req.body);
 
     try {
         const { userId, cityId, difficulty } = req.body;

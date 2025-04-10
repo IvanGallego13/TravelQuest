@@ -60,7 +60,7 @@ export const generateMission = async (city, difficultyRaw) => {
     }
 
     try {
-        // Obtener el modelo (usando Gemini 1.5 Flash-8B que tiene una capa gratuita más generosa)
+        // Obtener el modelo 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Crear el prompt

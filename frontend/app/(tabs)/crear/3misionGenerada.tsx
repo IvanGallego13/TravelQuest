@@ -4,13 +4,16 @@ import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-na
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { apiFetch } from "@/lib/api"; // tu helper para llamadas al backend
+import * as ImagePicker from "expo-image-picker";
+import { Camera } from "expo-camera";
 
 export default function Mision() {
   const router = useRouter();
   const { missionId, title, description } = useLocalSearchParams();
-  //const [missionResponse, setMissionResponse] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [completada, setCompletada] = useState(false);
+  const [estadoManual, setEstadoManual] = useState<"completed" | "accepted" | "discarded" | null>(null);
+
 
   const numericMissionId = Number(missionId);
 
@@ -25,6 +28,7 @@ export default function Mision() {
         body.image_url = imageUri;
         //body.response = missionResponse;
       }
+      console.log("📍 missionId a enviar:", numericMissionId);
 
       const res = await apiFetch(`/misiones/usuario/${numericMissionId}`, {
         method: "PATCH",
@@ -67,14 +71,17 @@ export default function Mision() {
         return;
       }
     }
+    setEstadoManual("completed");
     sendToBackend("completed");
   };
 
   const handleSaveForLater = () => {
+    setEstadoManual("accepted");
     sendToBackend("accepted");
   };
 
   const handleDiscard = () => {
+    setEstadoManual("discarded");
     sendToBackend("discarded");
   };
 
@@ -85,21 +92,39 @@ export default function Mision() {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (!completada) {
+        if (!completada && !estadoManual) {
           handleDiscard();
         }
       };
-    }, [completada])
+    }, [completada, estadoManual])
   );
 
-  const handleTakePhoto = () => {
-    Alert.alert("Simulado", "Abrir cámara");
-    // Aquí irá lógica de cámara en el futuro
+  const handleTakePhoto = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert("Permiso denegado", "No se puede acceder a la cámara.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
   };
 
-  const handlePickImage = () => {
-    Alert.alert("Simulado", "Seleccionar imagen");
-    // Aquí irá lógica de galería en el futuro
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
   };
 
   return (

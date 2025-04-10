@@ -11,9 +11,15 @@ export default {
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      infoPlist: {
+        NSCameraUsageDescription: "Esta app necesita acceder a la cámara para tomar fotos de las misiones.",
+        NSPhotoLibraryUsageDescription: "Esta app necesita acceder a tu galería para seleccionar imágenes.",
+      }
     },
     android: {
+      permissions: ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"],
+      package: "com.yourcompany.myapp", 
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
