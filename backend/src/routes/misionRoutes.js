@@ -3,10 +3,10 @@ import {
     generateNewMission,
     addMission,
     getMissionsForUser,
-    validateMissionImage
+    updateUserMissionStatus,
+    validateMissionImage,
 } from '../controllers/misionController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-import { updateUserMissionStatus } from '../controllers/misionController.js';
 
 const router = express.Router();
 

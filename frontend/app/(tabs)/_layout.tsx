@@ -87,20 +87,9 @@ export default function TabLayout(){
           href: null, 
         }}
       />
+       
         <Tabs.Screen
-          name="misiones"
-          options={{
-            href: null, 
-          }}
-        />
-        <Tabs.Screen
-          name="misiones/destallesMision"
-          options={{
-            href: null, 
-          }}
-        />
-        <Tabs.Screen
-          name="usuario"
+          name="misiones/detallesMision"
           options={{
             href: null, 
           }}
