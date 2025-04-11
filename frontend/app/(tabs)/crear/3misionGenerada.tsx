@@ -3,7 +3,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation  } from "@react-navigation/native";
-import { apiFetch } from "@/lib/api"; // tu helper para llamadas al backend
+import { apiFetch } from "@/lib/api"; 
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 
@@ -14,9 +14,15 @@ export default function Mision() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [completada, setCompletada] = useState(false);
   const [estadoManual, setEstadoManual] = useState<"completed" | "accepted" | "discarded" | null>(null);
-
-
   const numericMissionId = Number(missionId);
+  const navigation = useNavigation();
+
+  // Limpiar estado al cargar nueva misión
+  useEffect(() => {
+    setImageUri(null);
+    setCompletada(false);
+    setEstadoManual(null);
+  }, [missionId]);
 
   const sendToBackend = async (status: "completed" | "accepted" | "discarded") => {
     try {
@@ -99,7 +105,7 @@ export default function Mision() {
       };
     }, [completada, estadoManual])
   );
-  const navigation = useNavigation();
+  
 
 useEffect(() => {
   const unsubscribe = navigation.addListener("beforeRemove", (event) => {
