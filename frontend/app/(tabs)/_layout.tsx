@@ -43,7 +43,7 @@ export default function TabLayout(){
           }}
         />
         <Tabs.Screen
-          name="misiones/misiones"
+          name="misiones/listaMisiones"
           options={{
             title: 'misiones',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="airplane" color={color} />,
@@ -87,20 +87,9 @@ export default function TabLayout(){
           href: null, 
         }}
       />
+       
         <Tabs.Screen
-          name="misiones"
-          options={{
-            href: null, 
-          }}
-        />
-        <Tabs.Screen
-          name="misiones/2descripcion"
-          options={{
-            href: null, 
-          }}
-        />
-        <Tabs.Screen
-          name="usuario"
+          name="misiones/detallesMision"
           options={{
             href: null, 
           }}

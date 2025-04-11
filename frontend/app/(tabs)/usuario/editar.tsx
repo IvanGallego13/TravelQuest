@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "../../../lib/api";
 import * as SecureStore from "expo-secure-store";
 
 export default function EditarUsuario() {
