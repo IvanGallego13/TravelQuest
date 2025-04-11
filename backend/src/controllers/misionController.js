@@ -224,6 +224,7 @@ export const getMissionsForUser = async (req, res) => {
         mission_id,
         status,
         completed_at,
+        image_url,
         missions (
           id,
           title,
@@ -244,6 +245,7 @@ export const getMissionsForUser = async (req, res) => {
       created_at: entry.missions.created_at,
       completed_at: entry.completed_at,
       status: entry.status,
+      image_url: entry.image_url,
     }));
 
     res.json(missions);
