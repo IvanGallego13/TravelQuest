@@ -25,11 +25,12 @@ export default function EditarUsuario() {
       try {
         const token = await SecureStore.getItemAsync("travelquest_token");
 
-        const res = await apiFetch("/api/auth/profile", {
+        const res = await apiFetch("/api/ajustes/perfil", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+        
 
         const data = await res.json();
 
@@ -52,7 +53,7 @@ export default function EditarUsuario() {
     try {
       const token = await SecureStore.getItemAsync("travelquest_token");
 
-      const res = await apiFetch("/api/auth/profile", {
+      const res = await apiFetch("/api/ajustes/perfil", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
