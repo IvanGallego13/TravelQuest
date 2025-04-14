@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
+import { signInWithGoogle } from "@/lib/auth";
 import {
   View,
   Text,
@@ -67,8 +68,23 @@ export default function Login() {
     }
   };
   
-
- 
+  const handleGoogleLogin = async () => {
+    try {
+      const { session, error } = await signInWithGoogle();
+      
+      if (error) {
+        return;
+      }
+      
+      if (session) {
+        await login(session.access_token, session.user.id);
+        router.replace("/login/localizacion");
+      }
+    } catch (error) {
+      console.error('Error de inicio de sesión con Google:', error);
+      Alert.alert('Error', 'No se pudo iniciar sesión con Google');
+    }
+  };
 
   const goToRegister = () => {
     router.push("/login/register");
@@ -112,6 +128,19 @@ export default function Login() {
         className="bg-[#C76F40] py-3 rounded-xl mb-3 items-center"
       >
         <Text className="text-white font-semibold text-base">Iniciar sesión</Text>
+      </TouchableOpacity>
+
+      {/* Botón para iniciar sesión con Google */}
+      <TouchableOpacity
+        onPress={handleGoogleLogin}
+        className="bg-white py-3 rounded-xl mb-3 items-center flex-row justify-center border border-gray-300"
+      >
+        <Image 
+          source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }} 
+          style={{ width: 20, height: 20 }} 
+          className="mr-2"
+        />
+        <Text className="text-black font-semibold text-base">Continuar con Google</Text>
       </TouchableOpacity>
 
       {/* Botón para registrarse */}
