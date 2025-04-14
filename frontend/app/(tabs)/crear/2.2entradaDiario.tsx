@@ -2,29 +2,20 @@ import { Text, View, TouchableOpacity, TextInput, Image, Alert } from "react-nat
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useUbicacion } from "../../../hooks/useUbicacion";
+import { useUbicacion } from "@/hooks/useUbicacion";
+import { apiFetch } from "@/lib/api";
 
 
-interface Props {
-  ciudad?: string;
-  fecha?: string;
-}
-
-export default function CrearDiario(){
+export default function CreateJournalEntry(){
   const [description, setDescription] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { idDia } = useLocalSearchParams(); // <-- si existe, es edición de día
   const { ubicacion } = useUbicacion();
-
-   // Usa props, Zustand o valor por defecto
-   const ciudadFinal = ubicacion?.ciudad || "Ciudad desconocida";
-   const today = new Date();
-   const fechaFinal = `${today.getDate().toString().padStart(2, "0")}/${(today.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}/${today.getFullYear()}`;
+  
+  const cityName = ubicacion?.city || "Ciudad desconocida";
+  const formattedDate = new Date().toLocaleDateString("en-GB");
 
 
   const handleImagePick = async () => {
@@ -33,6 +24,25 @@ export default function CrearDiario(){
       quality: 1,
     });
 
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      console.log("✅ Imagen seleccionada:", uri);
+      setImageUri(uri);
+    } else {
+      console.log("❌ Selección de imagen cancelada");
+    }
+  };
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  
+    if (status !== "granted") {
+      Alert.alert("Permiso denegado", "No se puede acceder a la cámara.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 1,
+    });
+  
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
     }
@@ -43,43 +53,40 @@ export default function CrearDiario(){
       Alert.alert("Entrada vacía", "Agrega una descripción o una imagen.");
       return;
     }
+    if (!ubicacion?.cityId) {
+      Alert.alert("Error", "No se ha detectado una ciudad válida");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const imagenUrl = imageUri || null;
+     
+      const formData = new FormData();
+      formData.append("description", description);
+      formData.append("cityId", ubicacion.cityId.toString());
+      formData.append("travelDate", new Date().toISOString().split("T")[0]);
 
-      let url = "";
-      let body = {};
-
-      if (idDia) {
-        // Caso: añadir entrada a un día existente
-        url = "https://tu-backend.com/api/entradas";
-        body = {
-          idDia,
-          descripcion: description,
-          imagen: imagenUrl,
-        };
-      } else {
-        // Caso: entrada nueva (se creará diario/día si no existe)
-        url = "https://tu-backend.com/api/diario";
-        body = {
-          ciudad : ciudadFinal,
-          fecha : fechaFinal,
-          description: description,
-          imagen: imagenUrl,
-        };
+      if (imageUri) {
+        const fileName = imageUri.split("/").pop() || `photo-${Date.now()}.jpg`;
+        const image = {
+          uri: imageUri,
+          name: fileName,
+          type: "image/jpeg",
+        } as any;
+        formData.append("image", image);
       }
+      console.log("🟡 Publicando entrada de diario con datos:");
+      console.log({ description, cityId: ubicacion.cityId, imageUri });
 
-      const response = await fetch(url, {
+      const res = await apiFetch("/diaries/create-or-append", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+        body: formData,
       });
 
-      if (!response.ok) throw new Error("Error al guardar la entrada");
+      console.log("📬 Estado de la respuesta:", res.status);
+
+      if (!res.ok) throw new Error("Error al guardar la entrada");
 
       Alert.alert("Éxito", "Tu entrada ha sido publicada");
       router.replace("../crear");
@@ -94,21 +101,42 @@ export default function CrearDiario(){
   return (
     <View className="flex-1 bg-[#F4EDE0] px-6 pt-10">
       <Text className="text-black font-bold text-lg mb-4">
-        {idDia ? "Añadir entrada al día" : `${ciudadFinal}  ${fechaFinal}`}
+        {`${cityName} · ${formattedDate}`}
       </Text>
+        <View className="bg-gray-200 rounded-xl items-center justify-center p-6 mb-6">
+          {imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              style={{ width: 120, height: 120, marginBottom: 10, borderRadius: 10 }}
+            />
+          ) : (
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={{ width: 40, height: 40, marginBottom: 10 }}
+            />
+          )}
 
-      <TouchableOpacity
-        onPress={handleImagePick}
-        className="bg-gray-300 h-40 rounded-xl justify-center items-center mb-6"
-      >
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} className="w-full h-full rounded-xl" />
-        ) : (
-          <Text className="text-gray-700 text-center">
-            Al pulsar opción de hacer foto o subirla
+          <Text className="text-gray-600 text-center mb-2">
+            Al pulsar, opción de hacer foto o subirla
           </Text>
-        )}
-      </TouchableOpacity>
+
+          <View className="flex-row gap-4">
+            <TouchableOpacity
+              className="bg-[#699D81] px-3 py-2 rounded-md"
+              onPress={handleTakePhoto}
+            >
+              <Text className="text-white text-sm">Tomar foto</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="bg-[#C76F40] px-3 py-2 rounded-md"
+              onPress={handleImagePick}
+            >
+              <Text className="text-white text-sm">Subir imagen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      
 
       <TextInput
         multiline

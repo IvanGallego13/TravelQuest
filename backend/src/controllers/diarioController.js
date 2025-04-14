@@ -1,4 +1,151 @@
 import { supabase } from '../config/supabase.js';
+import { v4 as uuidv4 } from "uuid";
+
+/**
+ * Crea o añade una entrada al diario de viaje del usuario.
+ * Lógica:
+ * - Si el usuario ya tiene un viaje reciente en esa ciudad, se reutiliza
+ * - Si no lo tiene, se crea uno nuevo
+ * - Si no hay un día creado para la fecha de la entrada, se crea
+ * - Luego se sube la imagen (si hay) y se crea la entrada del diario
+ */
+export const createOrAppendJournalEntry = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { description, cityId, travelDate } = req.body;
+      const imageFile = req.files?.image;
+  
+      if (!cityId || !travelDate) {
+        return res.status(400).json({ error: "Faltan campos obligatorios" });
+      }
+  
+      const entryDate = new Date(travelDate);
+  
+      // 1. Buscar si el usuario ya tiene un "travel_book" reciente en esa ciudad
+      const { data: lastBook, error: bookError } = await supabase
+        .from("travel_books")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("city_id", cityId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+  
+      if (bookError) throw bookError;
+  
+      let travelBookId;
+  
+      // 2. Si hay uno reciente (menos de 2 días de diferencia), lo reutilizamos
+      if (lastBook) {
+        const lastDate = new Date(lastBook.created_at);
+        const diffInDays = Math.floor(
+          Math.abs(entryDate - lastDate) / (1000 * 60 * 60 * 24)
+        );
+  
+        if (diffInDays <= 2) {
+          travelBookId = lastBook.id;
+        }
+      }
+  
+      // 3. Si no hay viaje reciente, creamos uno nuevo
+      if (!travelBookId) {
+        const { data: newBook, error: newBookError } = await supabase
+          .from("travel_books")
+          .insert([{ user_id: userId, city_id: cityId }])
+          .select()
+          .single();
+  
+        if (newBookError) throw newBookError;
+  
+        travelBookId = newBook.id;
+      }
+  
+      // 4. Buscar o crear el día de viaje correspondiente
+      const { data: day, error: dayError } = await supabase
+        .from("travel_days")
+        .select("*")
+        .eq("travel_book_id", travelBookId)
+        .eq("travel_date", travelDate)
+        .maybeSingle();
+  
+      if (dayError) throw dayError;
+  
+      let travelDayId;
+  
+      if (day) {
+        travelDayId = day.id;
+      } else {
+        const { data: newDay, error: createDayError } = await supabase
+          .from("travel_days")
+          .insert([
+            {
+              travel_book_id: travelBookId,
+              travel_date: travelDate,
+            },
+          ])
+          .select()
+          .single();
+  
+        if (createDayError) throw createDayError;
+  
+        travelDayId = newDay.id;
+      }
+  
+      // 5. Subir la imagen si existe
+      let filePath = null;
+  
+      if (imageFile) {
+        const buffer = imageFile.data;
+        const fileExt = imageFile.name.split(".").pop();
+        filePath = `journal/${userId}/${uuidv4()}.${fileExt}`;
+        
+        //5.1subir al bucket
+        const { error: uploadError } = await supabase.storage
+          .from("journal")
+          .upload(filePath, buffer, {
+            contentType: imageFile.mimetype,
+          });
+  
+        if (uploadError) throw uploadError;
+  
+        // 5.2. Generar URL firmada válida por 1 hora (3600 segundos)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("journal")
+        .createSignedUrl(filePath, 60 * 60); // 1 hora
+
+        if (signedUrlError) throw signedUrlError;
+
+        filePath = signedUrlData.signedUrl;
+      }
+  
+      // 6. Crear la entrada del diario vinculada al día de viaje
+      const { data: entry, error: entryError } = await supabase
+        .from("diary_entries")
+        .insert([
+          {
+            travel_day_id: travelDayId,
+            user_id: userId,
+            description,
+            image_url: filePath,
+          },
+        ])
+        .select("*")
+        .single();
+  
+      if (entryError) throw entryError;
+  
+      // ✅ Respuesta final
+      res.status(201).json({
+        message: "Entrada del diario guardada correctamente",
+        entry,
+        travel_day_id: travelDayId,
+        travel_book_id: travelBookId,
+      });
+    } catch (error) {
+      console.error("❌ Error creando entrada de diario:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  };
 
 /**
  * Agregar una entrada de diario

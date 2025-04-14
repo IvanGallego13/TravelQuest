@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 // Tipo de los datos de ubicación
 type Ubicacion = {
-  ciudad: string;
+  city: string;
   latitude: number;
   longitude: number;
   imagen: string;
