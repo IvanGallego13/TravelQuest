@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Rutas
 import usuarioRoutes from './routes/usuarioRoutes.js';
-import diarioRoutes from './routes/diarioRoutes.js';
+import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import mensajeRoutes from './routes/mensajeRoutes.js';
@@ -33,7 +33,7 @@ app.use(fileUpload({
 
 // Rutas
 app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/diarios', diarioRoutes);
+app.use('/api/diaries', diarioRoutes);
 app.use('/api/amigos', amigosRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/mensajes', mensajeRoutes);

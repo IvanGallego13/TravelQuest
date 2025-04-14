@@ -62,7 +62,8 @@ export const generateNewMission = async (req, res) => {
   console.log("1 [generateNewMission] Body recibido:", req.body);
 
     try {
-        const { userId, cityId, difficulty } = req.body;
+        const {cityId, difficulty } = req.body;
+        const userId = req.user.id;
         
         if (!userId|| !cityId || !difficulty) {
             return res.status(400).json({ 
@@ -255,7 +256,7 @@ export const getMissionsForUser = async (req, res) => {
   }
 };
 /**
- * Agregar una nueva misión manualmente para un usuario
+ * Agregar una nueva misión manualmente para un usuario(requiere de cambios)
  */
 export const addMission = async (req, res) => {
     const { id_usuario, descripcion_mision, ubicacion, dificultad } = req.body;
