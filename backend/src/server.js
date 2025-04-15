@@ -30,10 +30,15 @@ app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: './uploads'
 }));
+app.use((req, res, next) => {
+  console.log("📥 Petición recibida:", req.method, req.url);
+  next();
+});
+
 
 // Rutas
 app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/diaries', diarioRoutes);
+app.use('/api/diarios', diarioRoutes);
 app.use('/api/amigos', amigosRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/mensajes', mensajeRoutes);

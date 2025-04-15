@@ -10,6 +10,11 @@ import { v4 as uuidv4 } from "uuid";
  * - Luego se sube la imagen (si hay) y se crea la entrada del diario
  */
 export const createOrAppendJournalEntry = async (req, res) => {
+  console.log("📡 Entró al controlador de createOrAppendJournalEntry");
+
+  console.log("📥 req.files:", req.files);
+  console.log("📥 req.body:", req.body);
+
     try {
       const userId = req.user.id;
       const { description, cityId, travelDate } = req.body;
@@ -20,6 +25,10 @@ export const createOrAppendJournalEntry = async (req, res) => {
       }
   
       const entryDate = new Date(travelDate);
+
+      console.log("🧭 userId:", userId);
+      console.log("🗓️ Fecha de entrada:", entryDate);
+
   
       // 1. Buscar si el usuario ya tiene un "travel_book" reciente en esa ciudad
       const { data: lastBook, error: bookError } = await supabase
@@ -32,7 +41,8 @@ export const createOrAppendJournalEntry = async (req, res) => {
         .maybeSingle();
   
       if (bookError) throw bookError;
-  
+      console.log("📚 Último travel_book:", lastBook);
+
       let travelBookId;
   
       // 2. Si hay uno reciente (menos de 2 días de diferencia), lo reutilizamos
@@ -41,7 +51,8 @@ export const createOrAppendJournalEntry = async (req, res) => {
         const diffInDays = Math.floor(
           Math.abs(entryDate - lastDate) / (1000 * 60 * 60 * 24)
         );
-  
+        console.log("📆 Días de diferencia:", diffInDays);
+
         if (diffInDays <= 2) {
           travelBookId = lastBook.id;
         }
@@ -58,6 +69,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
         if (newBookError) throw newBookError;
   
         travelBookId = newBook.id;
+        console.log("🆕 Nuevo travel_book creado:", newBook);
       }
   
       // 4. Buscar o crear el día de viaje correspondiente
@@ -69,7 +81,8 @@ export const createOrAppendJournalEntry = async (req, res) => {
         .maybeSingle();
   
       if (dayError) throw dayError;
-  
+      console.log("📖 Día de viaje existente:", day);
+
       let travelDayId;
   
       if (day) {
@@ -89,12 +102,14 @@ export const createOrAppendJournalEntry = async (req, res) => {
         if (createDayError) throw createDayError;
   
         travelDayId = newDay.id;
+        console.log("📆 Nuevo día de viaje creado:", newDay);
       }
   
       // 5. Subir la imagen si existe
       let filePath = null;
   
       if (imageFile) {
+        console.log("📸 Archivo de imagen recibido:", imageFile.name);
         const buffer = imageFile.data;
         const fileExt = imageFile.name.split(".").pop();
         filePath = `journal/${userId}/${uuidv4()}.${fileExt}`;
@@ -107,6 +122,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
           });
   
         if (uploadError) throw uploadError;
+        console.log("☁️ Imagen subida en:", filePath);
   
         // 5.2. Generar URL firmada válida por 1 hora (3600 segundos)
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
@@ -116,24 +132,32 @@ export const createOrAppendJournalEntry = async (req, res) => {
         if (signedUrlError) throw signedUrlError;
 
         filePath = signedUrlData.signedUrl;
+        console.log("🔗 URL firmada generada:", filePath);
       }
-  
+      console.log("📝 Insertando entrada en diary_entries con:");
+      console.log({
+        travel_day_id: travelDayId,
+        user_id: userId,
+        description,
+        image_path: filePath,
+      });
+
       // 6. Crear la entrada del diario vinculada al día de viaje
       const { data: entry, error: entryError } = await supabase
         .from("diary_entries")
         .insert([
           {
             travel_day_id: travelDayId,
-            user_id: userId,
+            //user_id: userId,
             description,
-            image_url: filePath,
+            image_path: filePath,
           },
         ])
         .select("*")
         .single();
   
       if (entryError) throw entryError;
-  
+      console.log("✅ Entrada insertada correctamente:", entry);
       // ✅ Respuesta final
       res.status(201).json({
         message: "Entrada del diario guardada correctamente",
