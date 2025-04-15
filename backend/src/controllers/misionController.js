@@ -52,7 +52,7 @@ export const updateUserMissionStatus = async (req, res) => {
       console.error("❌ Error al actualizar misión:", error.message);
       res.status(500).json({ error: error.message });
     }
-  };
+};
   
 /**
  * POST /api/misiones/generar
@@ -184,6 +184,7 @@ export const generateNewMission = async (req, res) => {
           });
         }  
       }
+      console.log("👤 Insertando misión con user_id:", userId);
 
       // 5. Asignamos la misión
       const { error: assignError } = await supabase
