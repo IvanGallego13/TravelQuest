@@ -121,7 +121,10 @@ export const createOrAppendJournalEntry = async (req, res) => {
             contentType: imageFile.mimetype,
           });
   
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("❌ Error al subir imagen:", uploadError.message);
+          throw uploadError;
+        }
         console.log("☁️ Imagen subida en:", filePath);
   
         // 5.2. Generar URL firmada válida por 1 hora (3600 segundos)
