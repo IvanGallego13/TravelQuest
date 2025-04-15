@@ -48,6 +48,8 @@ export const getUserFromToken = async (token) => {
     if (error) {
         return null;
     }
+    console.log("🔐 Token decodificado:", data.user);
 
     return data.user;
 };
+

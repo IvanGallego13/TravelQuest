@@ -67,19 +67,34 @@ export default function CreateJournalEntry(){
       formData.append("cityId", ubicacion.cityId.toString());
       formData.append("travelDate", new Date().toISOString().split("T")[0]);
 
-      if (imageUri) {
-        const fileName = imageUri.split("/").pop() || `photo-${Date.now()}.jpg`;
-        const image = {
-          uri: imageUri,
-          name: fileName,
-          type: "image/jpeg",
-        } as any;
-        formData.append("image", image);
-      }
-      console.log("🟡 Publicando entrada de diario con datos:");
-      console.log({ description, cityId: ubicacion.cityId, imageUri });
+        if (imageUri) {
+          const fileName = imageUri.split("/").pop() || `photo-${Date.now()}.jpg`;
+        
+          const image: any = {
+            uri: imageUri,
+            name: fileName,
+            type: "image/jpeg",
+          } as any;
+          console.log("📸 Imagen a enviar:", image);
+        
+          formData.append("image", image);
+        }
 
-      const res = await apiFetch("/diaries/create-or-append", {
+        // 🧪 Log de todo el formData antes de enviarlo
+        for (let [key, value] of formData.entries()) {
+          console.log("🧪 FormData:", key, value);
+        }
+        //termina prueba 
+      //console.log("🟡 Publicando entrada de diario con datos:");
+      //console.log({ description, cityId: ubicacion.cityId, imageUri });
+      /*console.log("🧾 FormData:", {
+        description,
+        cityId: ubicacion.cityId.toString(),
+        travelDate: new Date().toISOString().split("T")[0],
+        image: imageUri,
+      });*/
+
+      const res = await apiFetch("/diarios/create-or-append", {
         method: "POST",
         body: formData,
       });
