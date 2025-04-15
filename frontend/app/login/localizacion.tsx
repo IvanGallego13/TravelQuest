@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
-import { supabase } from "@/lib/supabase";
+import { useUbicacion } from "../../hooks/useUbicacion";
+import { supabase } from "../../lib/supabase";
 
 export default function Geolocalizacion() {
   const router = useRouter();

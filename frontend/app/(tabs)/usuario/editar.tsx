@@ -93,7 +93,7 @@ export default function EditarUsuario() {
           source={
             avatarUrl
               ? { uri: avatarUrl }
-              : require("@/assets/images/avatar.png")
+              : require("../../../assets/images/avatar.png")
           }
           className="w-24 h-24 rounded-full"
         />

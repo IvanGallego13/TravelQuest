@@ -2,7 +2,7 @@ import { Text, View, TouchableOpacity, TextInput, Image, Alert } from "react-nat
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
+import { useUbicacion } from "../../../hooks/useUbicacion";
 
 
 interface Props {

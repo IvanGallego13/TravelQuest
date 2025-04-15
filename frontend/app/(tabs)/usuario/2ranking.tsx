@@ -7,7 +7,7 @@ const usuarioActual = {
   nombre: "Tú",
   nivel: 615,
   posicion: 34,
-  avatar: require("@/assets/images/avatar.png"),
+  avatar: require("../../../assets/images/avatar.png"),
 };
 
 // Simulación temporal de ranking global (20 usuarios)
@@ -15,7 +15,7 @@ const usuariosTopSimulado = Array.from({ length: 20 }, (_, index) => ({
   id: `${index + 1}`,
   nombre: `Usuario ${index + 1}`,
   nivel: 900 - index * 10,
-  avatar: require("@/assets/images/avatar.png"),
+  avatar: require("../../../assets/images/avatar.png"),
 }));
 
 export default function Ranking() {

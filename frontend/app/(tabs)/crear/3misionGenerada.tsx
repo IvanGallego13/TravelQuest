@@ -3,7 +3,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation  } from "@react-navigation/native";
-import { apiFetch } from "@/lib/api"; 
+import { apiFetch } from "../../../lib/api"; 
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 
@@ -185,7 +185,7 @@ useEffect(() => {
             <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, marginBottom: 10 }} />
           ) : (
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("../../../assets/images/icon.png")}
               style={{ width: 40, height: 40, marginBottom: 10 }}
             />
           )}

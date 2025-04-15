@@ -1,97 +1,330 @@
-import { useState } from "react";
+/* import { useState, useEffect } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
-  Image,
-  ScrollView,
   Alert,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { apiFetch } from "../../../lib/api";
+import * as SecureStore from "expo-secure-store";
 
-export default function EditarAvatar() {
-  const [avatarSeleccionado, setAvatarSeleccionado] = useState<string | null>(null);
+export default function EditarUsuario() {
+  const [username, setUsername] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 📁 Avatares locales prediseñados
-  const avatares = [
-    require("@/assets/images/avatar.png"),
-    require("@/assets/images/avatar2.png"),
-    require("@/assets/images/avatar3.png"),
-    require("@/assets/images/avatar4.png"),
-    require("@/assets/images/avatar5.png"),
-    require("@/assets/images/avatar6.png"),
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("travelquest_token");
 
-  ];
+        const res = await apiFetch("/api/ajustes/perfil", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  // 📷 Escoger imagen personalizada
-  const seleccionarFoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+        const data = await res.json();
+        setUsername(data.profile.username);
+      } catch (err) {
+        Alert.alert("Error", "No se pudo cargar el perfil.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (!result.canceled && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-      setAvatarSeleccionado(uri);
+    fetchData();
+  }, []);
+
+  const handleUsernameChange = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("travelquest_token");
+
+      const res = await apiFetch("/api/ajustes/perfil", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar");
+
+      Alert.alert("Nombre actualizado", "Tu nombre de usuario ha sido cambiado.");
+      router.back();
+    } catch (err) {
+      Alert.alert("Error", "No se pudo cambiar el nombre.");
+      console.error(err);
     }
   };
 
-  // ✅ Guardar avatar
-  const guardarAvatar = async () => {
-    if (!avatarSeleccionado) {
-      Alert.alert("Selecciona un avatar", "Elige uno antes de guardar.");
-      return;
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword) {
+      return Alert.alert("Error", "Completa ambos campos.");
     }
 
-    // Aquí puedes hacer:
-    // - subir a Supabase Storage
-    // - guardar en tu backend el path/URL
+    try {
+      const token = await SecureStore.getItemAsync("travelquest_token");
 
-    Alert.alert("Avatar guardado", "Tu avatar ha sido actualizado.");
-    router.back(); // Volver a editar perfil
+      const res = await apiFetch("/api/ajustes/cambiar-contrasena", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          actual: oldPassword,
+          nueva: newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo cambiar la contraseña.");
+        return;
+      }
+
+      Alert.alert("Contraseña actualizada", "Tu nueva contraseña se ha guardado.");
+      setOldPassword("");
+      setNewPassword("");
+    } catch (err) {
+      Alert.alert("Error", "No se pudo actualizar la contraseña.");
+      console.error(err);
+    }
   };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-[#F4EDE0]">
+        <ActivityIndicator size="large" color="#699D81" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-[#F4EDE0] px-6 pt-10">
-      <Text className="text-black text-xl font-bold mb-4">Elige tu avatar</Text>
+      <Text className="text-black text-xl font-bold mb-6">Editar usuario</Text>
 
-      {/* 🖼 Avatares prediseñados */}
-      <View className="flex-row flex-wrap justify-between mb-6">
-        {avatares.map((avatar, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => setAvatarSeleccionado(Image.resolveAssetSource(avatar).uri)}
-            className={`rounded-full border-4 ${
-              avatarSeleccionado === Image.resolveAssetSource(avatar).uri
-                ? "border-[#C76F40]"
-                : "border-transparent"
-            }`}
-          >
-            <Image
-              source={avatar}
-              className="w-24 h-24 m-2 rounded-full"
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* 📷 Subir foto propia */}
+      {/* 📝 Cambiar nombre de usuario */ /*}
+      <Text className="text-black font-semibold mb-1">Nuevo nombre de usuario:</Text>
+      <TextInput
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Ej: viajero23"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
       <TouchableOpacity
-        onPress={seleccionarFoto}
-        className="bg-[#699D81] py-3 rounded-xl items-center mb-6"
+        onPress={handleUsernameChange}
+        className="bg-[#C76F40] py-3 rounded-xl items-center mb-10"
       >
-        <Text className="text-white font-semibold text-base">Usar una foto propia</Text>
+        <Text className="text-white font-semibold text-base">Guardar nombre</Text>
       </TouchableOpacity>
 
-      {/* ✅ Botón guardar */}
+      {/* 🔐 Cambiar contraseña *//*}
+      <Text className="text-black text-lg font-bold mb-4">Cambiar contraseña</Text>
+      <Text className="text-black font-semibold mb-1">Contraseña actual:</Text>
+      <TextInput
+        value={oldPassword}
+        onChangeText={setOldPassword}
+        placeholder="Contraseña actual"
+        secureTextEntry
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+
+      <Text className="text-black font-semibold mb-1">Nueva contraseña:</Text>
+      <TextInput
+        value={newPassword}
+        onChangeText={setNewPassword}
+        placeholder="Nueva contraseña"
+        secureTextEntry
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
+      />
+
       <TouchableOpacity
-        onPress={guardarAvatar}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
+        onPress={handlePasswordChange}
+        className="bg-[#699D81] py-3 rounded-xl items-center"
       >
-        <Text className="text-white font-semibold text-base">Guardar avatar</Text>
+        <Text className="text-white font-semibold text-base">Actualizar contraseña</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+*/
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { apiFetch } from "../../../lib/api";
+import * as SecureStore from "expo-secure-store";
+
+export default function EditarUsuario() {
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("travelquest_token");
+
+        const res = await apiFetch("/api/ajustes/perfil", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setUsername(data.profile.username);
+        setEmail(data.user.email);
+      } catch (err) {
+        Alert.alert("Error", "No se pudo cargar el perfil.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleUsernameChange = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("travelquest_token");
+
+      const res = await apiFetch("/api/ajustes/perfil", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar");
+
+      Alert.alert("Nombre actualizado", "Tu nombre de usuario ha sido cambiado.");
+    } catch (err) {
+      Alert.alert("Error", "No se pudo cambiar el nombre.");
+      console.error(err);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword) {
+      return Alert.alert("Error", "Completa ambos campos.");
+    }
+
+    try {
+      const token = await SecureStore.getItemAsync("travelquest_token");
+
+      const res = await apiFetch("/api/ajustes/cambiar-contrasena", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          actual: oldPassword,
+          nueva: newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo cambiar la contraseña.");
+        return;
+      }
+
+      Alert.alert("Contraseña actualizada", "Tu nueva contraseña se ha guardado.");
+      setOldPassword("");
+      setNewPassword("");
+    } catch (err) {
+      Alert.alert("Error", "No se pudo actualizar la contraseña.");
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-[#F4EDE0]">
+        <ActivityIndicator size="large" color="#699D81" />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView className="flex-1 bg-[#F4EDE0] px-6 pt-10">
+      <Text className="text-black text-xl font-bold mb-6">Editar perfil</Text>
+
+      {/* 📧 Correo electrónico */}
+      <Text className="text-black font-semibold mb-1">Correo electrónico:</Text>
+      <TextInput
+        value={email}
+        editable={false}
+        className="bg-gray-200 border border-gray-400 rounded-md px-4 py-2 mb-6 text-black"
+      />
+
+      {/* 📝 Cambiar nombre de usuario */}
+      <Text className="text-black font-semibold mb-1">Nombre de usuario:</Text>
+      <TextInput
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Ej: viajero23"
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+      <TouchableOpacity
+        onPress={handleUsernameChange}
+        className="bg-[#C76F40] py-3 rounded-xl items-center mb-10"
+      >
+        <Text className="text-white font-semibold text-base">Guardar nombre</Text>
+      </TouchableOpacity>
+
+      {/* 🔐 Cambiar contraseña */}
+      <Text className="text-black text-lg font-bold mb-4">Cambiar contraseña</Text>
+
+      <Text className="text-black font-semibold mb-1">Contraseña actual:</Text>
+      <TextInput
+        value={oldPassword}
+        onChangeText={setOldPassword}
+        placeholder="Contraseña actual"
+        secureTextEntry
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
+      />
+
+      <Text className="text-black font-semibold mb-1">Nueva contraseña:</Text>
+      <TextInput
+        value={newPassword}
+        onChangeText={setNewPassword}
+        placeholder="Nueva contraseña"
+        secureTextEntry
+        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
+      />
+
+      <TouchableOpacity
+        onPress={handlePasswordChange}
+        className="bg-[#699D81] py-3 rounded-xl items-center"
+      >
+        <Text className="text-white font-semibold text-base">Actualizar contraseña</Text>
       </TouchableOpacity>
     </ScrollView>
   );
