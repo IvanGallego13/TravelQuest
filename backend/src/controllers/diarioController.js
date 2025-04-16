@@ -10,11 +10,7 @@ import { v4 as uuidv4 } from "uuid";
  * - Luego se sube la imagen (si hay) y se crea la entrada del diario
  */
 export const createOrAppendJournalEntry = async (req, res) => {
-  console.log("📡 Entró al controlador de createOrAppendJournalEntry");
-
-  console.log("📥 req.files:", req.files);
-  console.log("📥 req.body:", req.body);
-
+  
     try {
       const userId = req.user.id;
       const { description, cityId, travelDate } = req.body;
@@ -26,10 +22,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
   
       const entryDate = new Date(travelDate);
 
-      console.log("🧭 userId:", userId);
-      console.log("🗓️ Fecha de entrada:", entryDate);
-
-  
       // 1. Buscar si el usuario ya tiene un "travel_book" reciente en esa ciudad
       const { data: lastBook, error: bookError } = await supabase
         .from("travel_books")
@@ -41,7 +33,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
         .maybeSingle();
   
       if (bookError) throw bookError;
-      console.log("📚 Último travel_book:", lastBook);
 
       let travelBookId;
   
@@ -51,8 +42,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
         const diffInDays = Math.floor(
           Math.abs(entryDate - lastDate) / (1000 * 60 * 60 * 24)
         );
-        console.log("📆 Días de diferencia:", diffInDays);
-
         if (diffInDays <= 2) {
           travelBookId = lastBook.id;
         }
@@ -69,7 +58,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
         if (newBookError) throw newBookError;
   
         travelBookId = newBook.id;
-        console.log("🆕 Nuevo travel_book creado:", newBook);
       }
   
       // 4. Buscar o crear el día de viaje correspondiente
@@ -81,7 +69,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
         .maybeSingle();
   
       if (dayError) throw dayError;
-      console.log("📖 Día de viaje existente:", day);
 
       let travelDayId;
   
@@ -100,20 +87,17 @@ export const createOrAppendJournalEntry = async (req, res) => {
           .single();
   
         if (createDayError) throw createDayError;
-  
         travelDayId = newDay.id;
-        console.log("📆 Nuevo día de viaje creado:", newDay);
       }
   
       // 5. Subir la imagen si existe
       let filePath = null;
   
       if (imageFile) {
-        console.log("📸 Archivo de imagen recibido:", imageFile.name);
         const buffer = imageFile.data;
         const fileExt = imageFile.name.split(".").pop();
-        filePath = `journal/${userId}/${uuidv4()}.${fileExt}`;
-        
+        filePath = `${userId}/${uuidv4()}.${fileExt}`;
+  
         //5.1subir al bucket
         const { error: uploadError } = await supabase.storage
           .from("journal")
@@ -121,30 +105,10 @@ export const createOrAppendJournalEntry = async (req, res) => {
             contentType: imageFile.mimetype,
           });
   
-        if (uploadError) {
-          console.error("❌ Error al subir imagen:", uploadError.message);
+        if (uploadError) {;
           throw uploadError;
         }
-        console.log("☁️ Imagen subida en:", filePath);
-  
-        // 5.2. Generar URL firmada válida por 1 hora (3600 segundos)
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from("journal")
-        .createSignedUrl(filePath, 60 * 60); // 1 hora
-
-        if (signedUrlError) throw signedUrlError;
-
-        filePath = signedUrlData.signedUrl;
-        console.log("🔗 URL firmada generada:", filePath);
-      }
-      console.log("📝 Insertando entrada en diary_entries con:");
-      console.log({
-        travel_day_id: travelDayId,
-        user_id: userId,
-        description,
-        image_path: filePath,
-      });
-
+      }    
       // 6. Crear la entrada del diario vinculada al día de viaje
       const { data: entry, error: entryError } = await supabase
         .from("diary_entries")
@@ -160,8 +124,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
         .single();
   
       if (entryError) throw entryError;
-      console.log("✅ Entrada insertada correctamente:", entry);
-      // ✅ Respuesta final
+      //Respuesta final
       res.status(201).json({
         message: "Entrada del diario guardada correctamente",
         entry,
@@ -173,6 +136,76 @@ export const createOrAppendJournalEntry = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
+  //obtener los viajes de un usuario
+  export const getJournalSummary = async (req, res) => {
+    try {
+      const userId = req.user.id;
+  
+      // 1. Obtener todos los días de viaje del usuario, agrupados por libro
+      const { data, error } = await supabase
+        .from("travel_books")
+        .select(`
+          id,
+          city_id,
+          cities ( name ),
+          travel_days (
+            id,
+            travel_date,
+            diary_entries (
+              image_path,
+              created_at
+            )
+          )
+        `)
+        .eq("user_id", userId);
+  
+      if (error) throw error;
+  
+      const summaries =  await Promise.all( data.map(async (book) => {
+        const allDays = book.travel_days || [];
+        const firstDay = allDays.sort(
+          (a, b) => new Date(a.travel_date) - new Date(b.travel_date)
+        )[0];
+  
+        let firstImage = null;
+  
+        // Buscar la primera imagen de todas las entradas
+        for (const day of allDays) {
+          const entries = day.diary_entries || [];
+          const withImage = entries.find((e) => !!e.image_path);
+          if (withImage) {
+            firstImage = withImage.image_path;
+            break;
+          }
+        }
+        let signedImageUrl = null;
+
+        if (firstImage) {
+          const { data: signed, error: signError } = await supabase.storage
+            .from("journal")
+            .createSignedUrl(firstImage, 60 * 60);
+
+          if (!signError && signed?.signedUrl) {
+            signedImageUrl = signed.signedUrl;
+          }
+        }
+  
+        return {
+          id: book.id,
+          city: book.cities?.name || "Unknown",
+          date: firstDay?.travel_date || null,
+          image: signedImageUrl,
+        };
+      })
+    );
+      console.log(summaries)
+      res.json(summaries);
+    } catch (error) {
+      console.error("❌ Error en getJournalSummary:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  };
+  
 
 /**
  * Agregar una entrada de diario
@@ -193,6 +226,50 @@ export const addDiaryEntry = async (req, res) => {
 /**
  * Obtener los diarios de un usuario
  */
+// controllers/diarioController.js
+
+export const getResumenDeViajes = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+
+    const { data: books, error } = await supabase
+      .from('travel_books')
+      .select(`
+        id,
+        created_at,
+        cities(name),
+        travel_days(
+          diary_entries(
+            image_path,
+            created_at
+          )
+        )
+      `)
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const viajes = books.map(book => {
+      const allEntries = book.travel_days?.flatMap(day => day.diary_entries || []) || [];
+      const firstImage = allEntries
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0]?.image_path;
+
+      return {
+        id: book.id,
+        ciudad: book.cities?.name || "Sin nombre",
+        fecha: book.created_at,
+        imagen: firstImage || null,
+      };
+    });
+
+    res.status(200).json(viajes);
+  } catch (err) {
+    console.error("❌ Error cargando resumen de viajes:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const getUserDiary = async (req, res) => {
     const { id_usuario } = req.params;
 

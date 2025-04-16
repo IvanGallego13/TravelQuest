@@ -1,6 +1,7 @@
 import express from 'express';
 import { 
     createOrAppendJournalEntry,
+    getJournalSummary,
     createDiario, 
     getAllDiarios, 
     getDiariosByLocation,
@@ -12,6 +13,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.post('/create-or-append', authMiddleware,createOrAppendJournalEntry);
+router.get('/resumen',authMiddleware, getJournalSummary);
 
 // Todas las rutas requieren autenticación
 router.use(authMiddleware);
