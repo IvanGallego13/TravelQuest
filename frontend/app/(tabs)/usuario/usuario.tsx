@@ -91,7 +91,7 @@ export default function Usuario() {
     <TouchableOpacity
       onPress={() => {
         setMostrarMenu(false);
-        router.push("/usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
+        router.push("../usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
       }}
       className="flex-row items-center px-4 py-3"
     >
