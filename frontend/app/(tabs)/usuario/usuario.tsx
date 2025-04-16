@@ -91,7 +91,7 @@ export default function Usuario() {
     <TouchableOpacity
       onPress={() => {
         setMostrarMenu(false);
-        router.push("/usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
+        router.push("../usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
       }}
       className="flex-row items-center px-4 py-3"
     >
@@ -144,7 +144,7 @@ export default function Usuario() {
 
       {/* 🔘 Botón para ir al historial de misiones */}
       <TouchableOpacity
-        onPress={() => router.push("/misiones/misiones")}
+        onPress={() => router.push("../misiones/misiones")}
         className="bg-[#C76F40] py-3 px-4 rounded-xl mb-4 w-full items-center"
       >
         <Text className="text-white font-semibold">Ver misiones completadas</Text>

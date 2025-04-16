@@ -1,21 +1,68 @@
-import { useState } from "react";
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { useState, useRef, useEffect } from "react";
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useUbicacion } from "@/hooks/useUbicacion";
 import { supabase } from "@/lib/supabase";
+import CesiumMap from "@/components/3d-map/CesiumMap";
+
+// Define a type for the map ref
+interface CesiumMapRef {
+  postMessage: (message: string) => void;
+}
 
 export default function Geolocalizacion() {
   const router = useRouter();
   const { setUbicacion } = useUbicacion();
   const [loading, setLoading] = useState(false);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const mapRef = useRef<CesiumMapRef>(null);
+
+  // Coordenadas iniciales para mostrar el mundo completo
+  const [initialCoords] = useState<{ latitude: number; longitude: number }>({
+    latitude: 0,  // Ecuador (centro del globo)
+    longitude: 0,  // Meridiano de Greenwich (centro del globo)
+  });
+
+  // Inicializar el mapa con una vista global al cargar
+  useEffect(() => {
+    // Establecer coordenadas iniciales para mostrar el globo
+    setCoords(initialCoords);
+    
+    // Crear una referencia al timer para poder limpiarlo después
+    const timer = setTimeout(() => {
+      if (mapRef.current) {
+        // Configuramos la vista inicial para mostrar el globo completo
+        mapRef.current.postMessage(JSON.stringify({
+          type: 'viewEarth',
+          height: 9000000, // Altura para ver el globo completo
+          duration: 0 // Sin animación inicial
+        }));
+        
+        // Después de un segundo, iniciamos la rotación suave
+        const rotationTimer = setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.postMessage(JSON.stringify({
+              type: 'rotate',
+              duration: 30, // Rotación más larga
+              speed: 0.0002 // Velocidad más lenta para una rotación suave
+            }));
+          }
+        }, 1000);
+        
+        // Devolver una función de limpieza para el timer de rotación
+        return () => clearTimeout(rotationTimer);
+      }
+    }, 500);
+    
+    // Devolver una función de limpieza para el timer principal
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleGeolocalizar = async () => {
     setLoading(true);
     
-
     try {
       // 1. Solicitar permisos
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -29,6 +76,18 @@ export default function Geolocalizacion() {
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
       setCoords({ latitude, longitude });
+
+      // Use the component-level ref instead of creating a new one
+      if (mapRef.current) {
+        const message = JSON.stringify({
+          type: 'flyTo',
+          latitude,
+          longitude,
+          height: 10000,
+          duration: 2
+        });
+        mapRef.current.postMessage(message);
+      }
 
       // 3. Obtener ciudad y país
       const lugares = await Location.reverseGeocodeAsync({ latitude, longitude });
@@ -81,8 +140,10 @@ export default function Geolocalizacion() {
         cityId: ciudadFinal.id,
       });
 
-      // 7. Navegar a la pantalla siguiente
-      router.replace("/(tabs)/crear");
+      setTimeout(() => {
+        // 7. Navegar a la pantalla siguiente
+        router.replace("/(tabs)/crear");
+      }, 2000);
     } catch (err) {
       console.error("Error geolocalizando:", err);
       Alert.alert("Error", "Ocurrió un problema al obtener tu ubicación.");
@@ -90,40 +151,33 @@ export default function Geolocalizacion() {
       setLoading(false);
     }
   };
-
+  
   return (
-    <View className="flex-1">
-      {/* 🌍 Mapa simple con Google Maps (react-native-maps) */}
-      <MapView
-        style={{ flex: 1 }}
-        region={
-          coords
-            ? {
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }
-            : {
-                latitude: 0,
-                longitude: 0,
-                latitudeDelta: 50,
-                longitudeDelta: 50,
-              }
-        }
-        showsUserLocation
-      >
-        {coords && <Marker coordinate={coords} />}
-      </MapView>
+    <View style={styles.container}>
+      <Text style={styles.title}>Localización</Text>
+      
+      {/* Pasar la referencia a CesiumMap */}
+      <View style={styles.mapContainer}>
+        <CesiumMap coords={coords} height={500} ref={mapRef} interactive={true} />
+      </View>
 
-      {/* 📍 Botón Geolocalizar */}
-      <View className="absolute bottom-20 w-full items-center">
+      {/* Información de coordenadas */}
+      {coords && (
+        <View style={styles.coordsContainer}>
+          <Text style={styles.coordsText}>
+            Lat: {coords.latitude.toFixed(4)}, Lon: {coords.longitude.toFixed(4)}
+          </Text>
+        </View>
+      )}
+
+      {/* Botón Geolocalizar */}
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={handleGeolocalizar}
           disabled={loading}
-          className="bg-[#C76F40] px-6 py-4 rounded-xl"
+          style={styles.button}
         >
-          <Text className="text-white font-bold text-lg">
+          <Text style={styles.buttonText}>
             {loading ? "Localizando..." : "Geolocalizarme"}
           </Text>
         </TouchableOpacity>
@@ -131,81 +185,59 @@ export default function Geolocalizacion() {
     </View>
   );
 }
-/*import { useEffect, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import MapboxGL from "@rnmapbox/maps";
-import * as Location from "expo-location";
-import { useRouter } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion"; //  usamos el store externo tipado
-
-// Configura tu token de Mapbox
-const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN!;
-MapboxGL.setAccessToken(MAPBOX_TOKEN);
-
-export default function Geolocalizacion() {
-  const cameraRef = useRef<MapboxGL.Camera>(null); // tipo correcto para evitar errores con flyTo y zoomTo
-  const router = useRouter();
-  const { setUbicacion } = useUbicacion();
-  const [loading, setLoading] = useState(false);
-
-  const handleGeolocalizar = async () => {
-    setLoading(true);
-
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      alert("Permiso de localización denegado");
-      setLoading(false);
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync({});
-    const { latitude, longitude } = location.coords;
-
-    // Obtener ciudad o región con reverse geocoding
-    const lugares = await Location.reverseGeocodeAsync({ latitude, longitude });
-    const ciudad = lugares[0]?.city || lugares[0]?.region || "Ubicación desconocida";
-
-    // Anima la cámara al punto actual
-    cameraRef.current?.flyTo([longitude, latitude], 1000);
-    cameraRef.current?.zoomTo(8, 1000);
-
-      //Genera imagen estática desde Mapbox Static API
-      const imagen = `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/${longitude},${latitude},10/600x400?access_token=${MAPBOX_TOKEN}`;
-
-    // Espera un poco para la animación y pasa a la siguiente pantalla
-    setTimeout(() => {
-      router.replace("/(tabs)/crear");
-    }, 2000);
-  };
-
-  return (
-    <View className="flex-1">*/
-      /* Mapa de fondo */
-     /* <MapboxGL.MapView
-        style={{ flex: 1 }}
-        styleURL="mapbox://styles/mapbox/satellite-streets-v12"
-      >
-        <MapboxGL.Camera
-          ref={cameraRef}
-          centerCoordinate={[0, 0]}
-          zoomLevel={1.5}
-          animationMode="flyTo"
-          animationDuration={2000}
-        />
-      </MapboxGL.MapView>
-
-      /* Botón Geolocalizar */
-      /*<View className="absolute bottom-20 w-full items-center">
-        <TouchableOpacity
-          onPress={handleGeolocalizar}
-          disabled={loading}
-          className="bg-[#C76F40] px-6 py-4 rounded-xl"
-        >
-          <Text className="text-white font-bold text-lg">
-            {loading ? "Localizando..." : "Geolocalizarme"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}*/
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F4EDE0',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#333',
+  },
+  mapContainer: {
+    height: 400,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  coordsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  coordsText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  button: {
+    backgroundColor: '#C76F40',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+}) ;
