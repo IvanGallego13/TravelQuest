@@ -76,4 +76,26 @@ export const signOut = async () => {
     console.error('Error al cerrar sesión:', error);
     return { error };
   }
+};
+
+// Función para solicitar restablecimiento de contraseña
+export const resetPassword = async (email: string) => {
+  try {
+    // Obtener URL de redirección basada en el entorno
+    const redirectUrl = getRedirectUrl();
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    
+    if (error) {
+      console.error('Error al solicitar restablecimiento de contraseña:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error al solicitar restablecimiento de contraseña:', error);
+    return { success: false, error };
+  }
 }; 

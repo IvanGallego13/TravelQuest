@@ -28,13 +28,22 @@ export function useAuth() {
 
   // Función de login real
   const login = async (token?: string, userId?: string) => {
+    console.log("🔐 Ejecutando función login en useAuth");
     if (token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      console.log("💾 Guardando token en SecureStore");
+      try {
+        await SecureStore.setItemAsync(TOKEN_KEY, token);
+        console.log("✅ Token guardado correctamente");
+      } catch (error) {
+        console.error("❌ Error al guardar token:", error);
+      }
     }
     if(userId){
+      console.log("👤 Guardando userId:", userId);
       useAuthStore.getState().setUserId(userId);
     }
     setIsLoggedIn(true);
+    console.log("✅ Estado de login actualizado a true");
   };
 
   // Función de registro real 
