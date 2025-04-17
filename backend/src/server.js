@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Rutas
 import usuarioRoutes from './routes/usuarioRoutes.js';
-import diarioRoutes from './routes/diarioRoutes.js';
+import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import mensajeRoutes from './routes/mensajeRoutes.js';
@@ -30,6 +30,11 @@ app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: './uploads'
 }));
+app.use((req, res, next) => {
+  console.log("📥 Petición recibida:", req.method, req.url);
+  next();
+});
+
 
 // Rutas
 app.use('/api/usuarios', usuarioRoutes);

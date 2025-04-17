@@ -74,7 +74,7 @@ export default function Geolocalizacion() {
 
       // 6. Guardar ubicación en Zustand
       setUbicacion({
-        ciudad,
+        city: ciudad,
         latitude,
         longitude,
         imagen: "", // puedes generar una imagen del mapa más adelante
