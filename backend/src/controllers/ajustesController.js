@@ -5,19 +5,27 @@ import { supabase } from '../config/supabase.js';
  */
 export const obtenerAjustes = async (req, res) => {
   try {
+    const token = req.header("Authorization")?.split(" ")[1];
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData?.user) throw authError || new Error("Usuario no encontrado");
+
+
     const userId = req.user.id;
 
-    const { data, error } = await supabase
+    const { profileData, profileError } = await supabase
       .from('profiles')
       .select('username, avatar')
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
+    if (profileError) throw profileError;
 
     res.json({
+      user: {
       id: userId,
-      profile: data,
+      email: authData.user.email, // 👈 aquí tienes el email
+      },
+      profile: profileData,
     });
   } catch (error) {
     console.error('Error al obtener ajustes:', error.message);
@@ -32,6 +40,10 @@ export const actualizarAjustes = async (req, res) => {
   try {
     const userId = req.user.id;
     const { username, avatar } = req.body;
+    // 🔒 Validar que el username no venga vacío
+    if (!username || typeof username !== "string" || username.trim() === "") {
+      return res.status(400).json({ error: "Nombre de usuario inválido" });
+    }
 
     const { error } = await supabase
       .from('profiles')
