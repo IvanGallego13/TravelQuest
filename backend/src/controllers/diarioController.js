@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from "uuid";
  * - Luego se sube la imagen (si hay) y se crea la entrada del diario
  */
 export const createOrAppendJournalEntry = async (req, res) => {
-  
+  console.log("llamada crear entrada");
     try {
       const userId = req.user.id;
       const { description, cityId, travelDate } = req.body;
@@ -105,8 +105,11 @@ export const createOrAppendJournalEntry = async (req, res) => {
             contentType: imageFile.mimetype,
           });
   
-        if (uploadError) {;
+        if (uploadError) {
+          console.error("❌ Error al subir imagen:", uploadError.message);
           throw uploadError;
+        }else {
+          console.log("✅ Imagen subida correctamente");
         }
       }    
       // 6. Crear la entrada del diario vinculada al día de viaje
@@ -138,6 +141,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
   };
   //obtener los viajes de un usuario
   export const getJournalSummary = async (req, res) => {
+    console.log("llamada resumen de viajes");
     try {
       const userId = req.user.id;
   
@@ -187,9 +191,12 @@ export const createOrAppendJournalEntry = async (req, res) => {
 
           if (!signError && signed?.signedUrl) {
             signedImageUrl = signed.signedUrl;
+          } else {
+            console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
           }
         }
-  
+        console.log("📷 Primera imagen encontrada:", firstImage);
+        console.log("🔗 URL firmada:", signedImageUrl);
         return {
           id: book.id,
           city: book.cities?.name || "Unknown",
