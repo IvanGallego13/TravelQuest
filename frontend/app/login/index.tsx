@@ -49,8 +49,13 @@ export default function Login() {
     }
   
     try {
-      console.log("🌐 Intentando conectar a:", process.env.EXPO_PUBLIC_API_URL + "/auth/login");
-      const res = await apiFetch("/auth/login", {
+      console.log("🔐 Iniciando conexión con el servidor...");
+      
+      // Usamos la ruta sin preocuparnos por /api, la función apiFetch ya lo maneja correctamente
+      const endpoint = "/auth/login";
+      console.log("🔄 Endpoint a usar:", endpoint);
+      
+      const res = await apiFetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,12 +71,22 @@ export default function Login() {
       if (!res.ok) {
         const errorText = await res.text();
         console.error("❌ Error en respuesta:", errorText);
+        // Mostrar el texto del error en una alerta para depuración
+        Alert.alert("Error del servidor", `Status: ${res.status}\nRespuesta: ${errorText}`);
         throw new Error(errorText);
       }
   
       console.log("✅ Respuesta OK, procesando datos");
       const data = await res.json();
       console.log("🔑 Token recibido:", data.token ? "Sí" : "No");
+      console.log("📄 Respuesta completa:", JSON.stringify(data));
+      
+      if (!data.token) {
+        console.error("⚠️ No se recibió un token en la respuesta del servidor");
+        Alert.alert("Error", "El servidor no devolvió un token válido. Datos recibidos: " + JSON.stringify(data));
+        return;
+      }
+      
       await login(data.token, data.userId); // almacena el token recibido
       console.log("🧭 Navegando a localización");
       router.replace("/login/localizacion");
@@ -140,19 +155,66 @@ export default function Login() {
   const testBackendConnection = async () => {
     try {
       console.log("🧪 Probando conexión al backend...");
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/`);
+      // Vamos a probar la ruta correcta del API
+      const apiURL = process.env.EXPO_PUBLIC_API_URL;
+      console.log("URL de API configurada:", apiURL);
       
-      if (response.ok) {
-        const text = await response.text();
-        console.log("✅ Respuesta del backend:", text);
-        Alert.alert("Conexión exitosa", `El servidor respondió: ${text}`);
-      } else {
-        console.error("❌ Error en la conexión, status:", response.status);
-        Alert.alert("Error de conexión", `El servidor respondió con código: ${response.status}`);
+      // Probar primero la ruta raíz del servidor
+      try {
+        console.log("Probando ruta raíz");
+        const rootResponse = await fetch(apiURL || '');
+        
+        const rootStatus = rootResponse.status;
+        console.log("✅ Respuesta de ruta raíz, status:", rootStatus);
+        
+        let rootText = '';
+        try {
+          rootText = await rootResponse.text();
+          console.log("Contenido de respuesta raíz:", rootText);
+        } catch (e) {
+          rootText = "No se pudo leer el contenido";
+        }
+      } catch (error) {
+        console.error("❌ Error al conectar con ruta raíz:", error);
+      }
+      
+      // Probar ahora la ruta de autenticación
+      try {
+        console.log("Probando ruta de autenticación (usando apiFetch)");
+        
+        const authResponse = await apiFetch("/auth/login", {
+          method: 'POST',
+          body: JSON.stringify({
+            email: 'test@test.com',
+            password: 'password'
+          })
+        });
+        
+        const authStatus = authResponse.status;
+        console.log("✅ Respuesta de auth:", authStatus);
+        
+        // Obtener el texto de la respuesta para depuración
+        let responseText = '';
+        try {
+          responseText = await authResponse.text();
+          console.log("📄 Contenido de respuesta auth:", responseText);
+        } catch (e) {
+          responseText = "No se pudo leer el contenido de la respuesta";
+        }
+        
+        if (authStatus === 404) {
+          Alert.alert("Error de ruta", `La ruta de autenticación no existe (404)`);
+        } else {
+          Alert.alert("Conexión exitosa", 
+            `El servidor está respondiendo correctamente.\n\nStatus: ${authStatus}`);
+        }
+      } catch (error) {
+        console.error("❌ Error al conectar con auth:", error);
+        Alert.alert("Error de conexión", `No se pudo conectar con el endpoint de autenticación`);
       }
     } catch (error) {
-      console.error("❌ Error al conectar con el backend:", error);
-      Alert.alert("Error de conexión", `No se pudo conectar con el backend: ${error}`);
+      console.error("❌ Error general al probar conexión:", error);
+      Alert.alert("Error de conexión", `No se pudo conectar con el backend`);
     }
   };
 
