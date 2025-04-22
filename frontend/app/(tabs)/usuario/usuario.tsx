@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 
 
 // Simulación de datos del usuario
@@ -106,7 +106,7 @@ export default function Usuario() {
       {/* 📸 Avatar + Nivel + Ranking */}
       <View className="items-center mb-4">
         <Image
-          source={require("@/assets/images/avatar.png")}
+          source={require("../../../assets/images/avatar.png")}
           className="w-24 h-24 rounded-full mb-2"
         />
         <Text className="text-black font-bold text-lg mb-2">Nivel {nivel}</Text>
@@ -144,7 +144,7 @@ export default function Usuario() {
 
       {/* 🔘 Botón para ir al historial de misiones */}
       <TouchableOpacity
-        onPress={() => router.push("../misiones/misiones")}
+        onPress={() => router.push("../misiones/misiones")} //Ojo que esta ruta me da miedo y no se si va bien
         className="bg-[#C76F40] py-3 px-4 rounded-xl mb-4 w-full items-center"
       >
         <Text className="text-white font-semibold">Ver misiones completadas</Text>

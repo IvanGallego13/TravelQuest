@@ -2,52 +2,59 @@ import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { apiFetch } from "@/lib/api";
 
 // Tipo de diario (puedes ampliarlo luego)
-type Diario = {
+type TripSummary = {
   id: string;
-  ciudad: string;
-  descripcion: string;
-  fecha: string; // formato "YYYY-MM-DD"
-  imagen?:string;
+  city: string;
+  date: string; // formato "YYYY-MM-DD"
+  image?:string;
 };
 
-export default function DiarioIndex() {
+export default function JournalIndex() {
   const router = useRouter();
 
   // Estado local para los diarios cargados
-  const [diarios, setDiarios] = useState<Diario[]>([]);
+  const [trips, setTrips] = useState<TripSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simulación de carga de diarios desde backend
+  //cargar diarios desde el backend
   useEffect(() => {
-    // Simula un fetch a la API (puedes cambiar esto por fetch real más adelante)
-    const cargarDiariosSimulados = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        const datosFalsos: Diario[] = [
-          { id: "1", ciudad: "Madrid", descripcion: "Santiago Bernabéu", fecha: "2025-03-20", imagen: "https://placekitten.com/300/200", },
-          { id: "2", ciudad: "Barcelona", descripcion: "La Sagrada Familia", fecha: "2025-02-14", imagen: "https://placekitten.com/300/200", },
-          { id: "3", ciudad: "Alicante", descripcion: "Puerto Alicante", fecha: "2025-01-05", imagen: "https://placekitten.com/300/200", },
-          { id: "4", ciudad: "Valencia", descripcion: "UPV", fecha: "2024-12-22", imagen: "https://placekitten.com/300/200", },
-          { id: "5", ciudad: "Murcia", descripcion: "Reu", fecha: "2024-11-18", imagen: "https://placekitten.com/300/200", },
-        ];
-        setDiarios(datosFalsos);
+    const loadTripsFromAPI = async () => {
+      try {
+        setLoading(true);
+        const res = await apiFetch("/diarios/resumen");
+        console.log("📡 Llamada a /diarios/resumen:", res.status);
+
+        const data = await res.json();
+        console.log("📦 Respuesta JSON recibida:", data);
+
+        if (!Array.isArray(data)) {
+          console.error("❌ Respuesta inesperada: no es un array.");
+          setTrips([]); // fallback
+          return;
+        }
+
+        setTrips(data);
+      } catch (error) {
+        console.error("❌ Error loading trips:", error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
-    cargarDiariosSimulados();
+    loadTripsFromAPI();
   }, []);
 
   // Navegación al detalle del diario de una ciudad
-  const irADetalleCiudad = (id: string, ciudad: string, imagen?: string) => {
+  const goToTripDetail = (tripId: string, city: string, image?: string) => {
     router.push({
       pathname: "../diario/2ciudad",
       params: {
-        idDiario: id,
-        ciudad,
-        imagen: imagen ?? "",
+        idDiario: tripId,
+        ciudad: city,
+        imagen: image ?? "",
       },
     });
   };
@@ -56,23 +63,23 @@ export default function DiarioIndex() {
   return (
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-8">
       <Text className="text-black text-lg font-bold mb-4 border-b border-black w-fit">
-        Ciudades
+        Viajes
       </Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#699D81" />
       ) : (
-        diarios.map((diario) => (
+        trips.map((trip) => (
           <TouchableOpacity
-            key={diario.id}
-            onPress={() => irADetalleCiudad(diario.id, diario.ciudad, diario.imagen)}
+            key={trip.id}
+            onPress={() => goToTripDetail(trip.id, trip.city, trip.image)}
             className="bg-white mb-4 p-3 rounded-xl border-2 border-[#699D81]"
           >
             <View className="flex-row space-x-4 items-center">
               {/* Imagen si existe */}
-              {diario.imagen ? (
+              {trip.image ? (
                 <Image
-                  source={{ uri: diario.imagen }}
+                  source={{ uri: trip.image }}
                   className="w-20 h-20 rounded-md"
                   resizeMode="cover"
                 />
@@ -84,9 +91,10 @@ export default function DiarioIndex() {
 
               {/*Info del diario */}
               <View className="flex-1">
-                <Text className="text-black font-bold text-base">{diario.ciudad}</Text>
-                <Text className="text-black text-sm">{diario.descripcion}</Text>
-                <Text className="text-gray-600 text-xs">{diario.fecha}</Text>
+                <Text className="text-black font-bold text-base">{trip.city}</Text>
+                <Text className="text-gray-600 text-xs">
+                  {new Date(trip.date).toLocaleDateString("es-ES")}
+                </Text>
               </View>
 
               {/* Íconos decorativos */}

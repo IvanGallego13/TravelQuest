@@ -1,6 +1,6 @@
 import { Text, View, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
+import { useUbicacion } from "../../../hooks/useUbicacion";
 import MapView, { Marker } from "react-native-maps";
 
 
@@ -26,7 +26,7 @@ export default function OpcionesDeCrear() {
     <View className="flex-1 px-6 pt-12 bg-[#F4EDE0]">
       {/* Ciudad */}
       <Text className="text-xl font-bold text-black border-b border-gray-400 mb-6">
-        {ubicacion?.ciudad || "Ubicación..."}
+        {ubicacion?.city || "Ubicación..."}
       </Text>
   
       {/* Mapa ilustrativo con Marker */}

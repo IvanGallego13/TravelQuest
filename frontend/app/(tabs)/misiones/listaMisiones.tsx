@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "../../../lib/api";
 
 // Tipo misión
 type Mission = {
@@ -115,7 +115,7 @@ export default function MissionList() {
   return (
     <View className="flex-1 bg-[#F4EDE0] relative">
       <Image
-        source={require("@/assets/images/brujula.png")}
+        source={require("../../../assets/images/brujula.png")}
         style={{
           position: "absolute",
           top: 20,

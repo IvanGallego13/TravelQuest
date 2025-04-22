@@ -52,7 +52,7 @@ export const updateUserMissionStatus = async (req, res) => {
       console.error("❌ Error al actualizar misión:", error.message);
       res.status(500).json({ error: error.message });
     }
-  };
+};
   
 /**
  * POST /api/misiones/generar
@@ -62,7 +62,8 @@ export const generateNewMission = async (req, res) => {
   console.log("1 [generateNewMission] Body recibido:", req.body);
 
     try {
-        const { userId, cityId, difficulty } = req.body;
+        const {cityId, difficulty } = req.body;
+        const userId = req.user.id;
         
         if (!userId|| !cityId || !difficulty) {
             return res.status(400).json({ 
@@ -183,6 +184,7 @@ export const generateNewMission = async (req, res) => {
           });
         }  
       }
+      console.log("👤 Insertando misión con user_id:", userId);
 
       // 5. Asignamos la misión
       const { error: assignError } = await supabase
@@ -255,7 +257,7 @@ export const getMissionsForUser = async (req, res) => {
   }
 };
 /**
- * Agregar una nueva misión manualmente para un usuario
+ * Agregar una nueva misión manualmente para un usuario(requiere de cambios)
  */
 export const addMission = async (req, res) => {
     const { id_usuario, descripcion_mision, ubicacion, dificultad } = req.body;

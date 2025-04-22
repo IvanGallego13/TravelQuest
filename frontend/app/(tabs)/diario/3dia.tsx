@@ -11,7 +11,7 @@ export default function DiaDetalle() {
     id: idDia,
     titulo: "Día Seleccionado",
     descripcion: "Descripción que hace el usuario de su día.",
-    imagen: require("@/assets/images/icon.png"),
+    imagen: require("../../../assets/images/icon.png"),
   };
 
   return (
@@ -20,7 +20,7 @@ export default function DiaDetalle() {
 
       {/* Brújula arriba derecha */}
       <Image
-        source={require("@/assets/images/brujula.png")}
+        source={require("../../../assets/images/brujula.png")}
         style={{
           position: "absolute",
           top: 20,
@@ -34,7 +34,7 @@ export default function DiaDetalle() {
 
       {/* Maleta abajo derecha */}
       <Image
-        source={require("@/assets/images/maleta.png")}
+        source={require("../../../assets/images/maleta.png")}
         style={{
           position: "absolute",
           bottom: 10,

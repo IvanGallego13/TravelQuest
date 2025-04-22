@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Rutas
 import usuarioRoutes from './routes/usuarioRoutes.js';
-import diarioRoutes from './routes/diarioRoutes.js';
+import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import mensajeRoutes from './routes/mensajeRoutes.js';
@@ -16,6 +16,7 @@ import imageRoutes from './routes/imageRoutes.js';
 import viajeRoutes from './routes/viajeRoutes.js';
 import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
+import ajustesRoutes from './routes/ajustesRoutes.js';
 
 dotenv.config();
 
@@ -30,6 +31,12 @@ app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: './uploads'
 }));
+app.use((req, res, next) => {
+  console.log("📥 Petición recibida:", req.method, req.url);
+  next();
+});
+
+
 
 // Rutas
 app.use('/api/usuarios', usuarioRoutes);
@@ -43,6 +50,7 @@ app.use('/api/imagenes', imageRoutes);
 app.use('/api/viajes', viajeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/ajustes', ajustesRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

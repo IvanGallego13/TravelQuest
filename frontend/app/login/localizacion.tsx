@@ -3,14 +3,8 @@ import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
-import { supabase } from "@/lib/supabase";
-import CesiumMap from "@/components/3d-map/CesiumMap";
-
-// Define a type for the map ref
-interface CesiumMapRef {
-  postMessage: (message: string) => void;
-}
+import { useUbicacion } from "../../hooks/useUbicacion";
+import { supabase } from "../../lib/supabase";
 
 export default function Geolocalizacion() {
   const router = useRouter();
@@ -133,7 +127,7 @@ export default function Geolocalizacion() {
 
       // 6. Guardar ubicación en Zustand
       setUbicacion({
-        ciudad,
+        city: ciudad,
         latitude,
         longitude,
         imagen: "", // puedes generar una imagen del mapa más adelante

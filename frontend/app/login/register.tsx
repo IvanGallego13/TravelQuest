@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/hooks/useAuth";
-import { apiFetch } from "@/lib/api";
+import { useAuth } from "../../hooks/useAuth";
+import { apiFetch } from "../../lib/api";
 import {
   View,
   Text,
@@ -94,7 +94,7 @@ export default function Register() {
       {/* Logo y título */}
       <View className="flex-row justify-center items-center mb-10">
         <Image
-          source={require("@/assets/images/logo.png")}
+          source={require("../../assets/images/logo.png")}
           className="w-10 h-10 mr-2"
         />
         <Text className="text-2xl font-bold text-black">TravelQuest</Text>

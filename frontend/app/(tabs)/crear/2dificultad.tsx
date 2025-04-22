@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { useRouter, useLocalSearchParams} from "expo-router";
 import React from 'react';
-import { useAuthStore } from "@/store/auth";
-import { apiFetch } from "@/lib/api";
-import { useUbicacion } from "@/hooks/useUbicacion";
+import { useAuthStore } from "../../../store/auth";
+import { apiFetch } from "../../../lib/api";
+import { useUbicacion } from "../../../hooks/useUbicacion";
 
 
 export default function Dificultad() {
