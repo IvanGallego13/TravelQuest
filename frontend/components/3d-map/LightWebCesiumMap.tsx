@@ -24,14 +24,14 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
     }
   }));
 
-  // HTML ultra simplificado para móviles
+  // HTML simplificado para mostrar el globo terráqueo
   const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Simple Earth</title>
+      <title>Earth View</title>
       <script src="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Cesium.js"></script>
       <link href="https://cesium.com/downloads/cesiumjs/releases/1.104/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
       <style>
@@ -42,12 +42,14 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
           padding: 0; 
           overflow: hidden; 
           background-color: black;
+          touch-action: none;
         }
         .cesium-viewer-bottom,
         .cesium-viewer-timelineContainer,
         .cesium-viewer-animationContainer,
         .cesium-viewer-toolbar,
-        .cesium-viewer-fullscreenContainer {
+        .cesium-viewer-fullscreenContainer,
+        .cesium-widget-credits {
           display: none !important;
         }
       </style>
@@ -56,134 +58,129 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
       <div id="cesiumContainer"></div>
       
       <script>
-        try {
-          Cesium.Ion.defaultAccessToken = '${CESIUM_TOKEN}';
-          
-          // Configuración ultra simple para mejor rendimiento
-          const viewer = new Cesium.Viewer('cesiumContainer', {
-            baseLayerPicker: false,
-            geocoder: false,
-            homeButton: false,
-            infoBox: false,
-            sceneModePicker: false,
-            selectionIndicator: false,
-            timeline: false,
-            navigationHelpButton: false,
-            animation: false,
-            creditContainer: document.createElement('div'), // Ocultar créditos
-            terrainProvider: new Cesium.EllipsoidTerrainProvider(), // Terreno básico
-            imageryProvider: new Cesium.IonImageryProvider({
-              assetId: 3 // Mapa base de Cesium (Bing Maps Aerial)
-            }),
-            scene3DOnly: true,
-            shouldAnimate: true
-          });
-          
-          // Configuración para mejor visualización
-          viewer.scene.globe.enableLighting = false;
-          viewer.scene.fog.enabled = false;
-          viewer.scene.skyAtmosphere.show = true;
-          viewer.scene.globe.showGroundAtmosphere = true;
-          viewer.scene.backgroundColor = Cesium.Color.BLACK;
-          
-          // Asegurarnos que el globo sea visible
-          viewer.scene.globe.show = true;
-          
-          // Ajustes de calidad y rendimiento
-          viewer.resolutionScale = 1.4;
-          viewer.scene.globe.maximumScreenSpaceError = 2;
-          
-          // Configurar vista inicial para ver el globo completo y centrado
-          viewer.camera.setView({
-            destination: Cesium.Cartesian3.fromDegrees(0, 0, 800000), // Altura ajustada para ver el globo completo
-            orientation: {
-              heading: 0.0,
-              pitch: -0.7, // Ajustado para ver el globo desde arriba y centrado
-              roll: 0.0
-            }
-          });
-          
-          // Limitar el zoom para evitar problemas
-          viewer.scene.screenSpaceCameraController.minimumZoomDistance = 5000000;
-          viewer.scene.screenSpaceCameraController.maximumZoomDistance = 25000000;
-          
-          // Notificar cuando esté listo
-          setTimeout(() => {
-            window.ReactNativeWebView.postMessage('mapLoaded');
-          }, 1000);
-          
-          // Manejar mensajes
-          document.addEventListener('message', function(event) {
-            try {
-              const message = JSON.parse(event.data);
-              if (message.type === 'flyTo' && message.latitude && message.longitude) {
-                viewer.camera.flyTo({
-                  destination: Cesium.Cartesian3.fromDegrees(
-                    message.longitude,
-                    message.latitude,
-                    message.height || 1200000
-                  ),
-                  orientation: {
-                    heading: 0.0,
-                    pitch: -1.3, // Ajustado para ver el globo centrado
-                    roll: 0.0
-                  },
-                  duration: 2
-                });
-              } else if (message.type === 'viewEarth') {
-                // Para volver a la vista del mundo completo
-                viewer.camera.flyTo({
-                  destination: Cesium.Cartesian3.fromDegrees(0, 0, message.height || 8000000),
-                  orientation: {
-                    heading: 0.0,
-                    pitch: -1.3, // Ajustado para ver el globo desde arriba y centrado
-                    roll: 0.0
-                  },
-                  duration: message.duration || 2
-                });
-              } else if (message.type === 'rotate') {
-                // Rotación suave
-                let rotationEvent = viewer.clock.onTick.addEventListener(function() {
-                  viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, message.speed || 0.0005);
-                });
-                
-                if (message.duration) {
-                  setTimeout(() => {
-                    viewer.clock.onTick.removeEventListener(rotationEvent);
-                  }, message.duration * 1000);
-                }
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          });
-          
-          // Si hay coordenadas, volar a ellas después de mostrar el mundo
-          ${coords ? `
-            // Primero mostramos el mundo completo
-            setTimeout(() => {
-              viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(
-                  ${coords.longitude},
-                  ${coords.latitude},
-                  ${coords.height || 2000000} // Aumentado para ver más contexto
-                ),
+        // Esperar a que todo esté cargado
+        window.onload = function() {
+          try {
+            // Configuración básica
+            Cesium.Ion.defaultAccessToken = '${CESIUM_TOKEN}';
+            
+            // Configuración simplificada del visor
+            const viewer = new Cesium.Viewer('cesiumContainer', {
+              baseLayerPicker: false,
+              geocoder: false,
+              homeButton: false,
+              infoBox: false,
+              sceneModePicker: false,
+              selectionIndicator: false,
+              timeline: false,
+              navigationHelpButton: false,
+              animation: false,
+              fullscreenButton: false,
+              creditContainer: document.createElement('div'),
+              imageryProvider: new Cesium.IonImageryProvider({ assetId: 3 }),
+              terrainProvider: Cesium.createWorldTerrain({
+                requestVertexNormals: false,
+                requestWaterMask: false
+              })
+            });
+            
+            // Ocultar elementos de la interfaz
+            viewer.cesiumWidget.creditContainer.style.display = 'none';
+            
+            // CRÍTICO: Asegurarse de que el globo esté visible
+            viewer.scene.globe.show = true;
+            viewer.scene.globe.enableLighting = false;
+            viewer.scene.skyAtmosphere.show = true;
+            viewer.scene.globe.showGroundAtmosphere = false;
+            viewer.scene.fog.enabled = false;
+            viewer.scene.backgroundColor = Cesium.Color.BLACK;
+            
+            // Forzar un renderizado inicial
+            viewer.scene.requestRender();
+            
+            // Función para asegurar que el globo sea visible
+            function setupEarthView() {
+              // Posicionar la cámara para ver el globo terráqueo
+              viewer.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(20, 15, 2500000),
                 orientation: {
                   heading: 0.0,
-                  pitch: -0.3, // Ajustado para ver más centrado
+                  pitch: -0.3,
                   roll: 0.0
-                },
-                duration: 2
+                }
               });
-            }, 2000); // Esperar 2 segundos antes de volar a la ubicación
-          ` : ''}
-          
-        } catch (error) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'error',
-            message: error.message || 'Error initializing Cesium'
-          }));
-        }
+              
+              // Forzar otro renderizado después de configurar la vista
+              viewer.scene.requestRender();
+              
+              // Notificar cuando el mapa esté listo
+              window.ReactNativeWebView.postMessage('mapLoaded');
+            }
+            
+            // Ejecutar la configuración inicial después de un breve retraso
+            setTimeout(setupEarthView, 1000);
+            
+            // Limitar el zoom para evitar salir al espacio pero permitir acercarse más
+            viewer.scene.screenSpaceCameraController.minimumZoomDistance = 1500000;
+            viewer.scene.screenSpaceCameraController.maximumZoomDistance = 20000000;
+            
+            // Manejar mensajes desde React Native
+            document.addEventListener('message', function(event) {
+              try {
+                const message = JSON.parse(event.data);
+                
+                if (message.type === 'flyTo' && message.latitude && message.longitude) {
+                  viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(
+                      message.longitude,
+                      message.latitude,
+                      message.height || 10000
+                    ),
+                    orientation: {
+                      heading: 0.0,
+                      pitch: -0.5,
+                      roll: 0.0
+                    },
+                    duration: 3
+                  });
+                } else if (message.type === 'viewEarth') {
+                  // Ajustado para mostrar el globo terráqueo más grande
+                  viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(20, 15, message.height || 2500000),
+                    orientation: {
+                      heading: 0.0,
+                      pitch: -0.3,
+                      roll: 0.0
+                    },
+                    duration: 3
+                  });
+                  
+                  // Forzar renderizado después de cambiar la vista
+                  viewer.scene.requestRender();
+                } else if (message.type === 'rotate') {
+                  // Iniciar rotación automática
+                  const rotateFactor = message.speed || 0.0005;
+                  viewer.clock.onTick.addEventListener(function() {
+                    viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, rotateFactor);
+                    // Forzar renderizado durante la rotación
+                    viewer.scene.requestRender();
+                  });
+                }
+              } catch (e) {
+                console.error(e);
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'error',
+                  message: e.message || 'Error processing message'
+                }));
+              }
+            });
+          } catch (error) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'error',
+              message: error.message || 'Error initializing Cesium'
+            }));
+          }
+        };
       </script>
     </body>
     </html>
@@ -197,6 +194,7 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
       try {
         const parsedData = JSON.parse(data);
         if (parsedData.type === 'error') {
+          console.error('Cesium error:', parsedData.message);
           setError(parsedData.message);
         }
       } catch (e) {
@@ -204,14 +202,6 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
       }
     }
   };
-
-  if (error) {
-    return (
-      <View style={[styles.container, { height }]}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={{ height, borderRadius: 12, overflow: 'hidden' }}>
@@ -223,11 +213,32 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
         onMessage={handleMessage}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        scrollEnabled={false}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          setError(`WebView error: ${nativeEvent.description}`);
+        }}
+        onHttpError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          setError(`HTTP error: ${nativeEvent.statusCode}`);
+        }}
+        onLoad={() => {
+          // Forzar la ocultación del indicador de carga después de 5 segundos
+          setTimeout(() => setIsLoading(false), 5000);
+        }}
       />
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#699D81" />
-          <Text style={styles.loadingText}>Cargando mapa...</Text>
+          <Text style={styles.loadingText}>Cargando mapa 3D...</Text>
+        </View>
+      )}
+      {error && (
+        <View style={styles.errorOverlay}>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
     </View>
@@ -235,11 +246,6 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
 });
 
 const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000000',
-  },
   loadingOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -252,11 +258,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
   },
+  errorOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    padding: 10,
+  },
   errorText: {
-    color: 'red',
+    color: 'white',
     fontSize: 14,
     textAlign: 'center',
-    padding: 10,
   }
 });
 

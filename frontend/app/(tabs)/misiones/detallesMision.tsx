@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity,Alert, ActivityIndicato
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "../../..//lib/api";
 
 
 export default function DetalleMisionCompletada() {

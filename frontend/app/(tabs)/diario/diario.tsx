@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "../../..//lib/api";
 
 // Tipo de diario (puedes ampliarlo luego)
 type TripSummary = {

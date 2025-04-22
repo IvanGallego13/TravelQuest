@@ -5,6 +5,12 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useUbicacion } from "../../hooks/useUbicacion";
 import { supabase } from "../../lib/supabase";
+import CesiumMap from "../../components/3d-map/CesiumMap";
+
+// Define a type for the map ref
+interface CesiumMapRef {
+  postMessage: (message: string) => void;
+}
 
 export default function Geolocalizacion() {
   const router = useRouter();
@@ -15,8 +21,8 @@ export default function Geolocalizacion() {
 
   // Coordenadas iniciales para mostrar el mundo completo
   const [initialCoords] = useState<{ latitude: number; longitude: number }>({
-    latitude: 0,  // Ecuador (centro del globo)
-    longitude: 0,  // Meridiano de Greenwich (centro del globo)
+    latitude: 15,  // Ecuador (centro del globo)
+    longitude: 20,  // Meridiano de Greenwich (centro del globo)
   });
 
   // Inicializar el mapa con una vista global al cargar
@@ -24,23 +30,23 @@ export default function Geolocalizacion() {
     // Establecer coordenadas iniciales para mostrar el globo
     setCoords(initialCoords);
     
-    // Crear una referencia al timer para poder limpiarlo después
+    // Configurar la vista inicial inmediatamente
     const timer = setTimeout(() => {
       if (mapRef.current) {
-        // Configuramos la vista inicial para mostrar el globo completo
+        // Configuramos la vista inicial para mostrar el globo completo y bien centrado
         mapRef.current.postMessage(JSON.stringify({
           type: 'viewEarth',
-          height: 9000000, // Altura para ver el globo completo
-          duration: 0 // Sin animación inicial
+          height: 2000000, // Ajustado para que el globo sea más grande y centrado
+          duration: 0
         }));
         
-        // Después de un segundo, iniciamos la rotación suave
+        // Iniciar rotación suave después de un breve retraso
         const rotationTimer = setTimeout(() => {
           if (mapRef.current) {
             mapRef.current.postMessage(JSON.stringify({
               type: 'rotate',
-              duration: 30, // Rotación más larga
-              speed: 0.0002 // Velocidad más lenta para una rotación suave
+              duration: 30,
+              speed: 0.00002 // Velocidad muy lenta para una rotación suave
             }));
           }
         }, 1000);
@@ -48,7 +54,7 @@ export default function Geolocalizacion() {
         // Devolver una función de limpieza para el timer de rotación
         return () => clearTimeout(rotationTimer);
       }
-    }, 500);
+    }, 500); // Reducido para que la configuración se aplique más rápido
     
     // Devolver una función de limpieza para el timer principal
     return () => clearTimeout(timer);
@@ -179,10 +185,11 @@ export default function Geolocalizacion() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4EDE0',
+    backgroundColor: 'transparent', // Cambiado de '#F4EDE0' a transparente
     padding: 16,
   },
   title: {
@@ -197,9 +204,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 16,
+    backgroundColor: 'transparent', // Fondo transparente para el contenedor del mapa
   },
   coordsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)', // Más transparente
     padding: 8,
     borderRadius: 8,
     alignItems: 'center',
@@ -234,4 +242,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-}) ;
+});
