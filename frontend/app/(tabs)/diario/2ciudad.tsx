@@ -1,78 +1,107 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator} from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons"; // Íconos decorativos
-import { useEffect, useState } from "react";
+import {useState,  useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { apiFetch } from "../../../lib/api";
 
 // Tipo Día para simular mejor la estructura real
-type Dia = {
+type TravelDay = {
   id: number;
-  titulo: string;
-  descripcion: string;
+  travel_date: string;
+  image?: string | null;
 };
 
-export default function CiudadDetalle() {
+export default function CityDetail() {
   const router = useRouter();
-  const { idDiario, ciudad, imagen } = useLocalSearchParams(); // Recibimos el ID real del diario, la ciudad y la imagen.
-  const [dias, setDias] = useState<Dia[]>([]);
+  const { bookId, city, image } = useLocalSearchParams();
 
-  // Simulación de carga de días desde una "API"
-  useEffect(() => {
-    // En el futuro reemplaza esto por un fetch real usando idDiario
-    const diasSimulados: Dia[] = [
-      { id: 1, titulo: "DÍA 1", descripcion: "Santiago Bernabéu" },
-      { id: 2, titulo: "DÍA 2", descripcion: "Museo del Prado" },
-      { id: 3, titulo: "DÍA 3", descripcion: "Castellana" },
-      { id: 4, titulo: "DÍA 4", descripcion: "Palacio Real" },
-      { id: 5, titulo: "DÍA 5", descripcion: "Puerta del Sol" },
-    ];
-    setDias(diasSimulados);
-  }, []);
+  const [days, setDays] = useState<TravelDay[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Al tocar un día, navega a la pantalla 3dia.tsx con su ID
-  const handleVerDia = (idDia: number) => {
-    router.push(`/diario/3dia?idDia=${idDia}`);
+  // Cargar días cada vez que se entra en esta pantalla (tab focus)
+  useFocusEffect(
+    useCallback(() => {
+      const loadDays = async () => {
+        try {
+          setLoading(true);
+          const res = await apiFetch(`/diarios/dias/${bookId}`);
+          if (!res.ok) throw new Error("Failed to fetch travel days");
+          const data = await res.json();
+          setDays(data);
+        } catch (err) {
+          console.error("❌ Error loading days:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadDays();
+    }, [bookId])
+  );
+
+  // Navegar al detalle del día
+  const handleViewDay = (dayId: string) => {
+    router.push(`/diario/3dia?idDay=${dayId}`);
   };
 
   return (
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 py-6">
-      {/* Ciudad + imagen */}
+      {/* Encabezado con ciudad e imagen */}
       <View className="mb-6">
-        <Text className="text-xl font-bold text-black mb-2">{ciudad}</Text>
-        {imagen ? (
+        <Text className="text-xl font-bold text-black mb-2">{city}</Text>
+        {image ? (
           <Image
-            source={{ uri: imagen as string }}
+            source={{ uri: image as string }}
             className="w-full h-40 rounded-xl"
             resizeMode="cover"
           />
         ) : (
-    <View className="w-full h-40 bg-gray-300 rounded-xl items-center justify-center">
-      <Text className="text-gray-700">Sin imagen de ciudad</Text>
-    </View>
-  )}
-</View>
+          <View className="w-full h-40 bg-gray-300 rounded-xl items-center justify-center">
+            <Text className="text-gray-700">No image</Text>
+          </View>
+        )}
+      </View>
 
       {/* Lista de días */}
-      {dias.map((dia) => (
-        <TouchableOpacity
-          key={dia.id}
-          className="flex-row justify-between items-center bg-white p-4 mb-4 rounded-xl border-2 border-[#699D81]"
-          onPress={() => handleVerDia(dia.id)}
-        >
-          {/* Info del día */}
-          <View>
-            <Text className="text-black font-bold">{dia.titulo}</Text>
-            <Text className="text-black text-sm">{dia.descripcion}</Text>
-          </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#699D81" />
+      ) : (
+        days.map((day) => (
+          <TouchableOpacity
+            key={day.id}
+            className="flex-row justify-between items-center bg-white p-4 mb-4 rounded-xl border-2 border-[#699D81]"
+            onPress={() => handleViewDay(day.id.toString())}
+          >
+            {/* Fecha e imagen */}
+            <View className="flex-row items-center space-x-4">
+              {day.image ? (
+                <Image
+                  source={{ uri: day.image }}
+                  className="w-16 h-16 rounded-md"
+                  resizeMode="cover"
+                />
+              ) : (
+                <View className="w-16 h-16 bg-gray-300 rounded-md items-center justify-center">
+                  <Text className="text-xs text-gray-500 text-center">No image</Text>
+                </View>
+              )}
 
-          {/* Íconos decorativos como en tu imagen */}
-          <View className="flex-row space-x-2">
-            <Ionicons name="today" size={20} color="#699D81" />
-            <FontAwesome5 name="image" size={18} color="#C76F40" />
-          </View>
-        </TouchableOpacity>
-      ))}
+              <View>
+                <Text className="text-black font-bold">
+                  {new Date(day.travel_date).toLocaleDateString("es-ES")}
+                </Text>
+              </View>
+            </View>
+
+            {/* Íconos */}
+            <View className="flex-row space-x-2">
+              <Ionicons name="calendar" size={20} color="#699D81" />
+              <FontAwesome5 name="image" size={18} color="#C76F40" />
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 }
-
-

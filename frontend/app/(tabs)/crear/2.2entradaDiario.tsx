@@ -2,8 +2,8 @@ import { Text, View, TouchableOpacity, TextInput, Image, Alert } from "react-nat
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
-import { apiFetch } from "@/lib/api";
+import { useUbicacion } from "../../../hooks/useUbicacion";
+import { apiFetch } from "../../../lib/api";
 
 
 export default function CreateJournalEntry(){
@@ -126,7 +126,7 @@ export default function CreateJournalEntry(){
             />
           ) : (
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("../../../assets/images/icon.png")}
               style={{ width: 40, height: 40, marginBottom: 10 }}
             />
           )}

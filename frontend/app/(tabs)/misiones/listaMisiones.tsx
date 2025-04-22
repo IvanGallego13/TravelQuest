@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useState} from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { apiFetch } from "../../../lib/api";
+import { useFocusEffect } from "@react-navigation/native";
 
 // Tipo misión
 type Mission = {
@@ -20,7 +21,8 @@ export default function MissionList() {
   const [missions, setMissions] = useState<Mission[]>([]);
 
   // Simulación de fetch de misiones desde backend
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     const fetchMissions = async () => {
       try {
         const res = await apiFetch("/misiones/mine");
@@ -34,7 +36,8 @@ export default function MissionList() {
     };
 
     fetchMissions();
-  }, []);
+   }, [])
+  );
 
   // Al pulsar una misión, decidir a qué pantalla ir
   const handlePressMission = (mission: Mission) => {
