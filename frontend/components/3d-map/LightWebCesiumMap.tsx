@@ -24,6 +24,24 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
     }
   }));
 
+  // Define the handleMessage function to fix the error
+  const handleMessage = (event: WebViewMessageEvent) => {
+    const data = event.nativeEvent.data;
+    if (data === 'mapLoaded') {
+      setIsLoading(false);
+    } else {
+      try {
+        const parsedData = JSON.parse(data);
+        if (parsedData.type === 'error') {
+          console.error('Cesium error:', parsedData.message);
+          setError(parsedData.message);
+        }
+      } catch (e) {
+        // Not JSON, ignore
+      }
+    }
+  };
+
   // HTML simplificado para mostrar el globo terráqueo
   const htmlContent = `
     <!DOCTYPE html>
@@ -43,6 +61,7 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
           overflow: hidden; 
           background-color: black;
           touch-action: none;
+          position: relative;
         }
         .cesium-viewer-bottom,
         .cesium-viewer-timelineContainer,
@@ -98,11 +117,11 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
             // Forzar un renderizado inicial
             viewer.scene.requestRender();
             
-            // Función para asegurar que el globo sea visible
+            // Función para asegurar que el globo sea visible y centrado
             function setupEarthView() {
-              // Posicionar la cámara para ver el globo terráqueo
+              // Posicionar la cámara para ver el globo terráqueo centrado
               viewer.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(20, 15, 2500000),
+                destination: Cesium.Cartesian3.fromDegrees(20, 15, 2000000), // Reducido para ver el globo más grande
                 orientation: {
                   heading: 0.0,
                   pitch: -0.3,
@@ -118,7 +137,7 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
             }
             
             // Ejecutar la configuración inicial después de un breve retraso
-            setTimeout(setupEarthView, 1000);
+            setTimeout(setupEarthView, 500);
             
             // Limitar el zoom para evitar salir al espacio pero permitir acercarse más
             viewer.scene.screenSpaceCameraController.minimumZoomDistance = 1500000;
@@ -141,18 +160,18 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
                       pitch: -0.5,
                       roll: 0.0
                     },
-                    duration: 3
+                    duration: 2
                   });
                 } else if (message.type === 'viewEarth') {
-                  // Ajustado para mostrar el globo terráqueo más grande
+                  // Ajustado para mostrar el globo terráqueo más grande y centrado
                   viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(20, 15, message.height || 2500000),
+                    destination: Cesium.Cartesian3.fromDegrees(20, 15, message.height || 2000000),
                     orientation: {
                       heading: 0.0,
                       pitch: -0.3,
                       roll: 0.0
                     },
-                    duration: 3
+                    duration: 0
                   });
                   
                   // Forzar renderizado después de cambiar la vista
@@ -186,23 +205,6 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
     </html>
   `;
 
-  const handleMessage = (event: WebViewMessageEvent) => {
-    const data = event.nativeEvent.data;
-    if (data === 'mapLoaded') {
-      setIsLoading(false);
-    } else {
-      try {
-        const parsedData = JSON.parse(data);
-        if (parsedData.type === 'error') {
-          console.error('Cesium error:', parsedData.message);
-          setError(parsedData.message);
-        }
-      } catch (e) {
-        // No es JSON, ignorar
-      }
-    }
-  };
-
   return (
     <View style={{ height, borderRadius: 12, overflow: 'hidden' }}>
       <WebView
@@ -217,6 +219,8 @@ const LightWebCesiumMap = forwardRef(({ coords, height = 400, interactive = true
         bounces={false}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
           setError(`WebView error: ${nativeEvent.description}`);
