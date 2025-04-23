@@ -34,7 +34,7 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     : "";
 
     return `
-    Eres un experto en historia local y turismo cultural. Genera una misión única para explorar la ciudad de ${city}. 
+    Eres un experto en historia arte y patrimonio cultural. Genera una misión única para explorar la ciudad de ${city}. 
 
     Nivel de dificultad: ${difficultyKey.toUpperCase()} - ${nivel.description}
     ${listaObjetos}
@@ -56,7 +56,20 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     - 'keywords' debe contener palabras claves relacionadas con ese objeto visual.
     - Asegúrate de que la misión no sea genérica, sino específica y visualmente verificable.
     - La misión debe poder completarse con una sola fotografía clara y representativa.
-    - La historia debe tener entre 250 y 400 alabras, que sea amena informativa y fácil de leer, y si hay algun datomuy curioso y poco conocido inclúyelo.
+    - Con respeto a la hitoria:
+        Contenido esperado:
+        - Contexto histórico o cultural del objeto
+        - Significado simbólico o estético
+        - Estilo arquitectónico o artístico, si aplica
+        - Curiosidades o anécdotas interesantes relacionadas con ese objeto o su entorno
+        - Importancia dentro de la ciudad o de su época
+
+        Instrucciones:
+        - No hables de misiones, desafíos ni exploraciones.
+        - No digas que el usuario debe buscar o encontrar nada.
+        - No des instrucciones ni uses frases como "la misión te llevó a…".
+        - En lugar de eso, presenta la información como una cápsula educativa o cultural.
+        - Escribe con un tono cálido, informativo y accesible para viajeros o curiosos culturales.
     - Duración aproximada: ${nivel.timeLimit} minutos.
     `;
     };

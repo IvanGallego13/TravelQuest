@@ -48,9 +48,20 @@ export default function Mision() {
       if (!res.ok) throw new Error("Error actualizando misión");
 
       setCompletada(true);
+      setEstadoManual("completed");
       setYaActualizada(true);
       console.log(`✅ Estado enviado: ${status}`);
+
+      if (status === "completed") {
+      router.push({
+        pathname: "/misiones/completadaMision",
+        params: {
+          missionId: numericMissionId.toString(),
+        },
+      });
+    } else {
       router.replace("/(tabs)/crear");
+    }
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "No se pudo actualizar la misión.");
@@ -102,14 +113,17 @@ export default function Mision() {
 
   useFocusEffect(
     useCallback(() => {
+      let seCancelo = false;
+  
       return () => {
-        console.log("🧠 Cleanup ejecutado", { yaActualizada, completada, estadoManual });
-        if (!yaActualizada &&!completada && !estadoManual) {
+        if (!seCancelo && !yaActualizada && !completada && !estadoManual) {
+          console.log("🧹 Cleanup: ejecutando discard porque no se completó ni se guardó.");
           handleDiscard();
         }
       };
     }, [yaActualizada, completada, estadoManual])
   );
+  
   
 
 useEffect(() => {

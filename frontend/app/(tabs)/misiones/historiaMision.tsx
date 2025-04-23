@@ -11,12 +11,24 @@ export default function HistoriaMision() {
   const [titulo, setTitulo] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  console.log("📥 Obteniendo historia para missionId:", missionId);
   useEffect(() => {
+    if (!missionId) {
+      console.warn("⚠️ No se recibió missionId en los parámetros");
+      return;
+    }
+
     const fetchHistoria = async () => {
       try {
+        console.log("📥 Fetching historia for missionId:", missionId);
         const res = await apiFetch(`/misiones/${missionId}/historia`);
-        if (!res.ok) throw new Error("No se pudo obtener la historia.");
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Error HTTP: ${res.status} - ${errorText}`);
+        }
         const data = await res.json();
+        console.log("📄 Historia obtenida:", data);
 
         if (typeof data.historia !== "string" || data.historia.trim().length === 0) {
           throw new Error("Historia vacía o malformada");
@@ -34,17 +46,20 @@ export default function HistoriaMision() {
 
     if (missionId) {
       fetchHistoria();
+    }else {
+      console.warn("⚠️ No se recibió missionId en los parámetros");
     }
   }, [missionId]);
 
   return (
     <View className="flex-1 bg-[#F4EDE0] pt-10">
-      {/* Botón atrás */}
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-10 left-4 z-10">
-        <Ionicons name="arrow-back" size={28} color="#000" />
-      </TouchableOpacity>
-
-      <ScrollView className="flex-1 px-6 pt-20 pb-10">
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 80,
+          paddingBottom: 140, // <- MÁS espacio para dejar ver el botón
+        }}
+      >
         {loading ? (
           <View className="mt-20 items-center justify-center">
             <ActivityIndicator size="large" color="#699D81" />

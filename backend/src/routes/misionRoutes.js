@@ -18,6 +18,6 @@ router.post('/generate', generateNewMission);
 router.post('/:missionId/validate-image', validateMissionImage);
 router.patch('/usuario/:missionId', updateUserMissionStatus);
 router.get("/mine", getMissionsForUser);
-router.get("/:id/historia")
+router.get("/:id/historia", getMissionHistory)
 
 export default router;

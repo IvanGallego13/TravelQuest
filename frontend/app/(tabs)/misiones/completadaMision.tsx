@@ -7,6 +7,11 @@ export default function MisionCompletada() {
   const { missionId } = useLocalSearchParams();
 
   const handleVerHistoria = () => {
+    console.log("📦 Enviando missionId a historia:", missionId);
+    if (!missionId) {
+      console.warn("⚠️ No se encontró missionId al navegar");
+      return;
+    }
     router.push({
       pathname: "/misiones/historiaMision",
       params: { missionId: missionId?.toString() },
