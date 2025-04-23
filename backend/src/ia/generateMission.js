@@ -56,7 +56,7 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     - 'keywords' debe contener palabras claves relacionadas con ese objeto visual.
     - Asegúrate de que la misión no sea genérica, sino específica y visualmente verificable.
     - La misión debe poder completarse con una sola fotografía clara y representativa.
-    - Con respeto a la hitoria:
+    - Con respeto al campo historia:
         Contenido esperado:
         - Contexto histórico o cultural del objeto
         - Significado simbólico o estético
