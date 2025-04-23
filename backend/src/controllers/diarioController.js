@@ -255,7 +255,7 @@ export const getTravelDaysByBook = async (req, res) => {
 
         return {
           id: day.id,
-          date: day.travel_date,
+          travel_date: day.travel_date,
           image: signedUrl,
         };
       })
@@ -267,3 +267,50 @@ export const getTravelDaysByBook = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+// GET /api/diarios/entradas/:dayId
+export const getEntriesByDay = async (req, res) => {
+  const dayId = req.params.dayId;
+  const userId = req.user.id;
+
+  console.log("📅 Buscando entradas para el día:", dayId);
+
+  try {
+    // Obtener entradas del día
+    const { data: entries, error } = await supabase
+      .from("diary_entries")
+      .select("id, description, image_path, created_at")
+      .eq("travel_day_id", dayId);
+
+    if (error) throw error;
+
+    // Firmar URLs de imagen si existen
+    const signedEntries = await Promise.all(
+      entries.map(async (entry) => {
+        let signedUrl = null;
+
+        if (entry.image_path) {
+          const { data: signed, error: signError } = await supabase.storage
+            .from("journal")
+            .createSignedUrl(entry.image_path, 60 * 60);
+
+          if (!signError && signed?.signedUrl) {
+            signedUrl = signed.signedUrl;
+          }
+        }
+
+        return {
+          id: entry.id,
+          description: entry.description,
+          created_at: entry.created_at,
+          image: signedUrl,
+        };
+      })
+    );
+
+    res.status(200).json(signedEntries);
+  } catch (err) {
+    console.error("❌ Error al obtener entradas del día:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+

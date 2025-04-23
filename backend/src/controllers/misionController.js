@@ -153,7 +153,8 @@ export const generateNewMission = async (req, res) => {
             !iaResult.titulo ||
             !iaResult.descripcion ||
             !iaResult.nombre_objeto ||
-            !Array.isArray(iaResult.keywords)
+            !Array.isArray(iaResult.keywords) ||
+            !iaResult.historia
           ) 
           {
             throw new Error("La misión generada es incompleta o inválida.");
@@ -168,6 +169,7 @@ export const generateNewMission = async (req, res) => {
                 difficulty: dificultadValor,
                 keywords: iaResult.keywords,
                 nombre_objeto: iaResult.nombre_objeto,
+                historia: iaResult.historia,
               },
             ])
             .select()
@@ -256,36 +258,6 @@ export const getMissionsForUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-/**
- * Agregar una nueva misión manualmente para un usuario(requiere de cambios)
- */
-export const addMission = async (req, res) => {
-    const { id_usuario, descripcion_mision, ubicacion, dificultad } = req.body;
-
-    // Validar que la dificultad sea válida
-    if (!['facil', 'media', 'dificil'].includes(dificultad)) {
-        return res.status(400).json({
-            message: 'La dificultad debe ser: facil, media o dificil'
-        });
-    }
-
-    const { data, error } = await supabase
-        .from('Historial_Misiones')
-        .insert([{ 
-            id_usuario, 
-            descripcion_mision, 
-            ubicacion, 
-            dificultad,
-            completada: false
-        }])
-        .select();
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.status(201).json({ message: 'Misión creada correctamente', data });
-};
-
-
 
 export const validateMissionImage = async (req, res) => {
     try {
@@ -324,3 +296,46 @@ export const validateMissionImage = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+/**
+ * GET /api/misiones/:id/historia
+ * Devuelve la historia de una misión SOLO si el usuario la ha completado
+ */
+export const getMissionHistory = async (req, res) => {
+  const missionId = parseInt(req.params.id);
+  const userId = req.user?.id;
+
+  if (!missionId || !userId) {
+    return res.status(400).json({ message: "Faltan parámetros o usuario no autenticado" });
+  }
+
+  try {
+    // 1. Comprobar que la misión fue completada por el usuario
+    const { data: userMission, error: userMissionError } = await supabase
+      .from("user_missions")
+      .select("status")
+      .eq("user_id", userId)
+      .eq("mission_id", missionId)
+      .maybeSingle();
+
+    if (userMissionError) throw userMissionError;
+
+    if (!userMission || userMission.status !== "completed") {
+      return res.status(403).json({ message: "No tienes acceso a esta historia" });
+    }
+
+    // 2. Obtener historia desde la tabla de misiones
+    const { data: mission, error: missionError } = await supabase
+      .from("missions")
+      .select("historia")
+      .eq("id", missionId)
+      .single();
+
+    if (missionError) throw missionError;
+
+    res.status(200).json({ historia: mission.historia });
+  } catch (error) {
+    console.error("❌ Error al obtener historia de misión:", error.message);
+    res.status(500).json({ message: "Error al obtener historia", error: error.message });
+  }
+};
+

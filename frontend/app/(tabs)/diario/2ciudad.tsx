@@ -42,7 +42,15 @@ export default function CityDetail() {
 
   // Navegar al detalle del día
   const handleViewDay = (dayId: string) => {
-    router.push(`/diario/3dia?idDay=${dayId}`);
+    router.push({
+      pathname: "/diario/3dia",
+      params: {
+        idDay: dayId,
+        bookId: bookId?.toString(),
+        city: city?.toString(),
+        image: image?.toString(),
+      },
+    });
   };
 
   return (
@@ -62,45 +70,49 @@ export default function CityDetail() {
           </View>
         )}
       </View>
-
+  
       {/* Lista de días */}
       {loading ? (
         <ActivityIndicator size="large" color="#699D81" />
       ) : (
-        days.map((day) => (
-          <TouchableOpacity
-            key={day.id}
-            className="flex-row justify-between items-center bg-white p-4 mb-4 rounded-xl border-2 border-[#699D81]"
-            onPress={() => handleViewDay(day.id.toString())}
-          >
-            {/* Fecha e imagen */}
-            <View className="flex-row items-center space-x-4">
-              {day.image ? (
-                <Image
-                  source={{ uri: day.image }}
-                  className="w-16 h-16 rounded-md"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-16 h-16 bg-gray-300 rounded-md items-center justify-center">
-                  <Text className="text-xs text-gray-500 text-center">No image</Text>
+        days.map((day) => {
+          const formattedDate = day.travel_date
+            ? new Date(`${day.travel_date}T00:00:00Z`).toLocaleDateString("es-ES")
+            : "Fecha no disponible";
+  
+          return (
+            <TouchableOpacity
+              key={day.id}
+              className="flex-row justify-between items-center bg-white p-4 mb-4 rounded-xl border-2 border-[#699D81]"
+              onPress={() => handleViewDay(day.id.toString())}
+            >
+              {/* Fecha e imagen */}
+              <View className="flex-row items-center space-x-4">
+                {day.image ? (
+                  <Image
+                    source={{ uri: day.image }}
+                    className="w-16 h-16 rounded-md"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-16 h-16 bg-gray-300 rounded-md items-center justify-center">
+                    <Text className="text-xs text-gray-500 text-center">No image</Text>
+                  </View>
+                )}
+  
+                <View>
+                  <Text className="text-black font-bold">{formattedDate}</Text>
                 </View>
-              )}
-
-              <View>
-                <Text className="text-black font-bold">
-                  {new Date(day.travel_date).toLocaleDateString("es-ES")}
-                </Text>
               </View>
-            </View>
-
-            {/* Íconos */}
-            <View className="flex-row space-x-2">
-              <Ionicons name="calendar" size={20} color="#699D81" />
-              <FontAwesome5 name="image" size={18} color="#C76F40" />
-            </View>
-          </TouchableOpacity>
-        ))
+  
+              {/* Iconos */}
+              <View className="flex-row space-x-2">
+                <Ionicons name="calendar" size={20} color="#699D81" />
+                <FontAwesome5 name="image" size={18} color="#C76F40" />
+              </View>
+            </TouchableOpacity>
+          );
+        })
       )}
     </ScrollView>
   );

@@ -46,6 +46,7 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     "description": "Descripción clara de máximo 8 líneas",
     "keywords": ["palabra1", "palabra2", ...], // Entre 3 y 6 palabras clave visuales,
     "nombre_objeto": "Nombre del objeto específico que debe fotografiarse (ej: estatua de Cervantes, escudo del Ayuntamiento, rosetón de la Catedral)"
+    "historia": "Texto explicativo y cultural sobre el objeto fotografiado."
     }
 
     IMPORTANTE:
@@ -55,6 +56,7 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     - 'keywords' debe contener palabras claves relacionadas con ese objeto visual.
     - Asegúrate de que la misión no sea genérica, sino específica y visualmente verificable.
     - La misión debe poder completarse con una sola fotografía clara y representativa.
+    - La historia debe tener entre 250 y 400 alabras, que sea amena informativa y fácil de leer, y si hay algun datomuy curioso y poco conocido inclúyelo.
     - Duración aproximada: ${nivel.timeLimit} minutos.
     `;
     };
@@ -96,7 +98,7 @@ export const generateMission = async (city, difficultyRaw, objetosPrevios = []) 
         let json;
         try {
             json = JSON.parse(match[0]);
-            if (!json.title || !json.description || !json.nombre_objeto || !Array.isArray(json.keywords)) {
+            if (!json.title || !json.description || !json.nombre_objeto || !Array.isArray(json.keywords) || !json.historia) {
                 throw new Error("La IA devolvió datos incompletos");
             }
         } catch (e) {
@@ -114,6 +116,7 @@ export const generateMission = async (city, difficultyRaw, objetosPrevios = []) 
         puntos: DIFFICULTY_LEVELS[difficulty].points,
         tiempoLimite: DIFFICULTY_LEVELS[difficulty].timeLimit,
         dificultad: difficulty,
+        historia: json.historia,
         };
 
         /*const displayNames = {
