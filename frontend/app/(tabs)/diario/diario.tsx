@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { apiFetch } from "../../../lib/api";
+import { useFocusEffect } from "@react-navigation/native";
 
-// Tipo de diario (puedes ampliarlo luego)
+// Tipo de diario
 type TripSummary = {
   id: string;
   city: string;
@@ -20,7 +21,8 @@ export default function JournalIndex() {
   const [loading, setLoading] = useState(true);
 
   //cargar diarios desde el backend
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     const loadTripsFromAPI = async () => {
       try {
         setLoading(true);
@@ -45,14 +47,15 @@ export default function JournalIndex() {
     };
 
     loadTripsFromAPI();
-  }, []);
+   }, [])
+  );
 
   // Navegación al detalle del diario de una ciudad
   const goToTripDetail = (tripId: string, city: string, image?: string) => {
     router.push({
       pathname: "../diario/2ciudad",
       params: {
-        idDiario: tripId,
+        bookId: tripId,
         ciudad: city,
         imagen: image ?? "",
       },

@@ -16,6 +16,8 @@ export default function Mision() {
   const [estadoManual, setEstadoManual] = useState<"completed" | "accepted" | "discarded" | null>(null);
   const numericMissionId = Number(missionId);
   const navigation = useNavigation();
+  const [yaActualizada, setYaActualizada] = useState(false);
+
 
   // Limpiar estado al cargar nueva misión
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function Mision() {
       if (!res.ok) throw new Error("Error actualizando misión");
 
       setCompletada(true);
+      setYaActualizada(true);
+      console.log(`✅ Estado enviado: ${status}`);
       router.replace("/(tabs)/crear");
     } catch (err) {
       console.error(err);
@@ -99,11 +103,12 @@ export default function Mision() {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (!completada && !estadoManual) {
+        console.log("🧠 Cleanup ejecutado", { yaActualizada, completada, estadoManual });
+        if (!yaActualizada &&!completada && !estadoManual) {
           handleDiscard();
         }
       };
-    }, [completada, estadoManual])
+    }, [yaActualizada, completada, estadoManual])
   );
   
 
