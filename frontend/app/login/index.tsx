@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
+import * as AuthSession from "expo-auth-session";
+import { supabase } from "../../lib/supabase";
 import {
   View,
   Text,
@@ -53,10 +55,7 @@ export default function Login() {
         }),
       });
   
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText);
-      }
+      if (!res.ok) throw new Error(await res.text());
   
       const data = await res.json();
       await login(data.token, data.userId); // almacena el token recibido
@@ -66,9 +65,38 @@ export default function Login() {
       console.error(err);
     }
   };
+  const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
   
-
- 
+    const redirectUrl = "https://auth.expo.io/@blancaciv/myApp"; // asegúrate que este esté registrado en Google
+  
+    console.log("📍 redirectUrl:", redirectUrl);
+  
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+  
+    console.log("✅ Resultado:", error, data);
+  
+    if (error) {
+      Alert.alert("Error", "No se pudo iniciar sesión con Google");
+      console.error(error);
+    }
+  
+    if (!data?.url) {
+      Alert.alert("No se pudo abrir el navegador", "No se generó la URL de autenticación");
+      return;
+    }
+  
+    // 👇 Abre el navegador manualmente
+    const result = await AuthSession.startAsync({ authUrl: data.url });
+    console.log("🔁 Resultado de AuthSession:", result);
+  };
+  
+  
 
   const goToRegister = () => {
     router.push("/login/register");
@@ -121,6 +149,14 @@ export default function Login() {
       >
         <Text className="text-white font-semibold text-base">Registrarse</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={handleGoogleLogin}
+        className="bg-white border border-[#C76F40] py-3 rounded-xl items-center"
+      >
+        <Text className="text-[#C76F40] font-semibold text-base">Iniciar sesión con Google</Text>
+      </TouchableOpacity>
+
     </KeyboardAvoidingView>
   );
 }
