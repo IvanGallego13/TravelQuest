@@ -59,6 +59,7 @@ export default function Dificultad() {
           missionId: mission.id.toString(),
           title: mission.title,
           description: mission.description,
+          difficulty: mission.difficulty,
         },
       });
     } catch (err) {

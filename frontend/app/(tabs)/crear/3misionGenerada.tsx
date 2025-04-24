@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,12 +10,14 @@ import { Camera } from "expo-camera";
 
 export default function Mision() {
   const router = useRouter();
-  const { missionId, title, description } = useLocalSearchParams();
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [completada, setCompletada] = useState(false);
-  const [estadoManual, setEstadoManual] = useState<"completed" | "accepted" | "discarded" | null>(null);
+  const { missionId, title, description, difficulty} = useLocalSearchParams();
   const numericMissionId = Number(missionId);
   const navigation = useNavigation();
+
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [completada, setCompletada] = useState(false);
+  const estadoEnviadoRef = useRef<"none" | "completed" | "accepted" | "discarded">("none");
+  
   const [yaActualizada, setYaActualizada] = useState(false);
 
 
@@ -23,7 +25,7 @@ export default function Mision() {
   useEffect(() => {
     setImageUri(null);
     setCompletada(false);
-    setEstadoManual(null);
+    estadoEnviadoRef.current = "none";
   }, [missionId]);
 
   const sendToBackend = async (status: "completed" | "accepted" | "discarded") => {
@@ -35,7 +37,6 @@ export default function Mision() {
       if (status === "completed") {
         body.completed_at = new Date().toISOString();
         body.image_url = imageUri;
-        //body.response = missionResponse;
       }
       console.log("📍 missionId a enviar:", numericMissionId);
 
@@ -47,9 +48,7 @@ export default function Mision() {
 
       if (!res.ok) throw new Error("Error actualizando misión");
 
-      setCompletada(true);
-      setEstadoManual("completed");
-      setYaActualizada(true);
+      estadoEnviadoRef.current = status;
       console.log(`✅ Estado enviado: ${status}`);
 
       if (status === "completed") {
@@ -57,6 +56,7 @@ export default function Mision() {
         pathname: "/misiones/completadaMision",
         params: {
           missionId: numericMissionId.toString(),
+          difficulty: difficulty?.toString(),
         },
       });
     } else {
@@ -74,36 +74,33 @@ export default function Mision() {
       return;
     }
      // Validar imagen si hay una
-    if (imageUri) {
-      try {
-        const res = await apiFetch(`/misiones/${missionId}/validate-image`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_url: imageUri }),
-        });
+    try {
+      const res = await apiFetch(`/misiones/${missionId}/validate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: imageUri }),
+      });
 
-        if (!res.ok) {
-          const err = await res.json();
-          Alert.alert("Imagen no válida", err.message || "La imagen no es adecuada para esta misión.");
-          return;
-        }
-      } catch (error) {
-        console.error("Error en validación de imagen", error);
-        Alert.alert("Error", "No se pudo validar la imagen.");
+      if (!res.ok) {
+        const err = await res.json();
+        Alert.alert("Imagen no válida", err.message || "La imagen no es adecuada para esta misión.");
         return;
       }
+      sendToBackend("completed");
+    } catch (error) {
+      console.error("Error en validación de imagen", error);
+      Alert.alert("Error", "No se pudo validar la imagen.");
     }
-    setEstadoManual("completed");
-    sendToBackend("completed");
   };
+    //setEstadoManual("completed");
+    //sendToBackend("completed");
+  
 
   const handleSaveForLater = () => {
-    setEstadoManual("accepted");
     sendToBackend("accepted");
   };
 
-  const handleDiscard = () => {
-    setEstadoManual("discarded");
+  const handleDiscard = () => {;
     sendToBackend("discarded");
   };
 
@@ -113,22 +110,20 @@ export default function Mision() {
 
   useFocusEffect(
     useCallback(() => {
-      let seCancelo = false;
-  
       return () => {
-        if (!seCancelo && !yaActualizada && !completada && !estadoManual) {
+        if (estadoEnviadoRef.current === "none") {
           console.log("🧹 Cleanup: ejecutando discard porque no se completó ni se guardó.");
           handleDiscard();
         }
       };
-    }, [yaActualizada, completada, estadoManual])
+    }, [])
   );
   
   
 
 useEffect(() => {
   const unsubscribe = navigation.addListener("beforeRemove", (event) => {
-    if (completada || estadoManual) return;
+    if (estadoEnviadoRef.current !== "none") return;
 
     event.preventDefault();
 
@@ -141,7 +136,6 @@ useEffect(() => {
           text: "Descartar y salir",
           style: "destructive",
           onPress: () => {
-            setEstadoManual("discarded");
             sendToBackend("discarded");
             navigation.dispatch(event.data.action); // Continúa navegación
           },
@@ -151,7 +145,7 @@ useEffect(() => {
   });
 
   return unsubscribe;
-}, [navigation, completada, estadoManual]);
+}, [navigation]);
 
 
   const handleTakePhoto = async () => {

@@ -4,7 +4,17 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function MisionCompletada() {
   const router = useRouter();
-  const { missionId } = useLocalSearchParams();
+  const { missionId, difficulty} = useLocalSearchParams();
+  console.log("📦 Difficulty recibida:", difficulty);
+
+  const puntosPorDificultad: Record<number, number> =  {
+    1: 10,
+    3: 20,
+    5: 30,
+  };
+  
+  const dificultadNumerica = typeof difficulty === "string" ? parseInt(difficulty, 10) : difficulty;
+  const puntosGanados = puntosPorDificultad[dificultadNumerica as number] ?? 0;
 
   const handleVerHistoria = () => {
     console.log("📦 Enviando missionId a historia:", missionId);
@@ -28,8 +38,11 @@ export default function MisionCompletada() {
       <Text className="text-2xl font-bold text-black mt-4 mb-2 text-center">
         ¡Misión completada!
       </Text>
+      <Text className="text-base text-black text-center mb-4">
+        Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
+      </Text>
       <Text className="text-base text-black text-center mb-6">
-        Has completado con éxito tu misión. ¿Quieres saber más sobre lo que fotografiaste?
+        ¿Quieres saber más sobre lo que fotografiaste?
       </Text>
 
       <TouchableOpacity

@@ -10,17 +10,17 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const DIFFICULTY_LEVELS = {
     "facil": {
         description: "Monumentos o lugares turísticos accesibles y populares.",
-        points: 100,
+        points: 10,
         timeLimit: 60 // minutos
     },
     "media": {
         description: "Exploración de estatuas, obras de arte o edificios históricos menos conocidos.",
-        points: 200,
+        points: 20,
         timeLimit: 90
     },
     "dificil": {
         description: "Descubrimiento de detalles ocultos o curiosidades poco evidentes en la ciudad.",
-        points: 300,
+        points: 30192.168,
         timeLimit: 120
     }
 };
@@ -46,7 +46,7 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     "description": "Descripción clara de máximo 8 líneas",
     "keywords": ["palabra1", "palabra2", ...], // Entre 3 y 6 palabras clave visuales,
     "nombre_objeto": "Nombre del objeto específico que debe fotografiarse (ej: estatua de Cervantes, escudo del Ayuntamiento, rosetón de la Catedral)"
-    "historia": "Texto explicativo y cultural sobre el objeto fotografiado."
+    "historia": "Texto explicativo y cultural sobre el objeto fotografiado, sin lenguaje de misión"
     }
 
     IMPORTANTE:
@@ -57,19 +57,24 @@ const createMissionPrompt = (city, difficultyKey, objetosPrevios = []) => {
     - Asegúrate de que la misión no sea genérica, sino específica y visualmente verificable.
     - La misión debe poder completarse con una sola fotografía clara y representativa.
     - Con respeto al campo historia:
-        Contenido esperado:
-        - Contexto histórico o cultural del objeto
-        - Significado simbólico o estético
-        - Estilo arquitectónico o artístico, si aplica
-        - Curiosidades o anécdotas interesantes relacionadas con ese objeto o su entorno
-        - Importancia dentro de la ciudad o de su época
+        - Este campo NO debe tener instrucciones ni tono de reto, ten en cuenta que esto lo verá el usuario solo cuando ya haya completado la mision y fotografiado el elemento.
+        - No uses frases como "la misión te lleva a…" o "debes encontrar…".
+        - No hables del usuario ni des consejos.
+        - En vez de eso, escribe un texto como si fuera una cápsula de historia o cultura para un museo o guía turística.
+        - Divide el texto en parrafos para una lectura más fácil.
 
-        Instrucciones:
-        - No hables de misiones, desafíos ni exploraciones.
-        - No digas que el usuario debe buscar o encontrar nada.
-        - No des instrucciones ni uses frases como "la misión te llevó a…".
-        - En lugar de eso, presenta la información como una cápsula educativa o cultural.
-        - Escribe con un tono cálido, informativo y accesible para viajeros o curiosos culturales.
+        Contenido sugerido:
+        - Contexto histórico, simbólico o artístico del objeto.
+        - Estilo arquitectónico o cultural si aplica.
+        - Curiosidades o datos poco conocidos del lugar.
+        - Importancia local del objeto o del entorno donde está ubicado.
+        - Debe contener entre 250 y 400 palabras.
+
+        Tono de la historia:
+        - Informativo, cálido y accesible.
+        - Evita dramatismo o lenguaje motivacional.
+        - Imagina que lo lee un viajero curioso que ya fotografió ese objeto y quiere saber más.
+
     - Duración aproximada: ${nivel.timeLimit} minutos.
     `;
     };

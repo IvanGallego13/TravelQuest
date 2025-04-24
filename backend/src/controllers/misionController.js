@@ -215,7 +215,7 @@ export const generateNewMission = async (req, res) => {
 };
 
 /**
- * GET /api/misiones/mias
+ * GET /api/misiones/mine
  * Devuelve todas las misiones del usuario autenticado
  */
 export const getMissionsForUser = async (req, res) => {
@@ -234,7 +234,8 @@ export const getMissionsForUser = async (req, res) => {
           title,
           description,
           difficulty,
-          created_at
+          created_at,
+          historia
         )
       `)
       .eq("user_id", userId);
@@ -250,6 +251,7 @@ export const getMissionsForUser = async (req, res) => {
       completed_at: entry.completed_at,
       status: entry.status,
       image_url: entry.image_url,
+      historia: entry.missions.historia ?? null,
     }));
 
     res.json(missions);
