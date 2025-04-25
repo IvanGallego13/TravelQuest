@@ -2,8 +2,12 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
-import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import * as AuthSession from "expo-auth-session";
+
 import {
   View,
   Text,
@@ -22,6 +26,8 @@ export default function Login() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [modoPrueba, setModoPrueba] = useState(false); // activa/desactiva conexión real
+
+  const redirectUri = Linking.createURL("login-callback");
   
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
@@ -65,39 +71,180 @@ export default function Login() {
       console.error(err);
     }
   };
+  
+  /*const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
+  
+    const redirectUri = "https://auth.expo.io/@blancaciv/myApp";
+    //AuthSession.makeRedirectUri({ useProxy: true });
+  
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
+  
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", (event) => {
+      console.log("🔁 Volvió desde navegador:", event.url);
+  
+      supabase.auth.getSession().then(({ data }) => {
+        console.log("🟢 Sesión detectada:", data.session);
+        if (data.session) {
+          login(data.session.access_token, data.session.user.id);
+          router.replace("/login/localizacion");
+        }
+      });
+  
+      WebBrowser.dismissBrowser();
+      listener.remove(); // limpia listener
+    });
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUri,
+      },
+    });
+  
+    if (error) {
+      console.error("❌ Error generando login:", error.message);
+      return;
+    }
+  
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
+  };
   const handleGoogleLogin = async () => {
     console.log("🔍 Google login: iniciado");
   
-    const redirectUrl = "https://auth.expo.io/@blancaciv/myApp"; // asegúrate que este esté registrado en Google
+    const redirectUri = Linking.createURL("login-callback");
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
   
-    console.log("📍 redirectUrl:", redirectUrl);
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", async (event) => {
+      console.log("📥 Evento recibido:", event.url);
+    
+      const url = new URL(event.url);
+      const code = url.searchParams.get("code");
+    
+      if (!code) {
+        console.error("❌ No se encontró el parámetro 'code' en el URL");
+        return;
+      }
+    
+      console.log("📨 Código recibido:", code);
+    
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+      if (error) {
+        console.error("❌ Error obteniendo sesión:", error.message);
+      } else if (data.session) {
+        console.log("🟢 Sesión obtenida:", data.session);
+        login(data.session.access_token, data.session.user.id);
+        router.replace("/login/localizacion");
+      }
+  
+      WebBrowser.dismissBrowser();
+      listener.remove();
+    });
   
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: redirectUrl,
+        redirectTo: redirectUri,
       },
     });
   
-    console.log("✅ Resultado:", error, data);
-  
     if (error) {
-      Alert.alert("Error", "No se pudo iniciar sesión con Google");
-      console.error(error);
-    }
-  
-    if (!data?.url) {
-      Alert.alert("No se pudo abrir el navegador", "No se generó la URL de autenticación");
+      console.error("❌ Error generando login:", error.message);
       return;
     }
   
-    // 👇 Abre el navegador manualmente
-    const result = await AuthSession.startAsync({ authUrl: data.url });
-    console.log("🔁 Resultado de AuthSession:", result);
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
+  };*/
+  const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
+  
+    const redirectUri = Linking.createURL("login-callback");
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
+  
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", async (event) => {
+      console.log("📥 Evento recibido:", event.url);
+  
+      const url = new URL(event.url);
+      const code = url.searchParams.get("code");
+  
+      if (!code) {
+        console.error("❌ No se encontró el parámetro 'code' en el URL");
+        return;
+      }
+  
+      console.log("📨 Código recibido:", code);
+  
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+      if (error) {
+        console.error("❌ Error obteniendo sesión:", error.message);
+        return;
+      }
+  
+      const session = data.session;
+      if (session) {
+        const { user } = session;
+        console.log("🟢 Sesión obtenida:", session);
+        await login(session.access_token, user.id); // guardar sesión
+  
+        // Comprobar si ya tiene profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+  
+        if (profileError || !profileData) {
+          console.log("🆕 Creando nuevo perfil para el usuario...");
+  
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              username: user.user_metadata?.full_name || user.email,
+              avatar: user.user_metadata?.avatar_url || null,
+              score: 0,
+            });
+  
+          if (insertError) {
+            console.error("❌ Error creando el perfil:", insertError.message);
+          } else {
+            console.log("✅ Perfil creado correctamente.");
+          }
+        } else {
+          console.log("🔁 Perfil ya existente.");
+        }
+  
+        router.replace("/login/localizacion");
+      }
+  
+      WebBrowser.dismissBrowser();
+      listener.remove();
+    });
+  
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUri,
+      },
+    });
+  
+    if (error) {
+      console.error("❌ Error generando login:", error.message);
+      return;
+    }
+  
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
   };
   
   
-
   const goToRegister = () => {
     router.push("/login/register");
   };
