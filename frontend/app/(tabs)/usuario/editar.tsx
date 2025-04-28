@@ -18,6 +18,8 @@ import React from "react";
 export default function EditarUsuario() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [currentUsername, setCurrentUsername] = useState(""); // 👈 nombre real
+  const [newUsername, setNewUsername] = useState(""); // 👈 nombre nuevo que se edita
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -38,7 +40,12 @@ export default function EditarUsuario() {
           });
   
           const data = await res.json();
-  
+          
+          if (data.profile.username) {
+            setCurrentUsername(data.profile.username);
+            setNewUsername(data.profile.username);
+          }
+          
           if (data.profile.avatar_url) {
             setAvatarUrl(data.profile.avatar_url);
           }
@@ -62,12 +69,13 @@ export default function EditarUsuario() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username: newUsername }),
       });
 
       if (!res.ok) throw new Error("Error al actualizar");
 
       Alert.alert("Nombre actualizado", "Tu nombre de usuario ha sido cambiado.");
+      setCurrentUsername(newUsername); // 👈 Actualizar visualmente
     } catch (err) {
       Alert.alert("Error", "No se pudo cambiar el nombre.");
       console.error(err);
@@ -127,7 +135,7 @@ export default function EditarUsuario() {
       {/* 👤 Avatar y botón */}
       <TouchableOpacity
         onPress={() => router.push("/usuario/editar-avatar")}
-        className="items-center mb-6"
+        className="items-center mb-2"
       >
         <Image
           source={
@@ -137,9 +145,12 @@ export default function EditarUsuario() {
           }
           className="w-24 h-24 rounded-full"
         />
-        <Text className="text-[#699D81] mt-2 underline">Cambiar avatar</Text>
-      </TouchableOpacity>
+        <Text className="text-[#699D81] mt-1 underline">Cambiar avatar</Text>
 
+        
+      </TouchableOpacity>
+      <Text className="text-black mb-1 font-semibold text-lg text-center">{currentUsername}</Text>
+      
       {/* 📧 Email */}
       <Text className="text-black font-semibold mb-1">Correo electrónico:</Text>
       <TextInput
@@ -151,8 +162,8 @@ export default function EditarUsuario() {
       {/* 📝 Cambiar nombre de usuario */}
       <Text className="text-black font-semibold mb-1">Nombre de usuario:</Text>
       <TextInput
-        value={username}
-        onChangeText={setUsername}
+        value={newUsername}
+        onChangeText={setNewUsername}
         placeholder="Ej: viajero23"
         className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
       />

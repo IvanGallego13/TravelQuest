@@ -139,10 +139,6 @@ export default function EditarAvatar() {
               source={avatar}
               className="w-24 h-24 m-2 rounded-full"
             />
-            <Image
-              source={avatar}
-              className="w-24 h-24 m-2 rounded-full"
-            />
           </TouchableOpacity>
         ))}
       </View>

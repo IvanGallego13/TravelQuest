@@ -68,7 +68,8 @@ export default function Usuario() {
   
 //const nivel = logros.reduce((acc, l) => acc + l.puntos, 0) +
 //              misiones.reduce((acc, m) => acc + m.puntos, 0);
-   
+const [username, setUsername] = useState("");
+
 useFocusEffect(
   React.useCallback(() => {
     const cargarPerfil = async () => {
@@ -86,6 +87,9 @@ useFocusEffect(
 
         if (data.profile.avatar_url) {
           setAvatarUrl(data.profile.avatar_url);
+        }
+        if (data.profile.username) {
+          setUsername(data.profile.username);
         }
       } catch (err) {
         console.error("Error al cargar avatar en usuario.tsx:", err);
@@ -133,6 +137,7 @@ useFocusEffect(
       onPress={() => {
         setMostrarMenu(false);
         logout();
+        router.replace("/login")
       }}
       className="flex-row items-center px-4 py-3 border-b border-gray-200"
     >
@@ -164,6 +169,7 @@ useFocusEffect(
           }
           className="w-24 h-24 rounded-full mb-2"
         />
+        <Text className="text-black font-semibold text-lg">{username}</Text>
         <Text className="text-black font-bold text-lg mb-2">Nivel {nivel}</Text>
 
         <TouchableOpacity
