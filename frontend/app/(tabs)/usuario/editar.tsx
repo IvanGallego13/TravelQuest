@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -12,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { apiFetch } from "../../../lib/api";
 import * as SecureStore from "expo-secure-store";
+import React from "react";
 
 export default function EditarUsuario() {
   const [email, setEmail] = useState("");
@@ -23,34 +25,33 @@ export default function EditarUsuario() {
   const router = useRouter();
 
   // 🔁 Cargar perfil al montar componente
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = await SecureStore.getItemAsync("travelquest_token");
-
-        const res = await apiFetch("/ajustes/perfil", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-
-        const data = await res.json();
-
-        setEmail(data.user.email);
-        setUsername(data.profile.username);
-        setAvatarUrl(data.profile.avatar || "");
-      } catch (err) {
-        Alert.alert("Error", "No se pudo cargar el perfil.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
+  useFocusEffect(
+    React.useCallback(() => {
+      const cargarPerfil = async () => {
+        try {
+          const token = await SecureStore.getItemAsync("travelquest_token");
+  
+          const res = await apiFetch("/ajustes/perfil", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+  
+          const data = await res.json();
+  
+          if (data.profile.avatar_url) {
+            setAvatarUrl(data.profile.avatar_url);
+          }
+        } catch (err) {
+          console.error("Error al cargar avatar en usuario.tsx:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      cargarPerfil();
+    }, [])
+  );
   const handleUsernameChange = async () => {
     try {
       const token = await SecureStore.getItemAsync("travelquest_token");
@@ -73,49 +74,6 @@ export default function EditarUsuario() {
     }
   };
 
-  /*const handlePasswordChange = async () => {
-    if (!oldPassword || !newPassword) {
-      return Alert.alert("Error", "Completa ambos campos.");
-    }
-  
-    try {
-      const token = await SecureStore.getItemAsync("travelquest_token");
-  
-      const res = await apiFetch("/ajustes/cambiar-Contrasena", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          actual: oldPassword,
-          nueva: newPassword,
-        }),
-      });
-  
-      const text = await res.text(); // Leer como texto plano
-      console.log("📥 Respuesta cruda del servidor:", text);
-  
-      try {
-        const data = JSON.parse(text); // Intentamos parsear a JSON
-  
-        if (!res.ok) {
-          Alert.alert("Error", data.error || "No se pudo cambiar la contraseña.");
-          return;
-        }
-  
-        Alert.alert("Contraseña actualizada", "Tu nueva contraseña se ha guardado.");
-        setOldPassword("");
-        setNewPassword("");
-      } catch (parseError) {
-        console.error("❌ No se pudo parsear como JSON:", text);
-        Alert.alert("Error inesperado", "Respuesta del servidor no es válida JSON.");
-      }
-    } catch (err) {
-      console.error("❌ Error general en petición:", err);
-      Alert.alert("Error", "No se pudo actualizar la contraseña.");
-    }
-  };*/
 
   const handlePasswordChange = async () => {
     if (!oldPassword || !newPassword) {
@@ -138,6 +96,7 @@ export default function EditarUsuario() {
       });
       
       const data = await res.json();
+      console.log("🧠 Perfil recibido:", data);
 
       if (!res.ok) {
         Alert.alert("Error", data.error || "No se pudo cambiar la contraseña.");

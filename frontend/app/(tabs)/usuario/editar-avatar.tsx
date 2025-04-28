@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiFetch } from "../../../lib/api";
+import * as SecureStore from "expo-secure-store";
+
 import {
   View,
   Text,
@@ -10,8 +13,10 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 
+
 export default function EditarAvatar() {
   const [avatarSeleccionado, setAvatarSeleccionado] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>(""); // 🔑 Necesario para backend
   const router = useRouter();
 
   // 📁 Avatares locales prediseñados
@@ -25,6 +30,35 @@ export default function EditarAvatar() {
 
   ];
 
+  // 🔁 Cargar el username actual
+  useEffect(() => {
+    const fetchUsername = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("travelquest_token");
+        const res = await apiFetch("/ajustes/perfil", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const data = await res.json();
+        console.log("📥 Datos recibidos del perfil:", data);
+  
+        const usernameExtraido = data.profile?.username;
+        if (usernameExtraido) {
+          setUsername(usernameExtraido);
+          console.log("✅ Username cargado:", usernameExtraido);
+        } else {
+          console.warn("⚠️ Username no encontrado en la respuesta");
+        }
+  
+      } catch (err) {
+        console.error("❌ Error cargando username:", err);
+        Alert.alert("Error", "No se pudo obtener tu nombre de usuario.");
+      }
+    };
+  
+    fetchUsername();
+  }, []);
+  
   // 📷 Escoger imagen personalizada
   const seleccionarFoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -45,13 +79,43 @@ export default function EditarAvatar() {
       Alert.alert("Selecciona un avatar", "Elige uno antes de guardar.");
       return;
     }
+  
+    try {
+      const token = await SecureStore.getItemAsync("travelquest_token");
+      
+      console.log("🔒 Token obtenido:", token);
+      console.log("🖼 Avatar seleccionado:", avatarSeleccionado);
+      console.log("📤 Username enviado:", username);
+      
+      if (!username || username.trim() === "") {
+        Alert.alert("Error", "No se ha podido cargar tu nombre de usuario.");
+        return;
+      }
+      
+      const res = await apiFetch("/ajustes/perfil", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ avatar_url: avatarSeleccionado, username, 
+        }),
+      });
+  
+      const data = await res.json();
+      console.log("📥 Respuesta del servidor:", data);
 
-    // Aquí puedes hacer:
-    // - subir a Supabase Storage
-    // - guardar en tu backend el path/URL
-
-    Alert.alert("Avatar guardado", "Tu avatar ha sido actualizado.");
-    router.back(); // Volver a editar perfil
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo guardar el avatar.");
+        return;
+      }
+  
+      Alert.alert("Avatar guardado", "Tu avatar ha sido actualizado.");
+      router.back(); // volver a editar perfil
+    } catch (err) {
+      Alert.alert("Error", "No se pudo conectar con el servidor.");
+      console.error("Error guardando avatar:", err);
+    }
   };
 
   return (
@@ -63,13 +127,18 @@ export default function EditarAvatar() {
         {avatares.map((avatar, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => setAvatarSeleccionado(Image.resolveAssetSource(avatar).uri)}
+             onPress={() => setAvatarSeleccionado(Image.resolveAssetSource(avatar).uri)}
+            
             className={`rounded-full border-4 ${
               avatarSeleccionado === Image.resolveAssetSource(avatar).uri
                 ? "border-[#C76F40]"
                 : "border-transparent"
             }`}
           >
+            <Image
+              source={avatar}
+              className="w-24 h-24 m-2 rounded-full"
+            />
             <Image
               source={avatar}
               className="w-24 h-24 m-2 rounded-full"
