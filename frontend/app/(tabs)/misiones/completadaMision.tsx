@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, TouchableOpacity, Image, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -33,31 +33,53 @@ export default function MisionCompletada() {
   };
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] justify-center items-center px-6">
-      <Ionicons name="checkmark-circle-outline" size={64} color="#699D81" />
-      <Text className="text-2xl font-bold text-black mt-4 mb-2 text-center">
-        ¡Misión completada!
-      </Text>
-      <Text className="text-base text-black text-center mb-4">
-        Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
-      </Text>
-      <Text className="text-base text-black text-center mb-6">
-        ¿Quieres saber más sobre lo que fotografiaste?
-      </Text>
+    <ImageBackground
+      source={require('../../../assets/images/catedral.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 bg-white/20 justify-center items-center px-6">
 
-      <TouchableOpacity
-        onPress={handleVerHistoria}
-        className="bg-[#699D81] px-6 py-3 rounded-full mb-4"
-      >
-        <Text className="text-white font-semibold text-base">Ver historia</Text>
-      </TouchableOpacity>
+        {/* Icono de éxito */}
+        <Ionicons name="checkmark-circle" size={80} color="#699D81" />
 
-      <TouchableOpacity
-        onPress={handleExplorar}
-        className="bg-[#C76F40] px-6 py-3 rounded-full"
-      >
-        <Text className="text-white font-semibold text-base">Seguir explorando</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Mensaje principal */}
+        <Text className="text-3xl font-bold text-black mt-6 mb-4 text-center">
+          ¡Misión completada!
+        </Text>
+
+        {/* Puntos ganados */}
+        <Text className="text-lg text-black text-center mb-2">
+          Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
+        </Text>
+
+        {/* Pregunta */}
+        <Text className="text-lg text-black text-center mb-8">
+          ¿Quieres saber más sobre lo que fotografiaste?
+        </Text>
+
+        {/* Botones de acción */}
+        <View className="flex-col space-y-6 w-full">
+
+          <TouchableOpacity
+            onPress={handleVerHistoria}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between mb-3"
+          >
+            <Text className="text-black font-bold text-lg">🎯 Ver historia</Text>
+            <Text className="text-black text-xl">→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleExplorar}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between"
+          >
+            <Text className="text-black font-bold text-lg">🌍 Seguir explorando</Text>
+            <Text className="text-black text-xl">→</Text>
+          </TouchableOpacity>
+
+        </View>
+
+      </View>
+    </ImageBackground>
   );
 }

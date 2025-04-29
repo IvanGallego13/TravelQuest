@@ -17,6 +17,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
 } from "react-native";
 
 export default function Login() {
@@ -250,61 +251,81 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-[#F4EDE0] justify-center px-6"
+    <ImageBackground
+      source={require('../../assets/images/caminante.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      {/* Logo y título */}
-      <View className="flex-row justify-center items-center mb-10">
-        <Image
-          source={require("../../assets/images/logo.png")}
-          className="w-10 h-10 mr-2"
-        />
-        <Text className="text-2xl font-bold text-black">TravelQuest</Text>
-      </View>
-
-      {/* Inputs */}
-      <Text className="text-black font-semibold mb-1">Usuario:</Text>
-      <TextInput
-        value={usuario}
-        onChangeText={setUsuario}
-        placeholder="Tu usuario"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-
-      <Text className="text-black font-semibold mb-1">Contraseña:</Text>
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Tu contraseña"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
-      />
-
-      {/* Botón de login */}
-      <TouchableOpacity
-        onPress={handleLogin}
-        className="bg-[#C76F40] py-3 rounded-xl mb-3 items-center"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-white/20 px-6 justify-center pb-20 "
       >
-        <Text className="text-white font-semibold text-base">Iniciar sesión</Text>
-      </TouchableOpacity>
+        {/* Contenedor central de login */}
+        <View className="bg-white/80 p-6 rounded-2xl shadow-md">
+          
+          {/* Título */}
+          <View className="items-center mb-8">
+            <Text className="text-2xl font-bold text-black">TravelQuest</Text>
+          </View>
 
-      {/* Botón para registrarse */}
-      <TouchableOpacity
-        onPress={goToRegister}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
-      >
-        <Text className="text-white font-semibold text-base">Registrarse</Text>
-      </TouchableOpacity>
+          {/* Input Usuario */}
+          <Text className="text-black text-lg font-semibold mb-1">Usuario:</Text>
+          <TextInput
+            value={usuario}
+            onChangeText={setUsuario}
+            placeholder="Tu usuario"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-4 text-black"
+          />
 
-      <TouchableOpacity
-        onPress={handleGoogleLogin}
-        className="bg-white border border-[#C76F40] py-3 rounded-xl items-center"
-      >
-        <Text className="text-[#C76F40] font-semibold text-base">Iniciar sesión con Google</Text>
-      </TouchableOpacity>
+          {/* Input Contraseña */}
+          <Text className="text-black text-lg font-semibold mb-1">Contraseña:</Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Tu contraseña"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-6 text-black"
+          />
 
-    </KeyboardAvoidingView>
+          {/* Botón Iniciar sesión */}
+          <TouchableOpacity
+            onPress={handleLogin}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mb-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">🔓</Text>
+              <Text className="text-black font-bold text-lg">Iniciar sesión</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón Registrarse */}
+          <TouchableOpacity
+            onPress={goToRegister}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mb-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">📝</Text>
+              <Text className="text-black font-bold text-lg">Registrarse</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón Google (comentado por ahora) */}
+          {/*
+          <TouchableOpacity
+            onPress={handleGoogleLogin}
+            className="bg-white border border-[#C76F40] px-6 py-4 rounded-2xl shadow-md"
+          >
+            <Text className="text-[#C76F40] font-semibold text-center">Iniciar sesión con Google</Text>
+          </TouchableOpacity>
+          */}
+          
+        </View>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 

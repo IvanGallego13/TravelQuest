@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator,ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
@@ -50,43 +50,49 @@ export default function HistoriaMision() {
       console.warn("⚠️ No se recibió missionId en los parámetros");
     }
   }, [missionId]);
-
   return (
-    <View className="flex-1 bg-[#F4EDE0] pt-10">
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 80,
-          paddingBottom: 140, // <- MÁS espacio para dejar ver el botón
-        }}
-      >
-        {loading ? (
-          <View className="mt-20 items-center justify-center">
-            <ActivityIndicator size="large" color="#699D81" />
-            <Text className="text-black mt-4">Cargando historia...</Text>
-          </View>
-        ) : historia ? (
-          <>
-            {titulo && (
-              <Text className="text-xl font-bold text-black mb-4 text-center">{titulo}</Text>
-            )}
-            <Text className="text-base text-black leading-6 text-justify whitespace-pre-line">
-              {historia}
-            </Text>
-          </>
-        ) : (
-          <Text className="text-black mt-10 text-center italic">
-            No se pudo mostrar la historia para esta misión.
-          </Text>
+    <ImageBackground
+      source={require('../../../assets/images/ciudad2.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 bg-white/20 px-6 pt-16 justify-start">
+
+        {/* Título */}
+        {titulo && !loading && (
+          <Text className="text-2xl font-bold text-black text-center mb-6">{titulo}</Text>
         )}
 
+        {/* Contenedor scrollable con altura fija */}
+        <View className="bg-white/80 rounded-2xl shadow-md p-4 mb-8" style={{ height: 500 }}>
+          {loading ? (
+            <View className="flex-1 justify-center items-center">
+              <ActivityIndicator size="large" color="#699D81" />
+              <Text className="text-black mt-4">Cargando historia...</Text>
+            </View>
+          ) : historia ? (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text className="text-black text-base leading-7 text-justify whitespace-pre-line">
+                {historia}
+              </Text>
+            </ScrollView>
+          ) : (
+            <Text className="text-black italic text-center">
+              No se pudo mostrar la historia para esta misión.
+            </Text>
+          )}
+        </View>
+
+        {/* Botón fijo abajo */}
         <TouchableOpacity
-          className="mt-10 bg-[#699D81] py-3 px-4 rounded-xl items-center"
+          className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-center"
           onPress={() => router.replace("/(tabs)/crear")}
         >
-          <Text className="text-white font-semibold text-base">Seguir explorando</Text>
+          <Text className="text-black font-bold text-lg">🌍 Seguir explorando</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </View>
+
+      </View>
+    </ImageBackground>
   );
+  
 }

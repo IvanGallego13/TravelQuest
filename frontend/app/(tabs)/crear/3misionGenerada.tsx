@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, ImageBackground} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation  } from "@react-navigation/native";
 import { apiFetch } from "../../../lib/api"; 
@@ -177,77 +177,107 @@ useEffect(() => {
   };
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] pt-10">
-      {/* Volver */}
-      <TouchableOpacity onPress={handleBack} className="absolute top-10 left-4 z-10">
-        <Ionicons name="arrow-back" size={24} color="#000" />
-      </TouchableOpacity>
-
-      <ScrollView className="flex-1 px-6">
-        <Text className="text-black font-bold text-lg mb-4 text-center">
-          {title ?? "Misión sin título"}
-        </Text>
-
+    <ImageBackground
+      source={require('../../../assets/images/catedral.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 bg-white/20 pt-10">
         
-        <Text className="text-black mb-4">
-          {description ?? "Descripción no disponible"}
-        </Text>
-        
-        <View className="bg-gray-200 rounded-xl items-center justify-center p-6 mb-6">
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, marginBottom: 10 }} />
-          ) : (
-            <Image
-              source={require("../../../assets/images/icon.png")}
-              style={{ width: 40, height: 40, marginBottom: 10 }}
-            />
-          )}
+        {/* Botón volver */}
+        <TouchableOpacity
+          onPress={handleBack}
+          className="absolute top-10 left-4 z-10 bg-white/70 rounded-full p-2 shadow-md"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
-          <Text className="text-gray-600 text-center mb-2">
-            Al pulsar, opción de hacer foto o subirla
-          </Text>
+        <ScrollView className="flex-1 px-6">
 
-          <View className="flex-row gap-4">
+          {/* Etiqueta de categoría 
+          <View className="bg-white/80 px-3 py-1 rounded-full self-start mt-16 mb-2 shadow-sm">
+            <Text className="text-xs font-semibold text-black/60">Exploración urbana</Text>
+          </View>*/}
+
+          {/* Título de misión */}
+          <View className="bg-white/80 p-4 mt-18 rounded-2xl shadow-md mb-4">
+            <Text className="text-black font-bold text-xl text-center">
+              🕵️‍♂️ {title ?? "Misión sin título"}
+            </Text>
+          </View>
+
+          {/* Descripción */}
+          <View className="bg-white/80 p-4 rounded-2xl shadow-md mb-10">
+            <Text className="text-black text-base leading-relaxed">
+              {description ?? "Descripción no disponible"}
+            </Text>
+          </View>
+
+          {/* Área de imagen / carga */}
+          <View className="bg-white/80 rounded-2xl shadow-xl items-center justify-center p-6 mb-10">
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: 120, height: 120, marginBottom: 10, borderRadius: 12 }}
+              />
+            ) : (
+              <Text className="text-4xl mb-4">📸</Text>
+            )}
+
+              
+
+            <View className="flex-row space-x-4">
+              <TouchableOpacity
+                className="bg-white/90 px-4 py-3 rounded-2xl shadow-md me-2"
+                onPress={handleTakePhoto}
+              >
+                <Text className="text-black font-semibold text-base">Tomar foto</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="bg-white/90 px-4 py-3 rounded-2xl shadow-md"
+                onPress={handlePickImage}
+              >
+                <Text className="text-black font-semibold text-base">Subir imagen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Acciones finales */}
+          <View className="flex-col space-y-6 pb-10">
             <TouchableOpacity
-              className="bg-[#699D81] px-3 py-2 rounded-md"
-              onPress={handleTakePhoto}
+              className="bg-white/80 px-6 py-4 rounded-2xl shadow-md mb-3"
+              onPress={handleDiscard}
             >
-              <Text className="text-white text-sm">Tomar foto</Text>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-black font-bold text-lg">❌ Descartar misión</Text>
+                <Text className="text-black text-xl">→</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="bg-[#C76F40] px-3 py-2 rounded-md"
-              onPress={handlePickImage}
+              className="bg-white/80 px-6 py-4 rounded-2xl shadow-md mb-3"
+              onPress={handleSubmit}
             >
-              <Text className="text-white text-sm">Subir imagen</Text>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-black font-bold text-lg">✅ Enviar</Text>
+                <Text className="text-black text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="bg-white/80 px-6 py-4 rounded-2xl shadow-md"
+              onPress={handleSaveForLater}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-black font-bold text-lg">💾 Guardar para más tarde</Text>
+                <Text className="text-black text-xl">→</Text>
+              </View>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <View className="space-y-3 pb-10">
-          <TouchableOpacity
-            className="bg-[#699D81] py-3 rounded-xl items-center"
-            onPress={handleDiscard}
-          >
-            <Text className="text-white font-semibold text-base">Descartar misión</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-[#C76F40] py-3 rounded-xl items-center"
-            onPress={handleSubmit}
-          >
-            <Text className="text-white font-semibold text-base">Enviar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-[#699D81] py-3 rounded-xl items-center"
-            onPress={handleSaveForLater}
-          >
-            <Text className="text-white font-semibold text-base">Guardar para más tarde</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
-  );  
+        </ScrollView>
+      </View>
+    </ImageBackground>
+  );
 }
 

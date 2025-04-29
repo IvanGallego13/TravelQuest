@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Image, ImageBackground } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { apiFetch } from "../../../lib/api";
@@ -62,54 +62,68 @@ export default function JournalIndex() {
     });
   };
   
-
   return (
-    <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-8">
-      <Text className="text-black text-lg font-bold mb-4 border-b border-black w-fit">
-        Viajes
-      </Text>
+    <ImageBackground
+      source={require('../../../assets/images/ciudad2.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 px-6 pt-12 justify-start">
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#699D81" />
-      ) : (
-        trips.map((trip) => (
-          <TouchableOpacity
-            key={trip.id}
-            onPress={() => goToTripDetail(trip.id, trip.city, trip.image)}
-            className="bg-white mb-4 p-3 rounded-xl border-2 border-[#699D81]"
-          >
-            <View className="flex-row space-x-4 items-center">
-              {/* Imagen si existe */}
-              {trip.image ? (
-                <Image
-                  source={{ uri: trip.image }}
-                  className="w-20 h-20 rounded-md"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-20 h-20 bg-gray-300 rounded-md items-center justify-center">
-                  <Text className="text-xs text-gray-500 text-center">Sin imagen</Text>
+        {/* Título viajes */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-8 flex-row items-center gap-2">
+          <Text className="text-black text-xl font-bold">
+            Viajes
+          </Text>
+          <Text className="text-black text-2xl">🌍</Text>
+        </View>
+
+        {/* Lista de viajes */}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#699D81" />
+          ) : (
+            trips.map((trip) => (
+              <TouchableOpacity
+                key={trip.id}
+                onPress={() => goToTripDetail(trip.id, trip.city, trip.image)}
+                className="bg-white/80 mb-6 p-5 rounded-2xl shadow-md"
+              >
+                <View className="flex-row items-center">
+
+                  {/* Imagen del viaje */}
+                  {trip.image ? (
+                    <Image
+                      source={{ uri: trip.image }}
+                      className="w-20 h-20 rounded-xl mr-4"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-20 h-20 bg-gray-300 rounded-xl items-center justify-center mr-4">
+                      <Text className="text-xs text-gray-500 text-center">Sin imagen</Text>
+                    </View>
+                  )}
+
+                  {/* Información del viaje */}
+                  <View className="flex-1">
+                    <Text className="text-black font-bold text-lg">{trip.city}</Text>
+                    <Text className="text-gray-600 text-sm mt-1">
+                      {new Date(trip.date).toLocaleDateString("es-ES")}
+                    </Text>
+                  </View>
+
+                  {/* Icono decorativo de viaje */}
+                  <Text className="text-3xl">🧳</Text>
+
                 </View>
-              )}
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
 
-              {/*Info del diario */}
-              <View className="flex-1">
-                <Text className="text-black font-bold text-base">{trip.city}</Text>
-                <Text className="text-gray-600 text-xs">
-                  {new Date(trip.date).toLocaleDateString("es-ES")}
-                </Text>
-              </View>
-
-              {/* Íconos decorativos */}
-              <View className="flex-col items-end space-y-2">
-                <Ionicons name="location-sharp" size={20} color="#699D81" />
-                <FontAwesome5 name="book" size={18} color="#C76F40" />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+      </View>
+    </ImageBackground>
   );
+ 
 }
 
