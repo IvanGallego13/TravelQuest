@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, TextInput, Image, Alert } from "react-native";
+import { Text, View, TouchableOpacity, TextInput, Image, Alert, ImageBackground} from "react-native";
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -114,66 +114,79 @@ export default function CreateJournalEntry(){
   };
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] px-6 pt-10">
-      <Text className="text-black font-bold text-lg mb-4">
-        {`${cityName} · ${formattedDate}`}
-      </Text>
-        <View className="bg-gray-200 rounded-xl items-center justify-center p-6 mb-6">
+    <ImageBackground
+      source={require('../../../assets/images/ciudad2.png')} // O la que tú uses
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 px-6 pt-12 justify-start">
+
+        {/* Ciudad y fecha como badge */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
+          <Text className="text-black text-lg font-semibold">
+            {cityName} · {formattedDate}
+          </Text>
+          <Text className="text-black text-xl">📓</Text>
+        </View>
+
+        {/* Área de imagen */}
+        <View className="bg-white/80 rounded-2xl shadow-md items-center justify-center p-6 mb-8 py-10">
           {imageUri ? (
             <Image
               source={{ uri: imageUri }}
-              style={{ width: 120, height: 120, marginBottom: 10, borderRadius: 10 }}
+              style={{ width: 120, height: 120, marginBottom: 10, borderRadius: 12 }}
             />
           ) : (
-            <Image
-              source={require("../../../assets/images/icon.png")}
-              style={{ width: 40, height: 40, marginBottom: 10 }}
-            />
+            <Text className="text-4xl mb-4">📸</Text>
           )}
 
-          <Text className="text-gray-600 text-center mb-2">
-            Al pulsar, opción de hacer foto o subirla
-          </Text>
-
-          <View className="flex-row gap-4">
+          <View className="flex-row space-x-4">
             <TouchableOpacity
-              className="bg-[#699D81] px-3 py-2 rounded-md"
+              className="bg-white/90 px-4 py-3 rounded-2xl shadow-md me-3"
               onPress={handleTakePhoto}
             >
-              <Text className="text-white text-sm">Tomar foto</Text>
+              <Text className="text-black font-semibold text-base">Tomar foto</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="bg-[#C76F40] px-3 py-2 rounded-md"
+              className="bg-white/90 px-4 py-3 rounded-2xl shadow-md"
               onPress={handleImagePick}
             >
-              <Text className="text-white text-sm">Subir imagen</Text>
+              <Text className="text-black font-semibold text-base">Subir imagen</Text>
             </TouchableOpacity>
           </View>
         </View>
-      
 
-      <TextInput
-        multiline
-        numberOfLines={4}
-        placeholder="Texto para descripción opcional"
-        placeholderTextColor="#999"
-        value={description}
-        onChangeText={setDescription}
-        className="bg-white border-[2px] border-[#699D81] rounded-xl p-4 mb-6 text-black"
-      />
+        {/* Área de texto */}
+        <View className="bg-white/80 rounded-2xl shadow-md p-4 mb-8">
+          <TextInput
+            multiline
+            numberOfLines={5}
+            placeholder="Escribe tu recuerdo..."
+            placeholderTextColor="#888"
+            value={description}
+            onChangeText={setDescription}
+            className="text-black text-base"
+          />
+        </View>
 
-      <TouchableOpacity
-        onPress={handlePublish}
-        disabled={loading}
-        className={`py-3 px-6 rounded-xl self-start ${
-          loading ? "bg-gray-400" : "bg-[#C76F40]"
-        }`}
-      >
-        <Text className="text-white font-semibold text-base">
-          {loading ? "Publicando..." : "Publicar"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        {/* Botón Publicar */}
+        <TouchableOpacity
+          onPress={handlePublish}
+          disabled={loading}
+          className={`px-6 py-4 rounded-2xl shadow-md ${
+            loading ? "bg-gray-400" : "bg-white/90"
+          }`}
+        >
+          <View className="flex-row items-center justify-between">
+            <Text className="text-black font-bold text-lg">
+              {loading ? "Publicando..." : "Publicar"}
+            </Text>
+            <Text className="text-black text-xl">→</Text>
+          </View>
+        </TouchableOpacity>
+
+      </View>
+    </ImageBackground>
   );
 }

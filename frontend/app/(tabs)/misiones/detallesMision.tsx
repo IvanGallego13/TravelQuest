@@ -26,9 +26,7 @@ export default function DetalleMisionCompletada() {
           router.back();
           return;
         }
-
         setMission(found);
-       
 
       } catch (err) {
         console.error("❌", err);
@@ -42,6 +40,7 @@ export default function DetalleMisionCompletada() {
   }, [id]);
 
   useEffect(() => {
+    console.log("🧠 Misión recibida:", mission);
     if (mission?.image_url) {
       Image.getSize(mission.image_url, (width, height) => {
         const ratio = height / width;
@@ -65,7 +64,7 @@ export default function DetalleMisionCompletada() {
       <TouchableOpacity onPress={() => router.back()} className="absolute top-10 left-4 z-10">
         <Ionicons name="arrow-back" size={28} color="#000" />
       </TouchableOpacity>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 80 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 80, paddingBottom: 100 }}>
         {/* Título */}
         <Text className="text-lg font-bold text-black mb-1">{mission.title}</Text>
         <View className="h-0.5 bg-black w-2/3 mb-4" />
@@ -99,6 +98,16 @@ export default function DetalleMisionCompletada() {
         ) : (
           <Text className="text-gray-500 italic">No se subió imagen para esta misión.</Text>
         )}
+        {/* Historia (si está completada y existe historia) */}
+        {mission.status === "completed" && mission.historia && (
+          <>
+            <Text className="text-black font-semibold text-lg mt-8 mb-2">Historia del lugar:</Text>
+            <View className="bg-white border border-[#C76F40] rounded-xl p-4 shadow-sm">
+              <Text className="text-black leading-6 text-justify">{mission.historia}</Text>
+            </View>
+          </>
+        )}
+
       </ScrollView>
     </View>
   );

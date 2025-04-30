@@ -20,7 +20,6 @@ export default function MissionList() {
   const router = useRouter();
   const [missions, setMissions] = useState<Mission[]>([]);
 
-  // Simulación de fetch de misiones desde backend
   useFocusEffect(
     useCallback(() => {
     const fetchMissions = async () => {

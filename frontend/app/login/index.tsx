@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import { useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import * as AuthSession from "expo-auth-session";
+
 import {
   View,
   Text,
@@ -11,6 +17,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
 } from "react-native";
 
 export default function Login() {
@@ -20,6 +27,8 @@ export default function Login() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [modoPrueba, setModoPrueba] = useState(false); // activa/desactiva conexión real
+
+  const redirectUri = Linking.createURL("login-callback");
   
   const handleLogin = async () => {
     if (!usuario.trim() && !password.trim()) {
@@ -53,10 +62,7 @@ export default function Login() {
         }),
       });
   
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText);
-      }
+      if (!res.ok) throw new Error(await res.text());
   
       const data = await res.json();
       await login(data.token, data.userId); // almacena el token recibido
@@ -67,61 +73,259 @@ export default function Login() {
     }
   };
   
-
- 
-
+  /*const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
+  
+    const redirectUri = "https://auth.expo.io/@blancaciv/myApp";
+    //AuthSession.makeRedirectUri({ useProxy: true });
+  
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
+  
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", (event) => {
+      console.log("🔁 Volvió desde navegador:", event.url);
+  
+      supabase.auth.getSession().then(({ data }) => {
+        console.log("🟢 Sesión detectada:", data.session);
+        if (data.session) {
+          login(data.session.access_token, data.session.user.id);
+          router.replace("/login/localizacion");
+        }
+      });
+  
+      WebBrowser.dismissBrowser();
+      listener.remove(); // limpia listener
+    });
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUri,
+      },
+    });
+  
+    if (error) {
+      console.error("❌ Error generando login:", error.message);
+      return;
+    }
+  
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
+  };
+  const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
+  
+    const redirectUri = Linking.createURL("login-callback");
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
+  
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", async (event) => {
+      console.log("📥 Evento recibido:", event.url);
+    
+      const url = new URL(event.url);
+      const code = url.searchParams.get("code");
+    
+      if (!code) {
+        console.error("❌ No se encontró el parámetro 'code' en el URL");
+        return;
+      }
+    
+      console.log("📨 Código recibido:", code);
+    
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+      if (error) {
+        console.error("❌ Error obteniendo sesión:", error.message);
+      } else if (data.session) {
+        console.log("🟢 Sesión obtenida:", data.session);
+        login(data.session.access_token, data.session.user.id);
+        router.replace("/login/localizacion");
+      }
+  
+      WebBrowser.dismissBrowser();
+      listener.remove();
+    });
+  
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUri,
+      },
+    });
+  
+    if (error) {
+      console.error("❌ Error generando login:", error.message);
+      return;
+    }
+  
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
+  };*/
+  const handleGoogleLogin = async () => {
+    console.log("🔍 Google login: iniciado");
+  
+    const redirectUri = Linking.createURL("login-callback");
+    console.log("🧭 redirectTo que se enviará a Supabase:", redirectUri);
+  
+    // Escuchamos el regreso desde el navegador
+    const listener = Linking.addEventListener("url", async (event) => {
+      console.log("📥 Evento recibido:", event.url);
+  
+      const url = new URL(event.url);
+      const code = url.searchParams.get("code");
+  
+      if (!code) {
+        console.error("❌ No se encontró el parámetro 'code' en el URL");
+        return;
+      }
+  
+      console.log("📨 Código recibido:", code);
+  
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  
+      if (error) {
+        console.error("❌ Error obteniendo sesión:", error.message);
+        return;
+      }
+  
+      const session = data.session;
+      if (session) {
+        const { user } = session;
+        console.log("🟢 Sesión obtenida:", session);
+        await login(session.access_token, user.id); // guardar sesión
+  
+        // Comprobar si ya tiene profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+  
+        if (profileError || !profileData) {
+          console.log("🆕 Creando nuevo perfil para el usuario...");
+  
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              username: user.user_metadata?.full_name || user.email,
+              avatar: user.user_metadata?.avatar_url || null,
+              score: 0,
+            });
+  
+          if (insertError) {
+            console.error("❌ Error creando el perfil:", insertError.message);
+          } else {
+            console.log("✅ Perfil creado correctamente.");
+          }
+        } else {
+          console.log("🔁 Perfil ya existente.");
+        }
+  
+        router.replace("/login/localizacion");
+      }
+  
+      WebBrowser.dismissBrowser();
+      listener.remove();
+    });
+  
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUri,
+      },
+    });
+  
+    if (error) {
+      console.error("❌ Error generando login:", error.message);
+      return;
+    }
+  
+    console.log("🌍 Abriendo navegador:", data.url);
+    await WebBrowser.openBrowserAsync(data.url);
+  };
+  
+  
   const goToRegister = () => {
     router.push("/login/register");
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-[#F4EDE0] justify-center px-6"
+    <ImageBackground
+      source={require('../../assets/images/caminante.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      {/* Logo y título */}
-      <View className="flex-row justify-center items-center mb-10">
-        <Image
-          source={require("../../assets/images/logo.png")}
-          className="w-10 h-10 mr-2"
-        />
-        <Text className="text-2xl font-bold text-black">TravelQuest</Text>
-      </View>
-
-      {/* Inputs */}
-      <Text className="text-black font-semibold mb-1">Usuario:</Text>
-      <TextInput
-        value={usuario}
-        onChangeText={setUsuario}
-        placeholder="Tu usuario"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-
-      <Text className="text-black font-semibold mb-1">Contraseña:</Text>
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Tu contraseña"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
-      />
-
-      {/* Botón de login */}
-      <TouchableOpacity
-        onPress={handleLogin}
-        className="bg-[#C76F40] py-3 rounded-xl mb-3 items-center"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-white/20 px-6 justify-center pb-20 "
       >
-        <Text className="text-white font-semibold text-base">Iniciar sesión</Text>
-      </TouchableOpacity>
+        {/* Contenedor central de login */}
+        <View className="bg-white/80 p-6 rounded-2xl shadow-md">
+          
+          {/* Título */}
+          <View className="items-center mb-8">
+            <Text className="text-2xl font-bold text-black">TravelQuest</Text>
+          </View>
 
-      {/* Botón para registrarse */}
-      <TouchableOpacity
-        onPress={goToRegister}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
-      >
-        <Text className="text-white font-semibold text-base">Registrarse</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+          {/* Input Usuario */}
+          <Text className="text-black text-lg font-semibold mb-1">Usuario:</Text>
+          <TextInput
+            value={usuario}
+            onChangeText={setUsuario}
+            placeholder="Tu usuario"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-4 text-black"
+          />
+
+          {/* Input Contraseña */}
+          <Text className="text-black text-lg font-semibold mb-1">Contraseña:</Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Tu contraseña"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-6 text-black"
+          />
+
+          {/* Botón Iniciar sesión */}
+          <TouchableOpacity
+            onPress={handleLogin}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mb-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">🔓</Text>
+              <Text className="text-black font-bold text-lg">Iniciar sesión</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón Registrarse */}
+          <TouchableOpacity
+            onPress={goToRegister}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mb-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">📝</Text>
+              <Text className="text-black font-bold text-lg">Registrarse</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón Google (comentado por ahora) */}
+          {/*
+          <TouchableOpacity
+            onPress={handleGoogleLogin}
+            className="bg-white border border-[#C76F40] px-6 py-4 rounded-2xl shadow-md"
+          >
+            <Text className="text-[#C76F40] font-semibold text-center">Iniciar sesión con Google</Text>
+          </TouchableOpacity>
+          */}
+          
+        </View>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 

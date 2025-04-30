@@ -1,86 +1,125 @@
-import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { useCallback, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { apiFetch } from "../../../lib/api";
 
-export default function DiaDetalle() {
+// Tipo de entrada individual
+type Entry = {
+  id: number;
+  description: string;
+  image?: string | null;
+  created_at: string;
+};
+
+export default function DayDetail() {
   const router = useRouter();
-  const { idDia } = useLocalSearchParams();
+  const { idDay, bookId, city, image } = useLocalSearchParams();
 
-  // Simulación de los datos de un día (luego se reemplaza por datos reales desde backend)
-  const dia = {
-    id: idDia,
-    titulo: "Día Seleccionado",
-    descripcion: "Descripción que hace el usuario de su día.",
-    imagen: require("../../../assets/images/icon.png"),
-  };
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchEntries = async () => {
+        try {
+          setLoading(true);
+          const res = await apiFetch(`/diarios/entradas/${idDay}`);
+          if (!res.ok) throw new Error("Failed to fetch entries");
+
+          const data = await res.json();
+          setEntries(data);
+        } catch (err) {
+          console.error("❌ Error fetching entries:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchEntries();
+    }, [idDay])
+  );
   return (
-    <View className="flex-1 bg-[#F4EDE0] relative">
-      {/* DECORACIÓN DE FONDO */}
-
-      {/* Brújula arriba derecha */}
-      <Image
-        source={require("../../../assets/images/brujula.png")}
-        style={{
-          position: "absolute",
-          top: 20,
-          right: 20,
-          width: 60,
-          height: 60,
-          opacity: 0.2,
-          transform: [{ rotate: "-15deg" }],
-        }}
-      />
-
-      {/* Maleta abajo derecha */}
-      <Image
-        source={require("../../../assets/images/maleta.png")}
-        style={{
-          position: "absolute",
-          bottom: 10,
-          right: 10,
-          width: 70,
-          height: 70,
-          opacity: 0.2,
-        }}
-      />
-
-      {/* CONTENIDO PRINCIPAL */}
-      <ScrollView contentContainerStyle={{ padding: 24 }}>
+    <ImageBackground
+      source={require('../../../assets/images/ciudad2.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1  px-6 pt-12 justify-start">
 
         {/* Botón volver */}
-        <TouchableOpacity onPress={() => router.back()} className="mb-4 self-start">
-          <Ionicons name="arrow-back" size={28} color="#699D81" />
-        </TouchableOpacity>
-
-        {/* Título del día */}
-        <Text className="text-lg font-bold text-black mb-4">{dia.titulo}</Text>
-
-        {/* Imagen del día */}
-        <Image
-          source={dia.imagen}
-          resizeMode="cover"
-          className="w-full h-48 rounded-xl mb-4 bg-gray-300"
-        />
-
-        {/* Descripción del día */}
-        <Text className="text-base font-bold mb-1 text-black">Texto del día</Text>
-        <Text className="text-black mb-6">{dia.descripcion}</Text>
-
-        {/* Botón para editar */}
-        <TouchableOpacity
-          className="bg-[#C76F40] px-4 py-3 rounded-xl self-start"
-          onPress={() =>
-            router.push({
-              pathname: "/crear/2.2entradaDiario",
-              params: { idDia: dia.id }, // <- pasamos el id del día actual
+        <TouchableOpacity 
+          onPress={() => 
+            router.replace({
+              pathname: "/diario/2ciudad",
+              params: { bookId, city, image },
             })
           }
+          className="absolute top-10 left-4 z-10 bg-white/70 rounded-full p-2 shadow-md"
         >
-          <Text className="text-white font-bold">Editar día</Text>
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-      </ScrollView>
-    </View>
-  );
-}
 
+        <ScrollView contentContainerStyle={{ paddingTop: 70, paddingBottom: 20 }}>
+          
+          {/* Fecha del día como badge */}
+          {entries.length > 0 && (
+            <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-8 flex-row items-center gap-2">
+              <Text className="text-black text-lg font-semibold">
+              {city} · {new Date(entries[0].created_at).toLocaleDateString("es-ES")}
+              </Text>
+              <Text className="text-black text-xl">🗓️</Text>
+            </View>
+          )}
+
+          {/* Lista de entradas */}
+          {loading ? (
+            <ActivityIndicator size="large" color="#699D81" />
+          ) : (
+            entries.map((entry) => (
+              <View key={entry.id} className="bg-white/80 rounded-2xl shadow-md mb-8 p-4">
+                
+                {/* Imagen */}
+                {entry.image ? (
+                  <Image
+                    source={{ uri: entry.image }}
+                    resizeMode="cover"
+                    className="w-full h-48 rounded-2xl mb-4"
+                  />
+                ) : (
+                  <View className="w-full h-48 bg-gray-300 rounded-2xl items-center justify-center mb-4">
+                    <Text className="text-gray-600">Sin imagen</Text>
+                  </View>
+                )}
+
+                {/* Texto */}
+                <Text className="text-black text-base leading-relaxed">
+                  {entry.description}
+                </Text>
+
+              </View>
+            ))
+          )}
+
+          {/* Botón añadir nueva entrada */}
+          <TouchableOpacity
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between self-start"
+            onPress={() =>
+              router.push({
+                pathname: "/crear/2.2entradaDiario",
+                params: { idDia: idDay },
+              })
+            }
+          >
+            <Text className="text-black font-bold text-base">➕ Añadir entrada</Text>
+            <Text className="text-black text-xl">→</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+
+      </View>
+    </ImageBackground>
+  );
+ 
+}

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Alert, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams} from "expo-router";
 import React from 'react';
 import { useAuthStore } from "../../../store/auth";
@@ -59,6 +59,7 @@ export default function Dificultad() {
           missionId: mission.id.toString(),
           title: mission.title,
           description: mission.description,
+          difficulty: mission.difficulty,
         },
       });
     } catch (err) {
@@ -73,32 +74,58 @@ export default function Dificultad() {
   };
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] px-6 pt-10 justify-start">
-      
-      <Text className="text-xl font-bold text-black border-b border-gray-400 mb-10">Nivel de dificultad</Text>
+    <ImageBackground
+      source={require('../../../assets/images/catedral.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      {/* Capa blanca translúcida */}
+      <View className="flex-1 bg-white/20 px-6 pt-12 justify-start">
 
-      <View>
-        <TouchableOpacity
-          className="bg-[#C76F40] py-4 rounded-xl items-center mb-5"
-          onPress={() => seleccionarDificultad("facil")}
-        >
-          <Text className="text-white font-semibold text-base">Fácil</Text>
-        </TouchableOpacity>
+        {/* Título */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-10 flex-row items-center gap-2">
+          <Text className="text-black text-lg font-semibold">
+            Nivel de dificultad
+          </Text>
+          <Text className="text-black text-lg">🎯</Text> 
+        </View>
 
-        <TouchableOpacity
-          className="bg-[#699D81] py-4 rounded-xl items-center mb-5"
-          onPress={() => seleccionarDificultad("media")}
-        >
-          <Text className="text-white font-semibold text-base">Media</Text>
-        </TouchableOpacity>
+        {/* Opciones de dificultad */}
+        <View className="flex-col space-y-6 mt-15">
+          <TouchableOpacity
+            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md mb-20"
+            onPress={() => seleccionarDificultad('facil')}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-black font-bold text-lg">Fácil</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+            <Text className="text-black/60 text-sm">Gana 10 puntos 🔥</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          className="bg-[#C76F40] py-4 rounded-xl items-center"
-          onPress={() => seleccionarDificultad("dificil")}
-        >
-          <Text className="text-white font-semibold text-base">Difícil</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md mb-20"
+            onPress={() => seleccionarDificultad('media')}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-black font-bold text-lg">Media</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+            <Text className="text-black/60 text-sm">Gana 20 puntos 🔥🔥</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md"
+            onPress={() => seleccionarDificultad('dificil')}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-black font-bold text-lg">Difícil</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+            <Text className="text-black/60 text-sm">Gana 30 puntos 🔥🔥🔥</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </ImageBackground>
   );
 }

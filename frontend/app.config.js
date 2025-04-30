@@ -3,11 +3,13 @@ import "dotenv/config";
 export default {
   expo: {
     name: "myApp",
+    owner: "blancaciv",
     slug: "myApp",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "myapp",
+    scheme: "myapp", 
+    deepLinking: true,
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
