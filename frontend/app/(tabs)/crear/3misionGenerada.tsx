@@ -3,7 +3,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation  } from "@react-navigation/native";
-import { apiFetch } from "@/lib/api"; 
+import { apiFetch } from "../../../lib/api"; 
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 
@@ -16,6 +16,8 @@ export default function Mision() {
   const [estadoManual, setEstadoManual] = useState<"completed" | "accepted" | "discarded" | null>(null);
   const numericMissionId = Number(missionId);
   const navigation = useNavigation();
+  const [yaActualizada, setYaActualizada] = useState(false);
+
 
   // Limpiar estado al cargar nueva misión
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function Mision() {
       if (!res.ok) throw new Error("Error actualizando misión");
 
       setCompletada(true);
+      setYaActualizada(true);
+      console.log(`✅ Estado enviado: ${status}`);
       router.replace("/(tabs)/crear");
     } catch (err) {
       console.error(err);
@@ -99,11 +103,12 @@ export default function Mision() {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (!completada && !estadoManual) {
+        console.log("🧠 Cleanup ejecutado", { yaActualizada, completada, estadoManual });
+        if (!yaActualizada &&!completada && !estadoManual) {
           handleDiscard();
         }
       };
-    }, [completada, estadoManual])
+    }, [yaActualizada, completada, estadoManual])
   );
   
 
@@ -185,7 +190,7 @@ useEffect(() => {
             <Image source={{ uri: imageUri }} style={{ width: 120, height: 120, marginBottom: 10 }} />
           ) : (
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("../../../assets/images/icon.png")}
               style={{ width: 40, height: 40, marginBottom: 10 }}
             />
           )}

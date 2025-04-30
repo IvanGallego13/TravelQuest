@@ -16,6 +16,7 @@ import imageRoutes from './routes/imageRoutes.js';
 import viajeRoutes from './routes/viajeRoutes.js';
 import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
+import ajustesRoutes from './routes/ajustesRoutes.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
 });
 
 
+
 // Rutas
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/diarios', diarioRoutes);
@@ -48,6 +50,7 @@ app.use('/api/imagenes', imageRoutes);
 app.use('/api/viajes', viajeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/ajustes', ajustesRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

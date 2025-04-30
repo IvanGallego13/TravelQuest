@@ -1,6 +1,6 @@
 import { Text, View, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { useUbicacion } from "@/hooks/useUbicacion";
+import { useUbicacion } from "../../../hooks/useUbicacion";
 import MapView, { Marker } from "react-native-maps";
 
 

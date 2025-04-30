@@ -16,12 +16,12 @@ export default function EditarAvatar() {
 
   // 📁 Avatares locales prediseñados
   const avatares = [
-    require("@/assets/images/avatar.png"),
-    require("@/assets/images/avatar2.png"),
-    require("@/assets/images/avatar3.png"),
-    require("@/assets/images/avatar4.png"),
-    require("@/assets/images/avatar5.png"),
-    require("@/assets/images/avatar6.png"),
+    require("../../../assets/images/avatar.png"),
+    require("../../../assets/images/avatar2.png"),
+    require("../../../assets/images/avatar3.png"),
+    require("../../../assets/images/avatar4.png"),
+    require("../../../assets/images/avatar5.png"),
+    require("../../../assets/images/avatar6.png"),
 
   ];
 
