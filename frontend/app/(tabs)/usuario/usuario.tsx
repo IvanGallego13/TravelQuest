@@ -1,11 +1,16 @@
+import { useEffect } from "react";
+import { apiFetch } from "../../../lib/api";
+import * as SecureStore from "expo-secure-store";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuth } from "../../../hooks/useAuth";
+import React from "react";
 
 
-// Simulación de datos del usuario
+/* Simulación de datos del usuario
 const logros = [
   { id: 1, nombre: "Logro 1", puntos: 50 },
   { id: 2, nombre: "Logro 2", puntos: 80 },
@@ -17,7 +22,7 @@ const misiones = [
   { id: 2, nombre: "Misión 2", puntos: 90 },
   { id: 3, nombre: "Misión 3", puntos: 70 },
 ];
-
+*/
 
 /*const [logros, setLogros] = useState([]);
 const [misiones, setMisiones] = useState([]);
@@ -37,13 +42,65 @@ useEffect(() => {
 */
 
 export default function Usuario() {
-  // Cálculo de puntos
+  
+  // Simulación de datos del usuario
+  const logros = [
+    { id: 1, nombre: "Logro 1", puntos: 50 },
+    { id: 2, nombre: "Logro 2", puntos: 80 },
+    { id: 3, nombre: "Logro 3", puntos: 100 },
+  ];
+
+  const misiones = [
+    { id: 1, nombre: "Misión 1", puntos: 60 },
+    { id: 2, nombre: "Misión 2", puntos: 90 },
+    { id: 3, nombre: "Misión 3", puntos: 70 },
+  ];
+
+// Cálculo de puntos
   const totalLogros = logros.reduce((acc, l) => acc + l.puntos, 0);
   const totalMisiones = misiones.reduce((acc, m) => acc + m.puntos, 0);
   const nivel = totalLogros + totalMisiones;
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const { logout } = useAuth();
+  
+//const nivel = logros.reduce((acc, l) => acc + l.puntos, 0) +
+//              misiones.reduce((acc, m) => acc + m.puntos, 0);
+const [username, setUsername] = useState("");
+
+useFocusEffect(
+  React.useCallback(() => {
+    const cargarPerfil = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("travelquest_token");
+
+        const res = await apiFetch("/ajustes/perfil", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        console.log("🧠 Perfil recibido:", data);
+
+        if (data.profile.avatar_url) {
+          setAvatarUrl(data.profile.avatar_url);
+        }
+        if (data.profile.username) {
+          setUsername(data.profile.username);
+        }
+      } catch (err) {
+        console.error("Error al cargar avatar en usuario.tsx:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarPerfil();
+  }, [])
+);
 
   return (
     <View className="flex-1 bg-[#F4EDE0] relative pt-10 px-4">
@@ -80,6 +137,7 @@ export default function Usuario() {
       onPress={() => {
         setMostrarMenu(false);
         logout();
+        router.replace("/login")
       }}
       className="flex-row items-center px-4 py-3 border-b border-gray-200"
     >
@@ -93,22 +151,25 @@ export default function Usuario() {
         setMostrarMenu(false);
         router.push("../usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
       }}
-      className="flex-row items-center px-4 py-3"
-    >
-      <Ionicons name="information-circle-outline" size={20} color="#000" />
-      <Text className="text-black ml-2">Sobre TravelQuest</Text>
-    </TouchableOpacity>
-  </View>
-)}
-
+      className="flex-row items-center px-4 py-3">
+        <Ionicons name="information-circle-outline" size={20} color="#000" />
+        <Text className="text-black ml-2">Sobre TravelQuest</Text>
+      </TouchableOpacity>
     </View>
+  )}
+</View>
+
     <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-10">
       {/* 📸 Avatar + Nivel + Ranking */}
       <View className="items-center mb-4">
         <Image
-          source={require("../../../assets/images/avatar.png")}
+          source={avatarUrl
+            ? { uri: avatarUrl }
+            : require("../../../assets/images/avatar.png")
+          }
           className="w-24 h-24 rounded-full mb-2"
         />
+        <Text className="text-black font-semibold text-lg">{username}</Text>
         <Text className="text-black font-bold text-lg mb-2">Nivel {nivel}</Text>
 
         <TouchableOpacity

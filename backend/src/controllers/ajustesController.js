@@ -12,9 +12,9 @@ export const obtenerAjustes = async (req, res) => {
 
     const userId = req.user.id;
 
-    const { profileData, profileError } = await supabase
+    const { data: profile, error: profileError  } = await supabase
       .from('profiles')
-      .select('username, avatar')
+      .select('username, avatar_url')
       .eq('id', userId)
       .single();
 
@@ -25,7 +25,7 @@ export const obtenerAjustes = async (req, res) => {
       id: userId,
       email: authData.user.email, // 👈 aquí tienes el email
       },
-      profile: profileData,
+      profile,
     });
   } catch (error) {
     console.error('Error al obtener ajustes:', error.message);
@@ -39,7 +39,7 @@ export const obtenerAjustes = async (req, res) => {
 export const actualizarAjustes = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { username, avatar } = req.body;
+    const { username, avatar_url } = req.body;
     // 🔒 Validar que el username no venga vacío
     if (!username || typeof username !== "string" || username.trim() === "") {
       return res.status(400).json({ error: "Nombre de usuario inválido" });
@@ -49,7 +49,7 @@ export const actualizarAjustes = async (req, res) => {
       .from('profiles')
       .update({
         username,
-        ...(avatar && { avatar }) // solo actualizar avatar si viene
+        ...(avatar_url && { avatar_url }) // solo actualizar avatar si viene
       })
       .eq('id', userId);
 

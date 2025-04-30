@@ -49,7 +49,12 @@ export default function Login() {
       router.replace("/login/localizacion");
       return;
     }
-  
+    console.log("📤 Enviando login:", {
+      email: usuario,
+      password,
+    });
+    //console.log("🌍 Intentando conectar a:", `${API_URL}/auth/login`);
+    
     try {
       const res = await apiFetch("/auth/login", {
         method: "POST",
