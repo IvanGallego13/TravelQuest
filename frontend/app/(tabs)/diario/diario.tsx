@@ -12,10 +12,8 @@ type TripSummary = {
   date: string; // formato "YYYY-MM-DD"
   image?:string;
 };
-
 export default function JournalIndex() {
   const router = useRouter();
-
   // Estado local para los diarios cargados
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [loading, setLoading] = useState(true);

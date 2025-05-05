@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 
 /**
  * Crea o añade una entrada al diario de viaje del usuario.
@@ -11,6 +12,9 @@ import { v4 as uuidv4 } from "uuid";
  */
 export const createOrAppendJournalEntry = async (req, res) => {
   console.log("llamada crear entrada");
+  console.log("🧪 req.body:", req.body);
+  console.log("🧪 req.files o req.file:", req.files || req.file);
+
     try {
       const userId = req.user.id;
       const { description, cityId, travelDate } = req.body;
@@ -92,9 +96,12 @@ export const createOrAppendJournalEntry = async (req, res) => {
   
       // 5. Subir la imagen si existe
       let filePath = null;
-  
+
+      
+
       if (imageFile) {
-        const buffer = imageFile.data;
+        const buffer = fs.readFileSync(imageFile.tempFilePath);
+        console.log("📦 Tamaño del buffer:", imageFile.data?.length);
         const fileExt = imageFile.name.split(".").pop();
         filePath = `${userId}/${uuidv4()}.${fileExt}`;
   

@@ -82,8 +82,9 @@ export default function CreateJournalEntry(){
         }
 
         // 🧪 Log de todo el formData antes de enviarlo
+        console.log("🔍 FormData antes de enviar:");
         for (let [key, value] of formData.entries()) {
-          console.log("🧪 FormData:", key, value);
+          console.log(`${key}:`, value);
         }
 
       const res = await apiFetch("/diarios/create-or-append", {
