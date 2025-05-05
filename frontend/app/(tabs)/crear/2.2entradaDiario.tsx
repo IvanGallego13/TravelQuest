@@ -1,9 +1,10 @@
 import { Text, View, TouchableOpacity, TextInput, Image, Alert, ImageBackground} from "react-native";
-import { useState } from "react";
+import { useState, useCallback} from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useUbicacion } from "../../../hooks/useUbicacion";
 import { apiFetch } from "../../../lib/api";
+import { useFocusEffect } from "@react-navigation/native";
 
 
 export default function CreateJournalEntry(){
@@ -84,15 +85,6 @@ export default function CreateJournalEntry(){
         for (let [key, value] of formData.entries()) {
           console.log("🧪 FormData:", key, value);
         }
-        //termina prueba 
-      //console.log("🟡 Publicando entrada de diario con datos:");
-      //console.log({ description, cityId: ubicacion.cityId, imageUri });
-      /*console.log("🧾 FormData:", {
-        description,
-        cityId: ubicacion.cityId.toString(),
-        travelDate: new Date().toISOString().split("T")[0],
-        image: imageUri,
-      });*/
 
       const res = await apiFetch("/diarios/create-or-append", {
         method: "POST",
@@ -104,6 +96,11 @@ export default function CreateJournalEntry(){
       if (!res.ok) throw new Error("Error al guardar la entrada");
 
       Alert.alert("Éxito", "Tu entrada ha sido publicada");
+
+      // Limpiar campos antes de navegar
+      setDescription("");
+      setImageUri(null);
+
       router.replace("../crear");
     } catch (error) {
       Alert.alert("Error", "No se pudo guardar la entrada");
@@ -111,6 +108,13 @@ export default function CreateJournalEntry(){
     } finally {
       setLoading(false);
     }
+    useFocusEffect(
+      useCallback(() => {
+        // Resetear formulario cada vez que se enfoca la pantalla
+        setDescription("");
+        setImageUri(null);
+      }, [])
+    );
   };
 
   return (

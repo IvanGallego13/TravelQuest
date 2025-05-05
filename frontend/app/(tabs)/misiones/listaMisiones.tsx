@@ -1,9 +1,11 @@
 import { useRouter } from "expo-router";
 import { useCallback, useState} from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, ImageBackground } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { apiFetch } from "../../../lib/api";
 import { useFocusEffect } from "@react-navigation/native";
+import { MotiView } from "moti";
+
 
 // Tipo misión
 type Mission = {
@@ -68,82 +70,67 @@ export default function MissionList() {
       ? `Completada el ${new Date(date).toLocaleDateString()}` 
       : `Asignada el ${new Date(date).toLocaleDateString()}`;
 
+      return (
+        <MotiView
+          key={mission.id}
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ delay: index * 100, type: "timing" }}
+          className="mb-4"
+        >
+          <TouchableOpacity
+            onPress={() => handlePressMission(mission)}
+            className="bg-white/80 p-4 rounded-2xl shadow-md flex-row items-center space-x-4"
+          >
+            <View className="flex-1 pr-2">
+              <Text className="text-black font-bold text-base mb-1">{mission.title}</Text>
+              <Text className="text-black text-sm mb-1" numberOfLines={2}>
+                {mission.description}
+              </Text>
+              <View className="flex-row items-center space-x-2">
+                <Text className="text-xs text-gray-500 italic me-3">{dateText}</Text>
+                  <Text>{isCompleted ? "✅" : "🕒"}</Text>
+              </View>
+            </View>
+  
+            {isCompleted && mission.image_url && (
+              <Image
+                source={{ uri: mission.image_url }}
+                style={{ width: 60, height: 60, borderRadius: 10 }}
+              />
+            )}
+          </TouchableOpacity>
+        </MotiView>
+      );
+    };
+  
     return (
-      <TouchableOpacity
-        key={index}
-        onPress={() => handlePressMission(mission)}
-        className={`bg-white mb-3 p-4 rounded-xl border-2 ${isCompleted ? "border-[#699D81]" : "border-[#C76F40]"}`}
+      <ImageBackground
+        source={require("../../../assets/images/catedral.png")}
+        style={{ flex: 1 }}
+        resizeMode="cover"
       >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-    
-    {/* Contenido textual limitado */}
-    <View style={{ flex: 1, paddingRight: 10 }}>
-      <Text className="text-black font-bold text-base mb-1">{mission.title}</Text>
-      <Text
-        className="text-black text-sm mb-1"
-        numberOfLines={2}
-        ellipsizeMode="tail"
-      >
-        {mission.description}
-      </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <Text className="text-xs text-gray-500 italic">
-          {dateText}
-        </Text>
-        <Ionicons
-          name="checkmark-done"
-          size={18}
-          color={isCompleted ? "#699D81" : "#C76F40"}
-        />
-      </View>
-    </View>
-
-    {/* Imagen de misión completada */}
-    {isCompleted && mission.image_url && (
-      <Image
-        source={{ uri: mission.image_url }}
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: 10,
-        }}
-      />
-    )}
-  </View>
-      </TouchableOpacity>
+        <View className="flex-1 bg-white/20 px-4 pt-20">
+          <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+            {pending.length > 0 && (
+              <View className="mb-8">
+                <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2">
+                  <Text className="text-black text-lg font-bold">🕒 Misiones pendientes</Text>
+                </View>
+                {pending.map((m, i) => renderMission(m, i))}
+              </View>
+            )}
+  
+            {completed.length > 0 && (
+              <View>
+                <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2">
+                  <Text className="text-black text-lg font-bold">✅ Misiones completadas</Text>
+                </View>
+                {completed.map((m, i) => renderMission(m, i))}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </ImageBackground>
     );
-  };
-
-  return (
-    <View className="flex-1 bg-[#F4EDE0] relative">
-      <Image
-        source={require("../../../assets/images/brujula.png")}
-        style={{
-          position: "absolute",
-          top: 20,
-          right: 20,
-          width: 60,
-          height: 60,
-          opacity: 0.2,
-          transform: [{ rotate: "-10deg" }],
-        }}
-      />
-
-      <ScrollView className="px-4 pt-20"contentContainerStyle={{ paddingBottom: 100 }}>
-        {pending.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-lg font-bold text-black mb-3">Misiones pendientes</Text>
-            {pending.map(renderMission)}
-          </View>
-        )}
-
-        {completed.length > 0 && (
-          <View>
-            <Text className="text-lg font-bold text-black mb-3">Misiones completadas</Text>
-            {completed.map(renderMission)}
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
-}
+  }

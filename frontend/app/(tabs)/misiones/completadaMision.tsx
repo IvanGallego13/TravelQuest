@@ -43,20 +43,19 @@ export default function MisionCompletada() {
         {/* Icono de éxito */}
         <Ionicons name="checkmark-circle" size={80} color="#699D81" />
 
-        {/* Mensaje principal */}
-        <Text className="text-3xl font-bold text-black mt-6 mb-4 text-center">
-          ¡Misión completada!
-        </Text>
-
-        {/* Puntos ganados */}
-        <Text className="text-lg text-black text-center mb-2">
-          Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
-        </Text>
-
+        {/* Mensaje principal + puntos ganados con fondo blanco semitransparente */}
+        <View className="bg-white/80 px-6 py-4 rounded-xl shadow-md mb-6">
+          <Text className="text-3xl font-bold text-black text-center mb-2">
+            ¡Misión completada!
+          </Text>
+          <Text className="text-lg text-black text-center">
+            Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
+          </Text>
         {/* Pregunta */}
-        <Text className="text-lg text-black text-center mb-8">
-          ¿Quieres saber más sobre lo que fotografiaste?
-        </Text>
+          <Text className="text-lg text-black text-center mb-8">
+            ¿Quieres saber más sobre lo que fotografiaste?
+          </Text>
+        </View>
 
         {/* Botones de acción */}
         <View className="flex-col space-y-6 w-full">

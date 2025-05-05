@@ -56,8 +56,8 @@ export default function JournalIndex() {
       pathname: "../diario/2ciudad",
       params: {
         bookId: tripId,
-        ciudad: city,
-        imagen: image ?? "",
+        city: city,
+        image: image ?? "",
       },
     });
   };

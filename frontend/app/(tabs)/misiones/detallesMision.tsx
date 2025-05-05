@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, Image, TouchableOpacity,Alert, ActivityIndicator  } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity,Alert, ActivityIndicator, ImageBackground  } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 export default function DetalleMisionCompletada() {
@@ -59,56 +60,71 @@ export default function DetalleMisionCompletada() {
   }
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] relative">
-      {/*Flecha para retroceder UNA pantalla */}
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-10 left-4 z-10">
-        <Ionicons name="arrow-back" size={28} color="#000" />
-      </TouchableOpacity>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 80, paddingBottom: 100 }}>
-        {/* Título */}
-        <Text className="text-lg font-bold text-black mb-1">{mission.title}</Text>
-        <View className="h-0.5 bg-black w-2/3 mb-4" />
+    <ImageBackground
+      source={require("../../../assets/images/nubes.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <SafeAreaView className="flex-1">
 
-        {/* Descripción */}
-        <Text className="text-black text-base mb-4">{mission.description}</Text>
+        {/* Botón volver fijo */}
+        <TouchableOpacity
+          onPress={() => router.push("./listaMisiones")}
+          className="absolute top-6 left-4 z-50 bg-white/90 p-2 rounded-full shadow-md"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
-        {/*Respuesta del usuario */}
-        <View className="bg-white border-[2px] border-[#699D81] rounded-xl p-4 mb-6 shadow-sm">
-          <Text className="text-black">
-            {mission.completed_at
-                ? `Misión completada el ${new Date(mission.completed_at).toLocaleDateString()}`
-                : "Sin fecha de finalización."}
-          </Text>
+        {/* Contenido desplazable */}
+        <View className="flex-1 pt-20 px-6">
+          <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            {/* Título */}
+            <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
+              <Text className="text-black text-lg font-bold">📌 {mission.title}</Text>
+            </View>
+
+            {/* Descripción */}
+            <View className="bg-white/80 rounded-2xl shadow-md p-4 mb-6">
+              <Text className="text-black text-base leading-6">{mission.description}</Text>
+            </View>
+
+            {/* Fecha */}
+            <View className="bg-white/80 rounded-xl shadow-md px-4 py-3 mb-6 self-start flex-row items-center gap-2">
+              <Text className="text-black text-base">✅ Completada el {new Date(mission.completed_at).toLocaleDateString("es-ES")}</Text>
+            </View>
+
+            {/* Imagen */}
+            {mission.image_url ? (
+              <Image
+                source={{ uri: mission.image_url }}
+                style={{
+                  width: "100%",
+                  height: imageHeight,
+                  borderRadius: 16,
+                  marginBottom: 24,
+                }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text className="text-gray-600 italic mb-6">No se subió imagen para esta misión.</Text>
+            )}
+
+            {/* Historia */}
+            {mission.status === "completed" && mission.historia && (
+              <>
+                <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2">
+                  <Text className="text-black text-lg font-bold">📖 Historia del lugar</Text>
+                </View>
+
+                <View className="bg-white/80 rounded-2xl p-4 shadow-md">
+                  <Text className="text-black leading-6 text-justify">{mission.historia}</Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
         </View>
 
-        {/*Imagen subida */}
-        {mission.image_url ? (
-          <>
-            <Text className="text-black font-semibold mb-2">Foto que subiste:</Text>
-            <Image
-              source={{ uri: mission.image_url }}
-              style={{
-                width: "100%",
-                height: imageHeight,
-                borderRadius: 12,
-              }}
-              resizeMode="cover"
-            />
-          </>
-        ) : (
-          <Text className="text-gray-500 italic">No se subió imagen para esta misión.</Text>
-        )}
-        {/* Historia (si está completada y existe historia) */}
-        {mission.status === "completed" && mission.historia && (
-          <>
-            <Text className="text-black font-semibold text-lg mt-8 mb-2">Historia del lugar:</Text>
-            <View className="bg-white border border-[#C76F40] rounded-xl p-4 shadow-sm">
-              <Text className="text-black leading-6 text-justify">{mission.historia}</Text>
-            </View>
-          </>
-        )}
-
-      </ScrollView>
-    </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
