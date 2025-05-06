@@ -172,54 +172,57 @@ export const createOrAppendJournalEntry = async (req, res) => {
   
       if (error) throw error;
   
-      const summaries =  await Promise.all( data.map(async (book) => {
-        const allDays = book.travel_days || [];
-        const firstDay = allDays.sort(
-          (a, b) => new Date(a.travel_date) - new Date(b.travel_date)
-        )[0];
+      const summaries = await Promise.all(
+        data.map(async (book) => {
+          const allDays = book.travel_days || [];
+          const firstDay = allDays.sort(
+            (a, b) => new Date(a.travel_date) - new Date(b.travel_date)
+          )[0];
   
-        let firstImage = null;
+          let firstImage = null;
   
-        // Buscar la primera imagen de todas las entradas
-        for (const day of allDays) {
-          const entries = day.diary_entries || [];
-          const withImage = entries.find((e) => !!e.image_path);
-          if (withImage) {
-            firstImage = withImage.image_path;
-            break;
+          // Buscar la primera imagen válida
+          for (const day of allDays) {
+            const entries = day.diary_entries || [];
+            const withImage = entries.find((e) => !!e.image_path);
+            if (withImage) {
+              firstImage = withImage.image_path;
+              break;
+            }
           }
-        }
-        
-
-        let signedImageUrl = null;
-
-        if (firstImage) {
-          const folder = firstImage.split("/")[0]; // ID del usuario
-          const filename = firstImage.split("/")[1];
-        
-          const { data: list, error: listError } = await supabase.storage
-            .from("journal")
-            .list(folder);
-        
-          console.log("📁 Archivos en carpeta:", folder, list?.map(f => f.name));
-        
-          const found = list?.find(file => file.name === filename);
-        
-          if (found) {
+  
+          let signedImageUrl = null;
+  
+          if (firstImage) {
+            console.log("📷 Primera imagen encontrada:", firstImage);
+  
             const { data: signed, error: signError } = await supabase.storage
               .from("journal")
-              .createSignedUrl(firstImage, 60 * 60);
-        
-            if (!signError && signed?.signedUrl) {
+              .createSignedUrl(firstImage, 60 * 60); // 1h
+  
+            if (signed?.signedUrl) {
               signedImageUrl = signed.signedUrl;
             } else {
-              console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
+              console.warn("⚠️ No se pudo firmar la imagen:", signError?.message);
             }
-          } else {
-            console.warn("⚠️ La imagen no se encontró en storage:", filename);
           }
-        }
-
+  
+          return {
+            id: book.id,
+            city: book.cities?.name || "Unknown",
+            date: firstDay?.travel_date || null,
+            image: signedImageUrl,
+          };
+        })
+      );
+  
+      console.log("📦 Resumen generado:", summaries);
+      res.json(summaries);
+    } catch (error) {
+      console.error("❌ Error en getJournalSummary:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  };
         /*if (firstImage) {
           const { data: signed, error: signError } = await supabase.storage
             .from("journal")
@@ -231,23 +234,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
             console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
           }
         }*/
-        console.log("📷 Primera imagen encontrada:", firstImage);
-        console.log("🔗 URL firmada:", signedImageUrl);
-        return {
-          id: book.id,
-          city: book.cities?.name || "Unknown",
-          date: firstDay?.travel_date || null,
-          image: signedImageUrl,
-        };
-      })
-    );
-      console.log(summaries)
-      res.json(summaries);
-    } catch (error) {
-      console.error("❌ Error en getJournalSummary:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  };
+        
   
   // GET /api/diarios/dias/:bookId
 export const getTravelDaysByBook = async (req, res) => {
