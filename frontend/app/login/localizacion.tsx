@@ -153,6 +153,7 @@ export default function Geolocalizacion() {
   };
   
   return (
+    
     <View style={styles.container}>
       <Text style={styles.title}>Localización</Text>
       
