@@ -189,9 +189,38 @@ export const createOrAppendJournalEntry = async (req, res) => {
             break;
           }
         }
+        
+
         let signedImageUrl = null;
 
         if (firstImage) {
+          const folder = firstImage.split("/")[0]; // ID del usuario
+          const filename = firstImage.split("/")[1];
+        
+          const { data: list, error: listError } = await supabase.storage
+            .from("journal")
+            .list(folder);
+        
+          console.log("📁 Archivos en carpeta:", folder, list?.map(f => f.name));
+        
+          const found = list?.find(file => file.name === filename);
+        
+          if (found) {
+            const { data: signed, error: signError } = await supabase.storage
+              .from("journal")
+              .createSignedUrl(firstImage, 60 * 60);
+        
+            if (!signError && signed?.signedUrl) {
+              signedImageUrl = signed.signedUrl;
+            } else {
+              console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
+            }
+          } else {
+            console.warn("⚠️ La imagen no se encontró en storage:", filename);
+          }
+        }
+
+        /*if (firstImage) {
           const { data: signed, error: signError } = await supabase.storage
             .from("journal")
             .createSignedUrl(firstImage, 60 * 60);
@@ -201,7 +230,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
           } else {
             console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
           }
-        }
+        }*/
         console.log("📷 Primera imagen encontrada:", firstImage);
         console.log("🔗 URL firmada:", signedImageUrl);
         return {

@@ -9,11 +9,13 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { apiFetch } from "../../../lib/api";
 import * as SecureStore from "expo-secure-store";
 import React from "react";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function EditarUsuario() {
   const [email, setEmail] = useState("");
@@ -129,75 +131,120 @@ export default function EditarUsuario() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-[#F4EDE0] px-6 pt-10">
-      <Text className="text-black text-xl font-bold mb-6">Editar perfil</Text>
+    <ImageBackground
+      source={require("../../../assets/images/nubes.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 bg-white/20 pt-14 px-6">
+        {/* Flecha para volver */}
+        <TouchableOpacity onPress={() => router.push("/usuario/usuario")} className="absolute top-12 left-4 z-10 bg-white rounded-full p-1">
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
-      {/* 👤 Avatar y botón */}
-      <TouchableOpacity
-        onPress={() => router.push("/usuario/editar-avatar")}
-        className="items-center mb-2"
-      >
-        <Image
-          source={
-            avatarUrl
-              ? { uri: avatarUrl }
-              : require("../../../assets/images/avatar.png")
-          }
-          className="w-24 h-24 rounded-full"
-        />
-        <Text className="text-[#699D81] mt-1 underline">Cambiar avatar</Text>
+        <ScrollView contentContainerStyle={{ paddingBottom: 150 }} className="mt-4">
 
-        
-      </TouchableOpacity>
-      <Text className="text-black mb-1 font-semibold text-lg text-center">{currentUsername}</Text>
-      
-      {/* 📧 Email */}
-      <Text className="text-black font-semibold mb-1">Correo electrónico:</Text>
-      <TextInput
-        value={email}
-        editable={false}
-        className="bg-gray-200 border border-gray-400 rounded-md px-4 py-2 mb-4 text-black"
-      />
+          {/* Avatar */}
+          <View className="items-center">
+              <View className="items-center">
+                <Image
+                  source={
+                    avatarUrl
+                      ? { uri: avatarUrl }
+                      : require("../../../assets/images/avatar.png")
+                  }
+                  className="w-24 h-24 rounded-full mb-4"
+                />
 
-      {/* 📝 Cambiar nombre de usuario */}
-      <Text className="text-black font-semibold mb-1">Nombre de usuario:</Text>
-      <TextInput
-        value={newUsername}
-        onChangeText={setNewUsername}
-        placeholder="Ej: viajero23"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-      <TouchableOpacity
-        onPress={handleUsernameChange}
-        className="bg-[#C76F40] py-3 rounded-xl items-center mb-10"
-      >
-        <Text className="text-white font-semibold text-base">Guardar nombre</Text>
-      </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/usuario/editar-avatar")}
+                  className="bg-white/90 px-6 py-2 rounded-2xl shadow-md flex-row items-center justify-between w-60"
+                >
+                  <Text className="text-black font-bold text-base">Cambiar avatar</Text>
+                  <Text className="text-black text-xl">→</Text>
+                </TouchableOpacity>
 
-      {/* 🔐 Cambiar contraseña */}
-      <Text className="text-black text-lg font-bold mb-4">Cambiar contraseña</Text>
-      <Text className="text-black font-semibold mb-1">Contraseña actual:</Text>
-      <TextInput
-        value={oldPassword}
-        onChangeText={setOldPassword}
-        placeholder="Contraseña actual"
-        secureTextEntry
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-      <Text className="text-black font-semibold mb-1">Nueva contraseña:</Text>
-      <TextInput
-        value={newPassword}
-        onChangeText={setNewPassword}
-        placeholder="Nueva contraseña"
-        secureTextEntry
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
-      />
-      <TouchableOpacity
-        onPress={handlePasswordChange}
-        className="bg-[#699D81] py-3 rounded-xl items-center"
-      >
-        <Text className="text-white font-semibold text-base">Actualizar contraseña</Text>
-      </TouchableOpacity>
-    </ScrollView>
+                <Text className="text-black mt-3 font-semibold text-lg text-center">{currentUsername}</Text>
+              </View>
+          </View>
+
+          {/* Tarjeta de datos */}
+          <View className="bg-white/90 rounded-2xl shadow-md p-6 space-y-5 mb-5">
+
+            {/* Email */}
+            <View>
+              <Text className="text-black font-semibold mb-2">📧 Correo electrónico:</Text>
+              <TextInput
+                value={email}
+                editable={false}
+                className="bg-gray-200 rounded-xl px-4 py-3 text-black"
+              />
+            </View>
+
+            {/* Cambiar usuario */}
+            <View>
+              <Text className="text-black font-semibold mb-2 mt-3">👤 Nombre de usuario:</Text>
+              <TextInput
+                value={newUsername}
+                onChangeText={setNewUsername}
+                placeholder="Ej: viajero23"
+                placeholderTextColor="#888"
+                className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-black"
+              />
+              <TouchableOpacity
+                onPress={handleUsernameChange}
+                className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mt-4"
+              >
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-black text-xl">💾</Text>
+                  <Text className="text-black font-bold text-lg">Guardar nombre</Text>
+                  <Text className="text-black text-xl">→</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Tarjeta contraseña */}
+          <View className="bg-white/90 rounded-2xl shadow-md p-6 space-y-5">
+            <Text className="text-black font-bold text-lg mb-3">🔒 Cambiar contraseña</Text>
+
+            <View>
+              <Text className="text-black font-semibold mb-2">Contraseña actual:</Text>
+              <TextInput
+                value={oldPassword}
+                onChangeText={setOldPassword}
+                placeholder="Contraseña actual"
+                secureTextEntry
+                placeholderTextColor="#888"
+                className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-black"
+              />
+            </View>
+
+            <View>
+              <Text className="text-black font-semibold mb-2 mt-3">Nueva contraseña:</Text>
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Nueva contraseña"
+                secureTextEntry
+                placeholderTextColor="#888"
+                className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-black"
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={handlePasswordChange}
+              className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mt-2"
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-black text-xl">🔐</Text>
+                <Text className="text-black font-bold text-lg">Actualizar contraseña</Text>
+                <Text className="text-black text-xl">→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    </ImageBackground>
   );
 }

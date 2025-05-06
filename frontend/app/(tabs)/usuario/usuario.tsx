@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { apiFetch } from "../../../lib/api";
 import * as SecureStore from "expo-secure-store";
 import { useFocusEffect } from "@react-navigation/native";
-import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, ImageBackground } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -103,125 +103,119 @@ useFocusEffect(
 );
 
   return (
-    <View className="flex-1 bg-[#F4EDE0] relative pt-10 px-4">
-    {/* Botón de ajustes arriba a la derecha */}
-    <View className="absolute top-10 right-4 z-10">
-      <TouchableOpacity onPress={() => setMostrarMenu(!mostrarMenu)}>
-        <Ionicons name="settings-outline" size={28} color="#699D81" />
-      </TouchableOpacity>
-
-      {/* Menú desplegable */}
-      {mostrarMenu && (
-  <View className="absolute top-14 right-4 bg-white rounded-xl border border-gray-300 shadow-md z-10 w-56">
-
-    {/* Cabecera del menú */}
-    <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-      <Ionicons name="settings-outline" size={20} color="#699D81" />
-      <Text className="text-black font-semibold ml-2">Ajustes</Text>
-    </View>
-
-    {/* Opción: Editar perfil */}
-    <TouchableOpacity
-      onPress={() => {
-        setMostrarMenu(false);
-        router.push("/usuario/editar");
-      }}
-      className="flex-row items-center px-4 py-3 border-b border-gray-200"
+    <ImageBackground
+      source={require("../../../assets/images/tren.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      <MaterialIcons name="edit" size={20} color="#000" />
-      <Text className="text-black ml-2">Editar perfil</Text>
-    </TouchableOpacity>
+      <View className="flex-1 bg-white/20 relative">
 
-    {/* Opción: Cerrar sesión */}
-    <TouchableOpacity
-      onPress={() => {
-        setMostrarMenu(false);
-        logout();
-        router.replace("/login")
-      }}
-      className="flex-row items-center px-4 py-3 border-b border-gray-200"
-    >
-      <Ionicons name="lock-closed-outline" size={20} color="#C76F40" />
-      <Text className="text-[#C76F40] ml-2 font-semibold">Cerrar sesión</Text>
-    </TouchableOpacity>
+        {/* Botón ajustes */}
+        <View className="absolute top-10 right-4 z-20 bg-white/90 p-2 rounded-full shadow-md">
+          <TouchableOpacity onPress={() => setMostrarMenu(!mostrarMenu)}>
+            <Ionicons name="settings-outline" size={24} color="#C76F40" />
+          </TouchableOpacity>
 
-    {/* Opción: Sobre TravelQuest */}
-    <TouchableOpacity
-      onPress={() => {
-        setMostrarMenu(false);
-        router.push("../usuario/sobre"); // ⚠️ asegúrate de tener esta ruta
-      }}
-      className="flex-row items-center px-4 py-3">
-        <Ionicons name="information-circle-outline" size={20} color="#000" />
-        <Text className="text-black ml-2">Sobre TravelQuest</Text>
-      </TouchableOpacity>
-    </View>
-  )}
-</View>
+          {mostrarMenu && (
+            <View className="absolute top-14 right-0 bg-white rounded-2xl shadow-md w-56 border border-gray-200 z-30">
+              <View className="flex-row items-center px-4 py-3 border-b border-gray-100">
+                <Ionicons name="settings-outline" size={20} color="#699D81" />
+                <Text className="text-black font-semibold ml-2">Ajustes</Text>
+              </View>
 
-    <ScrollView className="flex-1 bg-[#F4EDE0] px-4 pt-10">
-      {/* 📸 Avatar + Nivel + Ranking */}
-      <View className="items-center mb-4">
-        <Image
-          source={avatarUrl
-            ? { uri: avatarUrl }
-            : require("../../../assets/images/avatar.png")
-          }
-          className="w-24 h-24 rounded-full mb-2"
-        />
-        <Text className="text-black font-semibold text-lg">{username}</Text>
-        <Text className="text-black font-bold text-lg mb-2">Nivel {nivel}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setMostrarMenu(false);
+                  router.push("/usuario/editar");
+                }}
+                className="flex-row items-center px-4 py-3 border-b border-gray-100"
+              >
+                <MaterialIcons name="edit" size={20} color="#000" />
+                <Text className="text-black ml-2">Editar perfil</Text>
+              </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push("../usuario/2ranking")}
-          className="bg-[#699D81] px-4 py-2 rounded-xl"
-        >
-          <Text className="text-white font-semibold text-sm">Ver Ranking</Text>
-        </TouchableOpacity>
-      </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setMostrarMenu(false);
+                  logout();
+                  router.replace("/login");
+                }}
+                className="flex-row items-center px-4 py-3 border-b border-gray-100"
+              >
+                <Ionicons name="lock-closed-outline" size={20} color="#C76F40" />
+                <Text className="text-[#C76F40] ml-2 font-semibold">Cerrar sesión</Text>
+              </TouchableOpacity>
 
-      {/* 🏅 Logros */}
-      <Text className="text-black font-bold text-base mb-2 border-b border-black w-fit">
-        Logros ({totalLogros} puntos)
-      </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setMostrarMenu(false);
+                  router.push("../usuario/sobre");
+                }}
+                className="flex-row items-center px-4 py-3"
+              >
+                <Ionicons name="information-circle-outline" size={20} color="#000" />
+                <Text className="text-black ml-2">Sobre TravelQuest</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
-      {logros.map((logro) => (
-        <View
-          key={logro.id}
-          className="flex-row justify-between items-center bg-white p-3 mb-3 rounded-xl border-2 border-[#699D81]"
-        >
-          <View className="flex-row items-center space-x-2">
-            <View className="w-6 h-6 rounded-full bg-[#C76F40]" />
-            <Text className="text-black font-semibold">{logro.nombre}</Text>
+        {/* Scroll principal */}
+        <ScrollView className="px-6 pt-20 pb-60" showsVerticalScrollIndicator={false}>
+          {/* Perfil */}
+          <View className="items-center mb-6">
+            <Image
+              source={
+                avatarUrl
+                  ? { uri: avatarUrl }
+                  : require("../../../assets/images/avatar.png")
+              }
+              className="w-28 h-28 rounded-full mb-4"
+            />
+            <Text className="text-black font-bold text-xl">{username}</Text>
+            <Text className="text-black text-base mb-3">Nivel {nivel}</Text>
+
+            <TouchableOpacity
+              onPress={() => router.push("../usuario/2ranking")}
+              className="bg-white/90 px-6 py-3 rounded-2xl shadow-md"
+            >
+              <Text className="text-black font-semibold text-base">🏆 Ver Ranking</Text>
+            </TouchableOpacity>
           </View>
-          <Text className="text-[#C76F40] font-bold">{logro.puntos} pts</Text>
+
+          {/* Logros con altura mayor */}
+          <View className="bg-white/80 px-4 py-5 rounded-2xl shadow-md mb-10 min-h-[300px]">
+            <Text className="text-black font-bold text-lg mb-4">🎖️ Logros ({totalLogros} puntos)</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {logros.map((logro) => (
+                <View
+                  key={logro.id}
+                  className="bg-white/90 px-4 py-2 rounded-xl shadow mb-3 flex-row justify-between items-center"
+                >
+                  <Text className="text-black text-base font-medium truncate max-w-[65%]">
+                    {logro.nombre}
+                  </Text>
+                  <Text className="text-[#C76F40] font-bold text-sm">{logro.puntos} pts</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </ScrollView>
+
+        {/* Misiones ahora más arriba */}
+        <View className="absolute bottom-28 left-6 right-6 bg-white/90 shadow-md rounded-2xl px-5 py-4">
+          <Text className="text-black font-bold text-lg mb-2">✅ Misiones completadas ({totalMisiones} puntos)</Text>
+          <TouchableOpacity
+            onPress={() => router.push("../misiones/misiones")}
+            className="bg-white px-6 py-3 rounded-xl shadow-md flex-row justify-between items-center"
+          >
+            <Text className="text-black font-semibold text-base">📚 Ver historial</Text>
+            <Text className="text-black text-xl">→</Text>
+          </TouchableOpacity>
         </View>
-      ))}
 
-      {/* ✅ Misiones resumen */}
-      <Text className="text-black font-bold text-base mt-6 mb-2 border-b border-black w-fit">
-        Misiones completadas ({totalMisiones} puntos)
-      </Text>
-
-      {/* 🔘 Botón para ir al historial de misiones */}
-      <TouchableOpacity
-        onPress={() => router.push("../misiones/misiones")} //Ojo que esta ruta me da miedo y no se si va bien
-        className="bg-[#C76F40] py-3 px-4 rounded-xl mb-4 w-full items-center"
-      >
-        <Text className="text-white font-semibold">Ver misiones completadas</Text>
-      </TouchableOpacity>
-
-      {/* 📊 Barra de progreso */}
-      <View className="mb-10">
-        <Text className="text-black font-semibold mb-1 text-sm">Progreso actual</Text>
-        <View className="w-full h-4 bg-gray-300 rounded-full overflow-hidden">
-          <View
-            style={{ width: `${(totalMisiones / 300) * 100}%` }}
-            className="h-4 bg-[#699D81]"
-          />
-        </View>
       </View>
-    </ScrollView>
-  </View>
+    </ImageBackground>
   );
 }
+    

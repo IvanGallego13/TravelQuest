@@ -9,9 +9,11 @@ import {
   Image,
   ScrollView,
   Alert,
+  ImageBackground,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 
 export default function EditarAvatar() {
@@ -117,47 +119,70 @@ export default function EditarAvatar() {
       console.error("Error guardando avatar:", err);
     }
   };
-
   return (
-    <ScrollView className="flex-1 bg-[#F4EDE0] px-6 pt-10">
-      <Text className="text-black text-xl font-bold mb-4">Elige tu avatar</Text>
+    <ImageBackground
+      source={require("../../../assets/images/nubes.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 bg-white/20 pt-14 px-6">
+        {/* Flecha para volver */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-12 left-4 z-10 bg-white rounded-full p-1"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
-      {/* 🖼 Avatares prediseñados */}
-      <View className="flex-row flex-wrap justify-between mb-6">
-        {avatares.map((avatar, index) => (
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} className="mt-6">
+          {/* Título */}
+          <View className="bg-white/80 rounded-xl px-4 py-2 shadow-md self-start mb-6 mt-6">
+            <Text className="text-black text-xl font-bold">🎭 Elige tu avatar</Text>
+          </View>
+
+          {/* Avatares prediseñados */}
+          <View className="flex-row flex-wrap justify-between mb-8">
+            {avatares.map((avatar, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setAvatarSeleccionado(Image.resolveAssetSource(avatar).uri)}
+                className={`rounded-full border-4 ${
+                  avatarSeleccionado === Image.resolveAssetSource(avatar).uri
+                    ? "border-[#C76F40]"
+                    : "border-transparent"
+                }`}
+              >
+                <Image source={avatar} className="w-24 h-24 m-2 rounded-full" />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Botón usar foto propia */}
           <TouchableOpacity
-            key={index}
-             onPress={() => setAvatarSeleccionado(Image.resolveAssetSource(avatar).uri)}
-            
-            className={`rounded-full border-4 ${
-              avatarSeleccionado === Image.resolveAssetSource(avatar).uri
-                ? "border-[#C76F40]"
-                : "border-transparent"
-            }`}
+            onPress={seleccionarFoto}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md mb-6"
           >
-            <Image
-              source={avatar}
-              className="w-24 h-24 m-2 rounded-full"
-            />
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">📸</Text>
+              <Text className="text-black font-bold text-lg">Usar una foto propia</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
           </TouchableOpacity>
-        ))}
+
+          {/* Botón guardar avatar */}
+          <TouchableOpacity
+            onPress={guardarAvatar}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">✅</Text>
+              <Text className="text-black font-bold text-lg">Guardar avatar</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
-
-      {/* 📷 Subir foto propia */}
-      <TouchableOpacity
-        onPress={seleccionarFoto}
-        className="bg-[#699D81] py-3 rounded-xl items-center mb-6"
-      >
-        <Text className="text-white font-semibold text-base">Usar una foto propia</Text>
-      </TouchableOpacity>
-
-      {/* ✅ Botón guardar */}
-      <TouchableOpacity
-        onPress={guardarAvatar}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
-      >
-        <Text className="text-white font-semibold text-base">Guardar avatar</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </ImageBackground>
   );
 }
+ 
