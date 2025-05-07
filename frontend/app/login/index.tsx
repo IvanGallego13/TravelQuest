@@ -70,7 +70,7 @@ export default function Login() {
       if (!res.ok) throw new Error(await res.text());
   
       const data = await res.json();
-      await login(data.token, data.userId); // almacena el token recibido
+      await login(data.token, data.user.id); // almacena el token recibido
       router.replace("/login/localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");

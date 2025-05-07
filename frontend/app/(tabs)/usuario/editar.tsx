@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import { apiFetch } from "../../../lib/api";
 import * as SecureStore from "expo-secure-store";
 import React from "react";
+import { supabase } from "lib/supabase";
 
 export default function EditarUsuario() {
   const [email, setEmail] = useState("");
@@ -41,13 +42,29 @@ export default function EditarUsuario() {
   
           const data = await res.json();
           
-          if (data.profile.username) {
-            setCurrentUsername(data.profile.username);
-            setNewUsername(data.profile.username);
+          if (data?.profile) {
+            if (data.profile.username) {
+              setCurrentUsername(data.profile.username);
+              setNewUsername(data.profile.username);
+            }
+            if (data.profile.avatar_url) {
+              setAvatarUrl(data.profile.avatar_url);
+            }
+          } else {
+            console.warn("⚠️ data.profile no está definido:", data);
+          }
+          if (data?.message?.toLowerCase().includes("token inválido")) {
+            console.warn("⚠️ Token posiblemente expirado");
+            // aquí podrías redirigir al login, si quieres
           }
           
+
           if (data.profile.avatar_url) {
             setAvatarUrl(data.profile.avatar_url);
+          }
+          const { data: { user }, error } = await supabase.auth.getUser();
+            if (user?.email) {
+              setEmail(user.email);
           }
         } catch (err) {
           console.error("Error al cargar avatar en usuario.tsx:", err);
