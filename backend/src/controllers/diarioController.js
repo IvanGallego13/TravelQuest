@@ -225,8 +225,6 @@ export const createOrAppendJournalEntry = async (req, res) => {
           };
         })
       );
-  
-      console.log("📦 Resumen generado:", summaries);
       res.json(summaries);
     } catch (error) {
       console.error("❌ Error en getJournalSummary:", error.message);
@@ -251,6 +249,12 @@ export const getTravelDaysByBook = async (req, res) => {
   console.log("📘 Book ID recibido:", req.params.bookId);
   console.log("🛡️ Usuario autenticado:", req.user?.id);
   const bookId = req.params.bookId;
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Token no enviado' });
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createSupabaseClientWithAuth(token);
+
   try {
     // 1. Obtener los días del travel_book con sus entradas
     const { data, error } = await supabase
@@ -281,9 +285,7 @@ export const getTravelDaysByBook = async (req, res) => {
             .from("journal")
             .createSignedUrl(firstEntryWithImage.image_path, 60 * 60); // 1h
 
-          if (!signError && signed?.signedUrl) {
-            signedUrl = signed.signedUrl;
-          }
+            if (signed?.signedUrl) signedUrl = signed.signedUrl;
         }
 
         return {
@@ -307,6 +309,11 @@ export const getEntriesByDay = async (req, res) => {
 
   console.log("📅 Buscando entradas para el día:", dayId);
 
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Token no enviado' });
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createSupabaseClientWithAuth(token);
+
   try {
     // Obtener entradas del día
     const { data: entries, error } = await supabase
@@ -326,9 +333,7 @@ export const getEntriesByDay = async (req, res) => {
             .from("journal")
             .createSignedUrl(entry.image_path, 60 * 60);
 
-          if (!signError && signed?.signedUrl) {
-            signedUrl = signed.signedUrl;
-          }
+          if (signed?.signedUrl) signedUrl = signed.signedUrl;
         }
 
         return {

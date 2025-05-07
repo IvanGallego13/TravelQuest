@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -12,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ImageBackground,
+
 } from "react-native";
 
 export default function Register() {
@@ -88,10 +90,18 @@ export default function Register() {
   
   return (
     <ImageBackground
-      source={require('../../assets/images/caminante.png')}
+      source={require('../../assets/images/tren.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
+        {/* Botón volver fijo */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-6 left-4 z-50 bg-white/90 p-2 rounded-full shadow-md"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1 bg-white/20 px-6 justify-center pb-20"
