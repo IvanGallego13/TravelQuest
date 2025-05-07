@@ -1,6 +1,8 @@
 import { supabase } from '../config/supabase.js';
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import { createSupabaseClientWithAuth } from '../config/supabaseWithAuth.js';
+
 
 /**
  * Crea o añade una entrada al diario de viaje del usuario.
@@ -149,11 +151,19 @@ export const createOrAppendJournalEntry = async (req, res) => {
   //obtener los viajes de un usuario
   export const getJournalSummary = async (req, res) => {
     console.log("llamada resumen de viajes");
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Token no enviado' });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseWithAuth = createSupabaseClientWithAuth(token);
+  
     try {
       const userId = req.user.id;
   
       // 1. Obtener todos los días de viaje del usuario, agrupados por libro
-      const { data, error } = await supabase
+      const { data, error } = await supabaseWithAuth
         .from("travel_books")
         .select(`
           id,
@@ -196,7 +206,7 @@ export const createOrAppendJournalEntry = async (req, res) => {
           if (firstImage) {
             console.log("📷 Primera imagen encontrada:", firstImage);
   
-            const { data: signed, error: signError } = await supabase.storage
+            const { data: signed, error: signError } = await supabaseWithAuth.storage
               .from("journal")
               .createSignedUrl(firstImage, 60 * 60); // 1h
   
