@@ -49,20 +49,30 @@ export default function Usuario() {
         try {
           setLoading(true);
           
-          // Load user profile
-          const token = await SecureStore.getItemAsync("travelquest_token");
-          const perfilRes = await apiFetch("/ajustes/perfil", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          // Load user profile - No need to manually add the token
+          const perfilRes = await apiFetch("/ajustes/perfil");
           
           if (!perfilRes.ok) throw new Error("Error al cargar perfil");
           const perfilData = await perfilRes.json();
           
-          // Use the username from profile, or email as fallback
-          setUsername(perfilData.username || perfilData.email?.split('@')[0] || "Usuario");
-          setAvatarUrl(perfilData.avatar_url || "");
+          // Use the username from profile data structure
+          // Check both profile.username and profile directly
+          if (perfilData.profile && perfilData.profile.username) {
+            setUsername(perfilData.profile.username);
+          } else if (perfilData.username) {
+            setUsername(perfilData.username);
+          } else if (perfilData.email) {
+            setUsername(perfilData.email.split('@')[0]);
+          } else {
+            setUsername("Usuario");
+          }
+          
+          // Similarly check for avatar_url in both locations
+          if (perfilData.profile && perfilData.profile.avatar_url) {
+            setAvatarUrl(perfilData.profile.avatar_url);
+          } else if (perfilData.avatar_url) {
+            setAvatarUrl(perfilData.avatar_url);
+          }
           
           // Load user achievements
           const logrosRes = await apiFetch("/logros/mis-logros");

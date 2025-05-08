@@ -7,6 +7,7 @@ import * as Linking from "expo-linking";
 import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import * as AuthSession from "expo-auth-session";
+import * as SecureStore from "expo-secure-store";
 
 import {
   View,
@@ -69,8 +70,16 @@ export default function Login() {
   
       if (!res.ok) throw new Error(await res.text());
   
+      // En la función handleLogin, después de recibir la respuesta exitosa:
       const data = await res.json();
-      await login(data.token, data.userId); // almacena el token recibido
+      console.log("🔑 Token recibido:", data.token ? "Sí" : "No");
+  
+      // Asegúrate de que el token se guarda correctamente
+      await login(data.token, data.userId);
+  
+      // Verificar que el token se guardó
+      const storedToken = await SecureStore.getItemAsync("travelquest_token");
+      console.log("🔑 Token almacenado:", storedToken ? "Sí" : "No");
       router.replace("/login/localizacion");
     } catch (err) {
       Alert.alert("Error", "No se pudo iniciar sesión");
