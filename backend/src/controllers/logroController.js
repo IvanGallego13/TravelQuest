@@ -1,4 +1,10 @@
 import { supabase } from '../config/supabaseClient.js';
+// Si hay nuevos logros, insertarlos y actualizar puntos
+        // Add this import at the top of the file
+import { updateUserLevel } from './userController.js';
+        
+        // Export LOGROS so it can be used in other files
+export { LOGROS };
 
 // Definición de logros y sus puntos
 const LOGROS = {
@@ -82,7 +88,7 @@ const LOGROS = {
         nombre: 'Leyenda viajera',
         descripcion: 'Completa 100 misiones',
         categoria: 'misiones',
-        puntos: 1000,
+        puntos: 500,
         icono: '🪂'
     },
     MARATON_MISIONES: {
@@ -120,6 +126,7 @@ const LOGROS = {
         icono: '📒'
     },
 
+    /*
     // 📸 Diario
     PRIMERA_FOTO: {
         id: 'primera_foto',
@@ -152,9 +159,10 @@ const LOGROS = {
         categoria: 'diario',
         puntos: 30,
         icono: '📸'
-    },
+    },*/
 
     // 🎁 Especiales o secretos
+    /*
     PRECISION_TOTAL: {
         id: 'precision_total',
         nombre: 'Precisión total',
@@ -162,13 +170,13 @@ const LOGROS = {
         categoria: 'especial',
         puntos: 1000,
         icono: '🎁'
-    },
+    },*/
     VIAJERO_DEL_TIEMPO: {
         id: 'viajero_del_tiempo',
         nombre: 'Viajero del tiempo',
         descripcion: 'Realiza un viaje a la misma ciudad en años distintos',
         categoria: 'especial',
-        puntos: 1500,
+        puntos: 500,
         icono: '🎁'
     },
     COLECCIONISTA: {
@@ -176,7 +184,7 @@ const LOGROS = {
         nombre: 'Coleccionista',
         descripcion: 'Consigue al menos 1 logro de cada categoría',
         categoria: 'especial',
-        puntos: 2000,
+        puntos: 200,
         icono: '🎁'
     },
 
@@ -186,7 +194,7 @@ const LOGROS = {
         nombre: '“Bonjour, París”',
         descripcion: 'El típico logro por visitar París',
         categoria: 'bonus',
-        puntos: 300,
+        puntos: 30,
         icono: '😄'
     },
     DE_ARRIBA_A_ABAJO: {
@@ -194,7 +202,7 @@ const LOGROS = {
         nombre: '“De arriba a abajo”',
         descripcion: 'Caminaste más de 20 km en un solo viaje',
         categoria: 'bonus',
-        puntos: 400,
+        puntos: 40,
         icono: '🚶'
     },
     MISION_FALLIDA: {
@@ -202,7 +210,7 @@ const LOGROS = {
         nombre: '“Misión fallida”',
         descripcion: 'No completaste ninguna misión en un viaje (¡ups!)',
         categoria: 'bonus',
-        puntos: -100,
+        puntos: -10,
         icono: '😅'
     }
 };
@@ -432,33 +440,32 @@ export const checkAndAwardAchievements = async (userId, action, data) => {
         }
 
         // Si hay nuevos logros, insertarlos y actualizar puntos
-        if (newAchievements.length > 0) {
-            const achievementsToInsert = newAchievements.map(logro => ({
-                Usuario_id: userId, // Nombre de columna correcto
-                Logros_id: logro.id, // Nombre de columna correcto
-                Conseguido_en: new Date().toISOString() // Nombre de columna correcto
-            }));
-
-            const { error: insertError } = await supabase
-                .from('Usuario_Logros') // Nombre de tabla correcto
-                .insert(achievementsToInsert);
-
-            if (insertError) throw insertError;
-
-            // Actualizar puntos totales del usuario
-            const totalPoints = newAchievements.reduce((sum, logro) => sum + logro.puntos, 0);
-            const { error: updateError } = await supabase
-                .from('Usuario') // Nombre de tabla correcto
-                .update({ Puntos: supabase.raw(`Puntos + ${totalPoints}`) }) // Nombre de columna correcto
-                .eq('idusuario', userId); // Nombre de columna correcto
-
-            if (updateError) throw updateError;
-
-            return {
-                newAchievements,
-                pointsEarned: totalPoints
-            };
-        }
+        // Add this import at the top of the file
+        /*import { updateUserLevel } from './userController.js';*/
+        
+        // Export LOGROS so it can be used in other files
+        /*export { LOGROS };*/
+        
+        // Modify the end of your checkAndAwardAchievements function to update the user level
+        // Find this section at the end of your function:
+                if (newAchievements.length > 0) {
+                    const achievementsToInsert = newAchievements.map(logro => ({
+                        Usuario_id: userId, // Nombre de columna correcto
+                        Logros_id: logro.id, // Nombre de columna correcto
+                        Conseguido_en: new Date().toISOString() // Nombre de columna correcto
+                    }));
+        
+                    const { error: insertError } = await supabase
+                        .from('Usuario_Logros') // Nombre de tabla correcto
+                        .insert(achievementsToInsert);
+        
+                    if (insertError) throw insertError;
+        
+                    // Add this line to update the user's level after earning achievements
+                    await updateUserLevel(userId);
+                    
+                    return newAchievements;
+                }
 
         return { newAchievements: [], pointsEarned: 0 };
     } catch (error) {

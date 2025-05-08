@@ -2,9 +2,9 @@ import { supabase } from '../../config/supabaseClient.js';
 
 // Definir los niveles de dificultad y sus puntos (manteniendo consistencia con generateMission.js)
 const DIFFICULTY_POINTS = {
-    "facil": 100,
-    "medio": 200,
-    "dificil": 300
+    "facil": 10,
+    "medio": 20,
+    "dificil": 30
 };
 
 /**

@@ -11,12 +11,14 @@ import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import mensajeRoutes from './routes/mensajeRoutes.js';
 import misionesRoutes from './routes/misionRoutes.js';
-import rankingRoutes from './routes/rankingRoutes.js';
+import rankingRoutes from './routes/rankingroutes.js';
 import imageRoutes from './routes/imageRoutes.js';
 import viajeRoutes from './routes/viajeRoutes.js';
 import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
 import ajustesRoutes from './routes/ajustesRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import logrosRoutes from './routes/logrosRoutes.js'; // Add this line
 
 dotenv.config();
 
@@ -36,10 +38,8 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 // Rutas
-app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/diarios', diarioRoutes);
 app.use('/api/amigos', amigosRoutes);
 app.use('/api/location', locationRoutes);
@@ -51,6 +51,7 @@ app.use('/api/viajes', viajeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ajustes', ajustesRoutes);
+app.use('/api/logros', logrosRoutes); // Add this line
 
 // Ruta raíz
 app.get('/', (req, res) => {

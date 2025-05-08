@@ -1,6 +1,7 @@
 import { generateMission } from '../ia/generateMission.js';
 import { supabase } from '../config/supabaseClient.js';
 import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
+import { updateUserLevel } from './userController.js';
 
 
 export const updateUserMissionStatus = async (req, res) => {
@@ -39,6 +40,7 @@ export const updateUserMissionStatus = async (req, res) => {
         updateFields.completed_at = completed_at;
       }
   
+      // Actualizar la misión
       const { error: updateError } = await supabase
         .from("user_missions")
         .update(updateFields)
@@ -47,6 +49,15 @@ export const updateUserMissionStatus = async (req, res) => {
   
       if (updateError) throw updateError;
   
+      // Add this code to update the user level when a mission is completed
+      if (status === "completed") {
+        await updateUserLevel(userId);
+      }
+  
+      res.json({
+        message: `Misión ${status === "completed" ? "completada" : status === "accepted" ? "aceptada" : "descartada"} correctamente`,
+        status
+      });
       res.status(200).json({ message: "Misión actualizada correctamente" });
     } catch (error) {
       console.error("❌ Error al actualizar misión:", error.message);
