@@ -28,13 +28,19 @@ export function useAuth() {
   }, []);
 
   // Función de login real
+  // Asegúrate de que el token se guarda correctamente
   const login = async (token?: string, userId?: string) => {
     if (token) {
+      console.log('🔑 Guardando token en SecureStore:', token.substring(0, 10) + '...');
       await SecureStore.setItemAsync(TOKEN_KEY, token);
+    } else {
+      console.warn('⚠️ Intento de login sin token');
     }
+    
     if(userId){
       useAuthStore.getState().setUserId(userId);
     }
+    
     setIsLoggedIn(true);
   };
 
@@ -115,11 +121,16 @@ export function useAuth() {
 
   const login = async (token?: string, userId?: string) => {
     if (token) {
+      console.log('🔑 Guardando token en SecureStore:', token.substring(0, 10) + '...');
       await SecureStore.setItemAsync(TOKEN_KEY, token);
+    } else {
+      console.warn('⚠️ Intento de login sin token');
     }
-    if (userId) {
+    
+    if(userId){
       useAuthStore.getState().setUserId(userId);
     }
+    
     setIsLoggedIn(true);
   };
 

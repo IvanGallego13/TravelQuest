@@ -1,18 +1,25 @@
 import { Stack } from "expo-router";
-import { View } from "react-native";
-import "../global.css"
+import { View, StyleSheet } from "react-native";
+// Comentamos temporalmente la importación de CSS
+// import "../global.css"
 
 export default function RootLayout() {
   return(
-    <View className="flex-1 bg-yellow-200 min-h-screen"> 
+    <View style={styles.container}> 
       <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-      <Stack.Screen name="login/register" options={{ headerShown: false }}/>
-      <Stack.Screen name="login/index" options={{ headerShown: false }}/>
-      <Stack.Screen name="localizacion/index" options={{ headerShown: false }}/>
-      <Stack.Screen name="login/localizacion" options={{ headerShown: false }}/>
-      
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
+        <Stack.Screen name="login/register" options={{ headerShown: false }}/>
+        <Stack.Screen name="login/index" options={{ headerShown: false }}/>
+        <Stack.Screen name="login/localizacion" options={{ headerShown: false }}/>
       </Stack>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F4EDE0",
+    minHeight: '100%'
+  }
+});

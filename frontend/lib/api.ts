@@ -7,49 +7,61 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.159:3000/ap
 // Clave para almacenar el token
 const TOKEN_KEY = "travelquest_token";
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+export async function apiFetch(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
   const url = `${API_URL}${endpoint}`;
-  console.log("🌐 Llamando a:", url);
+  const token = await SecureStore.getItemAsync("travelquest_token");
 
-  // Configurar los headers por defecto con tipo correcto
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> || {}),
-  };
+  // Mejorar el logging para depuración
+  console.log(`🌐 Llamando a: ${url}`);
+  console.log(`🔑 Token disponible: ${token ? 'Sí' : 'No'}`);
+  if (token) {
+    console.log(`🔑 Token value: ${token.substring(0, 10)}...`);
+  } else {
+    console.warn(`⚠️ No hay token disponible para la petición: ${endpoint}`);
+  }
 
+  const headers: Record<string, string> = {};
+  
+  // Añadir token si existe
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // Solo añadir Content-Type si no estás enviando FormData
+  const isFormData = options.body instanceof FormData;
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+  
   try {
-    // Get token directly from SecureStore for each request
-    const token = await SecureStore.getItemAsync(TOKEN_KEY);
-    
-    // Depuración: Verificar si el token existe
-    console.log("🔑 Token disponible:", token ? "Sí" : "No");
-    console.log("🔑 Token value:", token ? token.substring(0, 10) + "..." : "None");
-    
-    // Si hay un token, añadirlo a los headers
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    } else {
-      console.warn("⚠️ No hay token disponible para la petición:", endpoint);
-    }
-
-    // Realizar la petición
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       ...options,
-      headers,
+      headers: {
+        ...headers,
+        ...(options.headers instanceof Headers ? {} : options.headers as Record<string, string>)
+      },
     });
 
-    // Depuración: Verificar el estado de la respuesta
-    console.log(`📥 Respuesta de ${endpoint}: ${response.status}`);
+    console.log(`📥 Respuesta de ${endpoint}: ${res.status}`);
     
-    // Si la respuesta no es exitosa, mostrar más información
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Error en ${endpoint}: ${response.status} - ${errorText}`);
+    // Log para depuración en caso de error
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`❌ Error en ${endpoint}: ${res.status} - ${errorText}`);
+      // Clonar la respuesta ya que se ha consumido el body
+      return new Response(errorText, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers
+      });
     }
 
-    return response;
+    return res;
   } catch (error) {
-    console.error(`❌ Error en fetch a ${endpoint}:`, error);
+    console.error(`❌ Error al llamar a la API: ${error}`);
     throw error;
   }
 }

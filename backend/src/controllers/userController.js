@@ -72,13 +72,11 @@ export const updateUserLevel = async (userId) => {
         const totalPoints = achievementPoints + missionPoints;
         console.log(`📊 Puntos totales: ${totalPoints}`);
         
-        // 6. Actualizar el perfil del usuario con los nuevos puntos
+        // 6. Actualizar el score (nivel) del usuario en la tabla profiles
+        // Ahora el nivel es igual a los puntos totales
         const { error: updateError } = await supabase
             .from('profiles')
-            .update({ 
-                score: totalPoints,
-                updated_at: new Date().toISOString()
-            })
+            .update({ score: totalPoints })
             .eq('id', userId);
             
         if (updateError) throw updateError;
@@ -87,29 +85,105 @@ export const updateUserLevel = async (userId) => {
         return totalPoints;
         
     } catch (error) {
-        console.error('❌ Error al actualizar nivel de usuario:', error);
+        console.error('❌ Error actualizando nivel de usuario:', error);
         throw error;
     }
 };
 
 /**
- * Endpoint para actualizar manualmente el nivel de un usuario
+ * Obtener perfil completo del usuario con puntos y logros
  */
-export const refreshUserLevel = async (req, res) => {
+export const getUserProfileComplete = async (req, res) => {
     try {
         const userId = req.user.id;
-        const totalPoints = await updateUserLevel(userId);
+        console.log(`📱 Obteniendo perfil completo para usuario: ${userId}`);
         
+        // Obtener datos del perfil
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+        if (profileError) throw profileError;
+        
+        // Obtener logros del usuario
+        const { data: userAchievements, error: achievementsError } = await supabase
+            .from('user_achievements')
+            .select('achievement_id, unlocked_at')
+            .eq('user_id', userId);
+            
+        if (achievementsError) throw achievementsError;
+        
+        // Obtener misiones completadas
+        const { data: completedMissions, error: missionsError } = await supabase
+            .from('user_missions')
+            .select('mission_id, status, completed_at, image_url')
+            .eq('user_id', userId)
+            .eq('status', 'completed');
+            
+        if (missionsError) throw missionsError;
+        
+        // Devolver toda la información
         res.json({
             success: true,
-            message: 'Nivel actualizado correctamente',
-            points: totalPoints
+            profile,
+            achievements: userAchievements || [],
+            completedMissions: completedMissions || [],
+            totalPoints: profile.score || 0
         });
+        
     } catch (error) {
+        console.error('❌ Error al obtener perfil de usuario:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al actualizar nivel',
+            message: 'Error al obtener perfil',
             error: error.message
         });
+    }
+};
+
+/**
+ * Obtener todos los usuarios
+ */
+export const getAllUsers = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, score, created_at')
+            .order('score', { ascending: false });
+            
+        if (error) throw error;
+        
+        res.json(data);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+};
+
+/**
+ * Obtener un usuario por ID
+ */
+export const getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, score, created_at')
+            .eq('id', id)
+            .single();
+            
+        if (error) throw error;
+        
+        if (!data) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        res.json(data);
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        res.status(500).json({ error: 'Error al obtener usuario' });
     }
 };
