@@ -53,11 +53,6 @@ export const updateUserMissionStatus = async (req, res) => {
       if (status === "completed") {
         await updateUserLevel(userId);
       }
-  
-      res.json({
-        message: `Misión ${status === "completed" ? "completada" : status === "accepted" ? "aceptada" : "descartada"} correctamente`,
-        status
-      });
       res.status(200).json({ message: "Misión actualizada correctamente" });
     } catch (error) {
       console.error("❌ Error al actualizar misión:", error.message);
