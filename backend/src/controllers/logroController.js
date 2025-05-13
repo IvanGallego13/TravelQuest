@@ -1,9 +1,7 @@
 import { supabase } from '../config/supabaseClient.js';
-// Si hay nuevos logros, insertarlos y actualizar puntos
-        // Add this import at the top of the file
 import { updateUserLevel } from './userController.js';
         
-        // Export LOGROS so it can be used in other files
+// Export LOGROS so it can be used in other files
 export { LOGROS };
 
 // Definición de logros y sus puntos
@@ -439,33 +437,65 @@ export const checkAndAwardAchievements = async (userId, action, data) => {
             // Lógica para "De arriba a abajo" requeriría rastrear la distancia recorrida en un viaje
         }
 
-        // Si hay nuevos logros, insertarlos y actualizar puntos
-        // Add this import at the top of the file
-        /*import { updateUserLevel } from './userController.js';*/
-        
-        // Export LOGROS so it can be used in other files
-        /*export { LOGROS };*/
-        
-        // Modify the end of your checkAndAwardAchievements function to update the user level
-        // Find this section at the end of your function:
-                if (newAchievements.length > 0) {
-                    const achievementsToInsert = newAchievements.map(logro => ({
-                        Usuario_id: userId, // Nombre de columna correcto
-                        Logros_id: logro.id, // Nombre de columna correcto
-                        Conseguido_en: new Date().toISOString() // Nombre de columna correcto
-                    }));
-        
-                    const { error: insertError } = await supabase
-                        .from('Usuario_Logros') // Nombre de tabla correcto
-                        .insert(achievementsToInsert);
-        
-                    if (insertError) throw insertError;
-        
-                    // Add this line to update the user's level after earning achievements
-                    await updateUserLevel(userId);
-                    
-                    return newAchievements;
+        // If there are new achievements, insert them and update points
+        if (newAchievements.length > 0) {
+            console.log(`🏆 Usuario ${userId} ha desbloqueado ${newAchievements.length} logros nuevos`);
+            
+            // First, ensure all achievements exist in the achievements table
+            for (const achievement of newAchievements) {
+                // Check if achievement exists in achievements table
+                const { data: existingAchievement, error: checkError } = await supabase
+                    .from('achievements')
+                    .select('id')
+                    .eq('id', achievement.id)
+                    .single();
+                
+                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+                    console.error(`Error checking achievement ${achievement.id}:`, checkError);
+                    continue;
                 }
+                
+                // If achievement doesn't exist, insert it
+                if (!existingAchievement) {
+                    const { error: insertAchievementError } = await supabase
+                        .from('achievements')
+                        .insert({
+                            id: achievement.id,
+                            title: achievement.nombre,
+                            description: achievement.descripcion,
+                            points: achievement.puntos,
+                            code: achievement.id,
+                            category: achievement.categoria,
+                            icon: achievement.icono
+                        });
+                    
+                    if (insertAchievementError) {
+                        console.error(`Error inserting achievement ${achievement.id}:`, insertAchievementError);
+                        continue;
+                    }
+                    
+                    console.log(`✅ Achievement ${achievement.id} added to achievements table`);
+                }
+            }
+            
+            // Now insert user achievements
+            const achievementsToInsert = newAchievements.map(logro => ({
+                user_id: userId,
+                achievement_id: logro.id,
+                unlocked_at: new Date().toISOString()
+            }));
+        
+            const { error: insertError } = await supabase
+                .from('user_achievements')
+                .insert(achievementsToInsert);
+        
+            if (insertError) throw insertError;
+        
+            // Update the user's level after earning achievements
+            await updateUserLevel(userId);
+            
+            return { newAchievements, pointsEarned: newAchievements.reduce((sum, a) => sum + a.puntos, 0) };
+        }
 
         return { newAchievements: [], pointsEarned: 0 };
     } catch (error) {
@@ -477,7 +507,27 @@ export const checkAndAwardAchievements = async (userId, action, data) => {
 /**
  * Obtener logros de un usuario
  */
-export const getUserAchievements = async (req, res) => {
+export const getUserAchievements = async (userId) => {
+    try {
+        // Get user's unlocked achievements
+        const { data: userAchievements, error: userAchievementsError } = await supabase
+            .from('user_achievements')
+            .select('achievement_id, unlocked_at')
+            .eq('user_id', userId);
+
+        if (userAchievementsError) throw userAchievementsError;
+        
+        return userAchievements || [];
+    } catch (error) {
+        console.error('Error al obtener logros del usuario:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener logros de un usuario para la API
+ */
+export const getUserAchievementsAPI = async (req, res) => {
     try {
         const { id_usuario } = req.params;
 

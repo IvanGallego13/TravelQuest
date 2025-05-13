@@ -1,10 +1,6 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require('nativewind/metro');
 
-/** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname)
 
-// Añadir CSS a las extensiones de activos
-config.resolver.assetExts.push('css');
-
-// Configuración simple sin NativeWind
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' })

@@ -2,6 +2,7 @@ import { Text, View, TouchableOpacity, Alert, ImageBackground } from "react-nati
 import { useRouter } from "expo-router";
 import { useUbicacion } from "../../../hooks/useUbicacion";
 import MapView, { Marker } from "react-native-maps";
+import { Ionicons } from '@expo/vector-icons'; // Add this import for the arrow icon
 
 
 export default function OpcionesDeCrear() {
@@ -22,6 +23,12 @@ export default function OpcionesDeCrear() {
   const irAEditarDiario =()=>{
     router.push("./crear/2.2entradaDiario");
   };
+
+  // Add this function to navigate back to the location screen
+  const irALocalizacion = () => {
+    router.push("/login/localizacion");
+  };
+
   return (
     <ImageBackground
       source={require('../../../assets/images/caminante.png')}
@@ -30,9 +37,17 @@ export default function OpcionesDeCrear() {
     >
       {/* Capa blanca translúcida para aclarar imagen */}
       <View className="flex-1 px-6 pt-12 bg-white/20">
+        
+        {/* Add back arrow button */}
+        <TouchableOpacity 
+          onPress={irALocalizacion}
+          className="absolute top-12 left-6 z-10 bg-white/80 p-2 rounded-full"
+        >
+          <Ionicons name="arrow-back" size={24} color="#699D81" />
+        </TouchableOpacity>
 
-        {/* Ciudad como etiqueta moderna */}
-        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2">
+        {/* Ciudad como etiqueta moderna - Moved more to the right */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2 ml-14">
           <Text className="text-black text-lg font-semibold">
             {ubicacion?.city || "Ubicación..."}
           </Text>

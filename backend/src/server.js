@@ -5,7 +5,7 @@ import fileUpload from 'express-fileupload';
 import { createClient } from '@supabase/supabase-js';
 
 // Rutas
-import userRoutes from './routes/userRoutes.js';
+import userRoutes from './routes/userroutes.js';
 import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
@@ -17,8 +17,6 @@ import viajeRoutes from './routes/viajeRoutes.js';
 import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
 import ajustesRoutes from './routes/ajustesRoutes.js';
-// Remove this duplicate import:
-// import userRoutes from './routes/userRoutes.js';
 import logrosRoutes from './routes/logrosRoutes.js';
 
 dotenv.config();

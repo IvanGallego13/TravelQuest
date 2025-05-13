@@ -42,18 +42,11 @@ router.post('/check', async (req, res) => {
         const { action, data } = req.body;
         
         if (!action) {
-            return res.status(400).json({ 
-                message: 'Se requiere una acción para verificar logros' 
-            });
+            return res.status(400).json({ message: 'Se requiere una acción' });
         }
         
-        const newAchievements = await checkAndAwardAchievements(userId, action, data);
-        
-        res.json({
-            success: true,
-            message: newAchievements.length > 0 ? 'Nuevos logros desbloqueados' : 'No hay nuevos logros',
-            achievements: newAchievements
-        });
+        const result = await checkAndAwardAchievements(userId, action, data);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ 
             message: 'Error al verificar logros',

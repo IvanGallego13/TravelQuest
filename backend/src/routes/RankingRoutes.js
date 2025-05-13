@@ -1,16 +1,16 @@
 import express from 'express';
-import { getGlobalRanking, getFriendsRanking, updateUserPoints } from '../controllers/opcional/rankingController.js';
+import { getGlobalRanking, getUserRankingPosition } from '../controllers/rankingController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// 🟢 Obtener ranking global
-router.get('/', authMiddleware, getGlobalRanking);
+// All routes require authentication
+router.use(authMiddleware);
 
-// 🔵 Obtener ranking de amigos
-router.get('/friends/:id_usuario', authMiddleware, getFriendsRanking);
+// Get global ranking
+router.get('/', getGlobalRanking);
 
-// 🟠 Actualizar puntos de usuario
-router.put('/points/:id_usuario', authMiddleware, updateUserPoints);
+// Get user's position in the ranking
+router.get('/position', getUserRankingPosition);
 
 export default router;

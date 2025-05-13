@@ -1,14 +1,15 @@
-// store/auth.ts
 import { create } from 'zustand';
 
 interface AuthState {
+  isLoggedIn: boolean;
   userId: string | null;
-  setUserId: (id: string) => void;
-  clearUser: () => void;
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
+  setUserId: (userId: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
+  isLoggedIn: false,
   userId: null,
-  setUserId: (id) => set({ userId: id }),
-  clearUser: () => set({ userId: null }),
+  setIsLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
+  setUserId: (userId) => set({ userId }),
 }));

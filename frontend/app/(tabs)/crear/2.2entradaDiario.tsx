@@ -1,16 +1,18 @@
-import { Text, View, TouchableOpacity, TextInput, Image, Alert, ImageBackground} from "react-native";
+import { Text, View, TouchableOpacity, TextInput, Image, Alert, ImageBackground, Platform} from "react-native";
 import { useState, useCallback} from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useUbicacion } from "../../../hooks/useUbicacion";
 import { apiFetch } from "../../../lib/api";
 import { useFocusEffect } from "@react-navigation/native";
-
+import * as SecureStore from "expo-secure-store";
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 
 export default function CreateJournalEntry(){
   const [description, setDescription] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
 
   const router = useRouter();
   const { ubicacion } = useUbicacion();
@@ -60,62 +62,115 @@ export default function CreateJournalEntry(){
     }
 
     setLoading(true);
+    setNetworkError(false);
 
     try {
-     
-      const formData = new FormData();
-      formData.append("description", description);
-      formData.append("cityId", ubicacion.cityId.toString());
-      formData.append("travelDate", new Date().toISOString().split("T")[0]);
-
-        if (imageUri) {
-          const fileName = imageUri.split("/").pop() || `photo-${Date.now()}.jpg`;
-        
-          const image: any = {
-            uri: imageUri,
+      // Upload image first if present
+      let imageUrl = null;
+      if (imageUri) {
+        try {
+          // Get file info
+          const uriParts = imageUri.split('.');
+          const fileType = uriParts[uriParts.length - 1].toLowerCase();
+          const fileName = `photo-${Date.now()}.${fileType}`;
+          
+          // Create FormData
+          const formData = new FormData();
+          
+          // Add image with proper structure for React Native
+          formData.append('image', {
+            uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
+            type: fileType === 'jpg' || fileType === 'jpeg' ? 'image/jpeg' : `image/${fileType}`,
             name: fileName,
-            type: "image/jpeg",
-          } as any;
-          console.log("📸 Imagen a enviar:", image);
+          } as any);
+          
+          console.log("📸 Enviando imagen...");
+          
+          // Upload the image with a timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds for image upload
+          
+          const uploadRes = await fetch(`http://192.168.1.159:3000/api/imagenes/upload`, {
+            method: "POST",
+            headers: {
+              // Don't set Content-Type header for FormData
+              "Authorization": `Bearer ${await SecureStore.getItemAsync("travelquest_token")}`,
+            },
+            body: formData,
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!uploadRes.ok) {
+            const errorText = await uploadRes.text();
+            console.error("Error del servidor:", errorText);
+            throw new Error("Error al subir la imagen");
+          }
+          
+          const uploadData = await uploadRes.json();
+          imageUrl = uploadData.url;
+          console.log("🖼️ Imagen subida correctamente:", imageUrl);
+        } catch (error: any) {
+          console.error("❌ Error al subir la imagen:", error);
+          
+          if (error.name === 'AbortError') {
+            Alert.alert(
+              "Error de conexión", 
+              "La subida de la imagen está tardando demasiado. Comprueba tu conexión a internet e inténtalo de nuevo."
+            );
+            setNetworkError(true);
+          } else {
+            Alert.alert("Error", "No se pudo subir la imagen. Intenta de nuevo.");
+          }
+          
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Now create the diary entry with the image URL
+      const entryData = {
+        description,
+        cityId: ubicacion.cityId.toString(),
+        travelDate: new Date().toISOString().split("T")[0],
+        imageUrl: imageUrl,
+      };
+
+      console.log("📝 Enviando entrada de diario:", entryData);
+
+      try {
+        const res = await apiFetch("/diarios/create-or-append", {
+          method: "POST",
+          body: JSON.stringify(entryData),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Error del servidor:", errorText);
+          throw new Error("Error al guardar la entrada");
+        }
+
+        Alert.alert("¡Éxito!", "Tu entrada de diario se ha guardado correctamente.");
+        setDescription("");
+        setImageUri(null);
+        router.replace("../(tabs)/diario");
+      } catch (error: any) {
+        console.error("❌ Error al publicar:", error);
         
-          formData.append("image", image);
+        if (error.name === 'AbortError') {
+          Alert.alert(
+            "Error de conexión", 
+            "La conexión con el servidor está tardando demasiado. Comprueba tu conexión a internet e inténtalo de nuevo."
+          );
+          setNetworkError(true);
+        } else {
+          Alert.alert("Error", "No se pudo guardar la entrada. Intenta de nuevo.");
         }
-
-        // 🧪 Log de todo el formData antes de enviarlo
-        console.log("🔍 FormData antes de enviar:");
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}:`, value);
-        }
-
-      const res = await apiFetch("/diarios/create-or-append", {
-        method: "POST",
-        body: formData,
-      });
-
-      console.log("📬 Estado de la respuesta:", res.status);
-
-      if (!res.ok) throw new Error("Error al guardar la entrada");
-
-      Alert.alert("Éxito", "Tu entrada ha sido publicada");
-
-      // Limpiar campos antes de navegar
-      setDescription("");
-      setImageUri(null);
-
-      router.replace("../crear");
-    } catch (error) {
-      Alert.alert("Error", "No se pudo guardar la entrada");
-      console.error(error);
+      }
     } finally {
       setLoading(false);
     }
-    useFocusEffect(
-      useCallback(() => {
-        // Resetear formulario cada vez que se enfoca la pantalla
-        setDescription("");
-        setImageUri(null);
-      }, [])
-    );
   };
 
   return (
@@ -125,6 +180,13 @@ export default function CreateJournalEntry(){
       resizeMode="cover"
     >
       <View className="flex-1 px-6 pt-12 justify-start">
+        {/* Back button */}
+        <TouchableOpacity 
+          onPress={() => router.push("/login/localizacion")}
+          className="absolute top-10 left-4 z-10 bg-white/70 rounded-full p-2 shadow-md"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
         {/* Ciudad y fecha como badge */}
         <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
@@ -191,6 +253,28 @@ export default function CreateJournalEntry(){
           </View>
         </TouchableOpacity>
 
+      </View>
+    </ImageBackground>
+  );
+
+  // Add a network error message
+  return (
+    <ImageBackground
+      source={require('../../../assets/images/ciudad2.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 px-6 pt-12 justify-start">
+        {/* Show network error message if needed */}
+        {networkError && (
+          <View className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <Text className="font-bold">Problema de conexión</Text>
+            <Text>Hay problemas para conectar con el servidor. Comprueba tu conexión a internet.</Text>
+          </View>
+        )}
+
+        {/* Rest of your component UI */}
+        {/* ... */}
       </View>
     </ImageBackground>
   );

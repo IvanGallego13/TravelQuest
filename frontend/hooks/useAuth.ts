@@ -1,161 +1,95 @@
-/*import { useState, useEffect } from "react";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
-import { useAuthStore } from "../store/auth";
-import { supabase } from "../lib/supabase";
+import { create } from 'zustand';
+import * as SecureStore from 'expo-secure-store';
+import { useAuthStore } from '../store/auth';
 
-const TOKEN_KEY = "travelquest_token";
+// Constants
+const TOKEN_KEY = 'travelquest_token';
+const USER_ID_KEY = 'travelquest_user_id';
 
 export function useAuth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { setIsLoggedIn, setUserId } = useAuthStore();
 
-  // Al iniciar la app, verificamos si hay un token guardado
-  useEffect(() => {
-    const checkToken = async () => {
-      if (Platform.OS === "web") {
-        setIsLoggedIn(false);
-        setLoading(false);
-        return;
+  // Login function that stores token and userId
+  const login = async (token: string, userId?: string) => {
+    try {
+      console.log("🔐 Guardando token en SecureStore...");
+      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      
+      if (userId) {
+        console.log("👤 Guardando userId en SecureStore...");
+        await SecureStore.setItemAsync(USER_ID_KEY, userId);
+        setUserId(userId);
       }
-
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      setIsLoggedIn(!!token);
-      setLoading(false);
-    };
-
-    checkToken();
-  }, []);
-
-  // Función de login real
-  // Asegúrate de que el token se guarda correctamente
-  const login = async (token?: string, userId?: string) => {
-    if (token) {
-      console.log('🔑 Guardando token en SecureStore:', token.substring(0, 10) + '...');
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    } else {
-      console.warn('⚠️ Intento de login sin token');
+      
+      // Verify token was stored
+      const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+      console.log("✅ Token guardado correctamente:", !!storedToken);
+      
+      setIsLoggedIn(true);
+      return true;
+    } catch (error) {
+      console.error("❌ Error guardando token:", error);
+      return false;
     }
-    
-    if(userId){
-      useAuthStore.getState().setUserId(userId);
-    }
-    
-    setIsLoggedIn(true);
   };
 
-  // Función de registro real 
+  // Register function - essentially the same as login but with a different name for clarity
   const register = async (token?: string, userId?: string) => {
-    if (token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    }
-    if (userId) {
-      useAuthStore.getState().setUserId(userId);
-    }  
-    setIsLoggedIn(true);
-  };
-
-  // Cierra sesión y elimina token
-  const logout = async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    useAuthStore.getState().clearUser();
-    setIsLoggedIn(false);
-  };
-
-  return {
-    isLoggedIn,
-    loading,
-    login,
-    logout,
-    register,
-  };
-}*/
-import { useState, useEffect } from "react";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
-import { useAuthStore } from "../store/auth";
-import { supabase } from "../lib/supabase"; // asegúrate de usar el cliente real
-
-const TOKEN_KEY = "travelquest_token";
-
-export function useAuth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkInitialSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data?.session;
-      const token = session?.access_token;
-
-      if (token && session?.user?.id) {
+    try {
+      if (token) {
+        console.log("🔐 Guardando token de registro en SecureStore...");
         await SecureStore.setItemAsync(TOKEN_KEY, token);
-        useAuthStore.getState().setUserId(session.user.id);
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
       }
-
-      setLoading(false);
-    };
-
-    checkInitialSession();
-
-    // Escuchar cambios de sesión (para Google login o logout)
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.access_token && session.user?.id) {
-        SecureStore.setItemAsync(TOKEN_KEY, session.access_token);
-        useAuthStore.getState().setUserId(session.user.id);
-        setIsLoggedIn(true);
-      } else {
-        SecureStore.deleteItemAsync(TOKEN_KEY);
-        useAuthStore.getState().clearUser();
-        setIsLoggedIn(false);
+      
+      if (userId) {
+        console.log("👤 Guardando userId de registro en SecureStore...");
+        await SecureStore.setItemAsync(USER_ID_KEY, userId);
+        setUserId(userId);
       }
-    });
-
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, []);
-
-  const login = async (token?: string, userId?: string) => {
-    if (token) {
-      console.log('🔑 Guardando token en SecureStore:', token.substring(0, 10) + '...');
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    } else {
-      console.warn('⚠️ Intento de login sin token');
+      
+      setIsLoggedIn(true);
+      return true;
+    } catch (error) {
+      console.error("❌ Error guardando datos de registro:", error);
+      return false;
     }
-    
-    if(userId){
-      useAuthStore.getState().setUserId(userId);
-    }
-    
-    setIsLoggedIn(true);
   };
 
-  const register = async (token?: string, userId?: string) => {
-    if (token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-    }
-    if (userId) {
-      useAuthStore.getState().setUserId(userId);
-    }
-    setIsLoggedIn(true);
-  };
-
+  // Logout function that clears token
   const logout = async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    useAuthStore.getState().clearUser();
-    await supabase.auth.signOut();
-    setIsLoggedIn(false);
+    try {
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await SecureStore.deleteItemAsync(USER_ID_KEY);
+      setIsLoggedIn(false);
+      setUserId(null);
+      return true;
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      return false;
+    }
   };
 
-  return {
-    isLoggedIn,
-    loading,
-    login,
-    logout,
-    register,
+  // Check if user is logged in
+  const checkAuth = async () => {
+    try {
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      const userId = await SecureStore.getItemAsync(USER_ID_KEY);
+      
+      if (token) {
+        console.log("🔑 Token encontrado en inicio");
+        setIsLoggedIn(true);
+        if (userId) {
+          setUserId(userId);
+        }
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error verificando autenticación:", error);
+      return false;
+    }
   };
+
+  return { login, register, logout, checkAuth };
 }

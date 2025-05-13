@@ -1,9 +1,21 @@
 import { Stack } from "expo-router";
 import { View, StyleSheet } from "react-native";
-// Comentamos temporalmente la importación de CSS
-// import "../global.css"
+import { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
+import "../global.css";
 
 export default function RootLayout() {
+  const { checkAuth } = useAuth();
+  
+  useEffect(() => {
+    // Check authentication status on app startup
+    const verifyAuth = async () => {
+      await checkAuth();
+    };
+    
+    verifyAuth();
+  }, []);
+  
   return(
     <View style={styles.container}> 
       <Stack>

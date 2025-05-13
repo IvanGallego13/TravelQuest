@@ -21,7 +21,9 @@
   },
   "homepage": "https://github.com/IvanGallego13/TravelQuest#readme",
   "devDependencies": {
-    "concurrently": "^8.0.0"
+    "concurrently": "^8.0.0",
+    "typescript": "^5.3.3",
+    "@types/react": "~18.3.12"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
