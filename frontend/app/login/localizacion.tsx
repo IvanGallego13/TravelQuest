@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet, ImageBackground} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
@@ -153,91 +153,42 @@ export default function Geolocalizacion() {
   };
   
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Localización</Text>
-      
-      {/* Pasar la referencia a LightWebCesiumMap */}
-      <View style={styles.mapContainer}>
-        <LightWebCesiumMap coords={coords} height={500} ref={mapRef} interactive={true} />
-      </View>
+    <ImageBackground
+      source={require('../../assets/images/universo4.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1  p-4">
 
-      {/* Información de coordenadas */}
-      {coords && (
-        <View style={styles.coordsContainer}>
-          <Text style={styles.coordsText}>
-            Lat: {coords.latitude.toFixed(4)}, Lon: {coords.longitude.toFixed(4)}
-          </Text>
+        <Text className="text-xl font-bold text-center text-black mb-16 mt-10 bg-white/80 px-4 py-2 rounded-xl">
+          Localización
+        </Text>
+
+        <View className="h-[400px] rounded-xl overflow-hidden mb-4 bg-white/80">
+          <LightWebCesiumMap coords={coords} height={500} ref={mapRef} interactive={true} />
         </View>
-      )}
 
-      {/* Botón Geolocalizar */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          onPress={handleGeolocalizar}
-          disabled={loading}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Localizando..." : "Geolocalizarme"}
-          </Text>
-        </TouchableOpacity>
+        {coords && (
+          <View className="bg-white/80 px-4 py-3 rounded-xl mt-3 mb-4 items-center">
+            <Text className="text-black font-medium">
+              Lat: {coords.latitude.toFixed(4)}, Lon: {coords.longitude.toFixed(4)}
+            </Text>
+          </View>
+        )}
+
+        <View className="items-center">
+          <TouchableOpacity
+            onPress={handleGeolocalizar}
+            disabled={loading}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md"
+            >
+            <Text className="text-black font-bold text-lg">
+              {loading ? 'Localizando...' : 'Geolocalizarme'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
       </View>
-    </View>
+    </ImageBackground>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F4EDE0',
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-    color: '#333',
-  },
-  mapContainer: {
-    height: 400,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  coordsContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  coordsText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  buttonContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  button: {
-    backgroundColor: '#C76F40',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
-  },
-}) ;

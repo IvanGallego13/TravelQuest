@@ -1,6 +1,8 @@
 import { supabase } from '../config/supabase.js';
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import { createSupabaseClientWithAuth } from '../config/supabaseWithAuth.js';
+
 
 /**
  * Crea o añade una entrada al diario de viaje del usuario.
@@ -149,11 +151,19 @@ export const createOrAppendJournalEntry = async (req, res) => {
   //obtener los viajes de un usuario
   export const getJournalSummary = async (req, res) => {
     console.log("llamada resumen de viajes");
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Token no enviado' });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseWithAuth = createSupabaseClientWithAuth(token);
+  
     try {
       const userId = req.user.id;
   
       // 1. Obtener todos los días de viaje del usuario, agrupados por libro
-      const { data, error } = await supabase
+      const { data, error } = await supabaseWithAuth
         .from("travel_books")
         .select(`
           id,
@@ -172,54 +182,55 @@ export const createOrAppendJournalEntry = async (req, res) => {
   
       if (error) throw error;
   
-      const summaries =  await Promise.all( data.map(async (book) => {
-        const allDays = book.travel_days || [];
-        const firstDay = allDays.sort(
-          (a, b) => new Date(a.travel_date) - new Date(b.travel_date)
-        )[0];
+      const summaries = await Promise.all(
+        data.map(async (book) => {
+          const allDays = book.travel_days || [];
+          const firstDay = allDays.sort(
+            (a, b) => new Date(a.travel_date) - new Date(b.travel_date)
+          )[0];
   
-        let firstImage = null;
+          let firstImage = null;
   
-        // Buscar la primera imagen de todas las entradas
-        for (const day of allDays) {
-          const entries = day.diary_entries || [];
-          const withImage = entries.find((e) => !!e.image_path);
-          if (withImage) {
-            firstImage = withImage.image_path;
-            break;
+          // Buscar la primera imagen válida
+          for (const day of allDays) {
+            const entries = day.diary_entries || [];
+            const withImage = entries.find((e) => !!e.image_path);
+            if (withImage) {
+              firstImage = withImage.image_path;
+              break;
+            }
           }
-        }
-        
-
-        let signedImageUrl = null;
-
-        if (firstImage) {
-          const folder = firstImage.split("/")[0]; // ID del usuario
-          const filename = firstImage.split("/")[1];
-        
-          const { data: list, error: listError } = await supabase.storage
-            .from("journal")
-            .list(folder);
-        
-          console.log("📁 Archivos en carpeta:", folder, list?.map(f => f.name));
-        
-          const found = list?.find(file => file.name === filename);
-        
-          if (found) {
-            const { data: signed, error: signError } = await supabase.storage
+  
+          let signedImageUrl = null;
+  
+          if (firstImage) {
+            console.log("📷 Primera imagen encontrada:", firstImage);
+  
+            const { data: signed, error: signError } = await supabaseWithAuth.storage
               .from("journal")
-              .createSignedUrl(firstImage, 60 * 60);
-        
-            if (!signError && signed?.signedUrl) {
+              .createSignedUrl(firstImage, 60 * 60); // 1h
+  
+            if (signed?.signedUrl) {
               signedImageUrl = signed.signedUrl;
             } else {
-              console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
+              console.warn("⚠️ No se pudo firmar la imagen:", signError?.message);
             }
-          } else {
-            console.warn("⚠️ La imagen no se encontró en storage:", filename);
           }
-        }
-
+  
+          return {
+            id: book.id,
+            city: book.cities?.name || "Unknown",
+            date: firstDay?.travel_date || null,
+            image: signedImageUrl,
+          };
+        })
+      );
+      res.json(summaries);
+    } catch (error) {
+      console.error("❌ Error en getJournalSummary:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  };
         /*if (firstImage) {
           const { data: signed, error: signError } = await supabase.storage
             .from("journal")
@@ -231,29 +242,19 @@ export const createOrAppendJournalEntry = async (req, res) => {
             console.warn("⚠️ No se pudo firmar imagen:", signError?.message);
           }
         }*/
-        console.log("📷 Primera imagen encontrada:", firstImage);
-        console.log("🔗 URL firmada:", signedImageUrl);
-        return {
-          id: book.id,
-          city: book.cities?.name || "Unknown",
-          date: firstDay?.travel_date || null,
-          image: signedImageUrl,
-        };
-      })
-    );
-      console.log(summaries)
-      res.json(summaries);
-    } catch (error) {
-      console.error("❌ Error en getJournalSummary:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  };
+        
   
   // GET /api/diarios/dias/:bookId
 export const getTravelDaysByBook = async (req, res) => {
   console.log("📘 Book ID recibido:", req.params.bookId);
   console.log("🛡️ Usuario autenticado:", req.user?.id);
   const bookId = req.params.bookId;
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Token no enviado' });
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createSupabaseClientWithAuth(token);
+
   try {
     // 1. Obtener los días del travel_book con sus entradas
     const { data, error } = await supabase
@@ -284,9 +285,7 @@ export const getTravelDaysByBook = async (req, res) => {
             .from("journal")
             .createSignedUrl(firstEntryWithImage.image_path, 60 * 60); // 1h
 
-          if (!signError && signed?.signedUrl) {
-            signedUrl = signed.signedUrl;
-          }
+            if (signed?.signedUrl) signedUrl = signed.signedUrl;
         }
 
         return {
@@ -310,6 +309,11 @@ export const getEntriesByDay = async (req, res) => {
 
   console.log("📅 Buscando entradas para el día:", dayId);
 
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Token no enviado' });
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createSupabaseClientWithAuth(token);
+
   try {
     // Obtener entradas del día
     const { data: entries, error } = await supabase
@@ -329,9 +333,7 @@ export const getEntriesByDay = async (req, res) => {
             .from("journal")
             .createSignedUrl(entry.image_path, 60 * 60);
 
-          if (!signError && signed?.signedUrl) {
-            signedUrl = signed.signedUrl;
-          }
+          if (signed?.signedUrl) signedUrl = signed.signedUrl;
         }
 
         return {

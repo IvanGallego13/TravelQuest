@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -11,6 +12,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
+
 } from "react-native";
 
 export default function Register() {
@@ -85,64 +88,91 @@ export default function Register() {
     }
   };
   
-
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-[#F4EDE0] justify-center px-6"
+    <ImageBackground
+      source={require('../../assets/images/tren.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
     >
-      {/* Logo y título */}
-      <View className="flex-row justify-center items-center mb-10">
-        <Image
-          source={require("../../assets/images/logo.png")}
-          className="w-10 h-10 mr-2"
-        />
-        <Text className="text-2xl font-bold text-black">TravelQuest</Text>
-      </View>
+        {/* Botón volver fijo */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-6 left-4 z-50 bg-white/90 p-2 rounded-full shadow-md"
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
 
-      {/* Email */}
-      <Text className="text-black font-semibold mb-1">Email:</Text>
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Tu email"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-      <Text className="text-black font-semibold mb-1">Nombre de usuario:</Text>
-      <TextInput
-        value={nombreUsuario}
-        onChangeText={setNombreUsuario}
-        placeholder="Ej. ivangallego13"
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-      {/* Contraseña */}
-      <Text className="text-black font-semibold mb-1">Contraseña:</Text>
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Contraseña"
-        secureTextEntry
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-4 text-black"
-      />
-      {/* Confirmar contraseña */}
-      <Text className="text-black font-semibold mb-1">Repite la contraseña:</Text>
-      <TextInput
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        placeholder="Repite tu contraseña"
-        secureTextEntry
-        className="bg-white border-2 border-[#699D81] rounded-md px-4 py-2 mb-6 text-black"
-      />
-
-      {/* Botón de registro */}
-      <TouchableOpacity
-        onPress={handleRegister}
-        className="bg-[#C76F40] py-3 rounded-xl items-center"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-white/20 px-6 justify-center pb-20"
       >
-        <Text className="text-white font-semibold text-base">Registrarse</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+        {/* Contenedor central de registro */}
+        <View className="bg-white/80 p-6 rounded-2xl shadow-md">
+          
+          {/* Título */}
+          <View className="items-center mb-8">
+            <Text className="text-2xl font-bold text-black">TravelQuest</Text>
+          </View>
+
+          {/* Email */}
+          <Text className="text-black text-lg font-semibold mb-1">📧 Email:</Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Tu email"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-4 text-black"
+          />
+
+          {/* Nombre de usuario */}
+          <Text className="text-black text-lg font-semibold mb-1">👤 Nombre de usuario:</Text>
+          <TextInput
+            value={nombreUsuario}
+            onChangeText={setNombreUsuario}
+            placeholder="Ej. viajero23"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-4 text-black"
+          />
+
+          {/* Contraseña */}
+          <Text className="text-black text-lg font-semibold mb-1">🔐 Contraseña:</Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Contraseña"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-4 text-black"
+          />
+
+          {/* Confirmar contraseña */}
+          <Text className="text-black text-lg font-semibold mb-1">🔁 Repite la contraseña:</Text>
+          <TextInput
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            placeholder="Repite tu contraseña"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-300 rounded-xl px-4 py-3 mb-6 text-black"
+          />
+
+          {/* Botón Registrarse */}
+          <TouchableOpacity
+            onPress={handleRegister}
+            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-black text-xl">📝</Text>
+              <Text className="text-black font-bold text-lg">Registrarse</Text>
+              <Text className="text-black text-xl">→</Text>
+            </View>
+          </TouchableOpacity>
+
+        </View>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
+  
 
 
