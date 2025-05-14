@@ -4,6 +4,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../hooks/useAuth";
 import { apiFetch } from "../../../lib/api";
+import { useFocusEffect } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 
 // Definir tipos para logros y misiones
@@ -39,9 +40,11 @@ export default function Usuario() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      cargarDatos();
+    }, [])
+  );
 
   const cargarDatos = async () => {
     try {
