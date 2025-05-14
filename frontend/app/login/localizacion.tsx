@@ -161,7 +161,7 @@ export default function Geolocalizacion() {
       <View className="flex-1  p-4">
 
         <Text className="text-xl font-bold text-center text-black mb-16 mt-10 bg-white/80 px-4 py-2 rounded-xl">
-          Localización
+          🧭 Activa tu ubicación
         </Text>
 
         <View className="h-[400px] rounded-xl overflow-hidden mb-4 bg-white/80">
@@ -183,7 +183,7 @@ export default function Geolocalizacion() {
             className="bg-white/90 px-6 py-4 rounded-2xl shadow-md"
             >
             <Text className="text-black font-bold text-lg">
-              {loading ? 'Localizando...' : 'Geolocalizarme'}
+              {loading ? 'Descifrando tu lugar en el mundo…...' : 'Geolocalizarme ahora'}
             </Text>
           </TouchableOpacity>
         </View>

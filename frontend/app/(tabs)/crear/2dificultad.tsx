@@ -80,7 +80,7 @@ export default function Dificultad() {
       resizeMode="cover"
     >
       {/* Capa blanca translúcida */}
-      <View className="flex-1 bg-white/20 px-6 pt-12 justify-start">
+      <View className="flex-1 px-6 pt-12 justify-start">
 
         {/* Título */}
         <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-10 flex-row items-center gap-2">

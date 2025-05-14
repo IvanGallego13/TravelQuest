@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, ImageBackground } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../hooks/useAuth";
@@ -42,6 +42,7 @@ export default function Usuario() {
 
   useFocusEffect(
     React.useCallback(() => {
+      setMostrarMenu(false);
       cargarDatos();
     }, [])
   );
@@ -129,138 +130,135 @@ export default function Usuario() {
     router.push("/usuario/editar");
   };
 
-  return (
-    <View className="flex-1 bg-[#F4EDE0]">
-      {/* Cabecera con avatar y nombre */}
-      <View className="pt-14 pb-6 px-6 bg-white">
-        <View className="flex-row justify-between items-center">
-          <View className="flex-row items-center">
+   return (
+    <ImageBackground
+      source={require("../../../assets/images/fondo.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 px-6 pt-14">
+
+        {/* Cabecera con avatar, nombre y menú */}
+        <View className="flex-row justify-between items-center mb-6">
+          <View className="flex-row items-center space-x-4">
             <Image
               source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/avatar.png")}
-              className="w-16 h-16 rounded-full mr-4"
+              className="w-16 h-16 rounded-full"
             />
             <View>
-              <Text className="text-black text-xl font-bold">{username}</Text>
-              <Text className="text-black text-base">Nivel {score}</Text>
+              <Text className="text-white text-lg font-bold ms-4">{username}</Text>
+              <Text className="text-white text-base ms-4">Nivel {score}</Text>
             </View>
           </View>
-          
-          <TouchableOpacity
-            onPress={() => setMostrarMenu(!mostrarMenu)}
-            className="p-2"
-          >
-            <Ionicons name="ellipsis-vertical" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-        
-        {/* Menú desplegable */}
-        {mostrarMenu && (
-          <View className="absolute right-6 top-24 bg-white shadow-md rounded-md z-10 w-48">
+
+          <View className="relative">
             <TouchableOpacity
-              className="flex-row items-center p-3 border-b border-gray-200"
-              onPress={handleVerSobre}
+              onPress={() => setMostrarMenu(!mostrarMenu)}
+              className="bg-white/80 rounded-full p-2 shadow-md"
             >
-              <Ionicons name="information-circle-outline" size={20} color="black" className="mr-2" />
-              <Text className="text-black ml-2">Sobre TravelQuest</Text>
+              <Ionicons name="ellipsis-vertical" size={22} color="#504382" />
             </TouchableOpacity>
-            
-            {/* Añadir opción de Editar Perfil */}
-            <TouchableOpacity
-              className="flex-row items-center p-3 border-b border-gray-200"
-              onPress={handleVereditar}
-            >
-              <Ionicons name="person-outline" size={20} color="black" className="mr-2" />
-              <Text className="text-black ml-2">Editar perfil</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              className="flex-row items-center p-3"
-              onPress={handleLogout}
-            >
-              <Ionicons name="log-out-outline" size={20} color="red" className="mr-2" />
-              <Text className="text-red-500 ml-2">Cerrar sesión</Text>
-            </TouchableOpacity>
+
+            {mostrarMenu && (
+              <View className="absolute top-12 right-0 bg-white/90 rounded-2xl shadow-md z-10 w-56 overflow-hidden">
+                <TouchableOpacity
+                  onPress={handleVerSobre}
+                  className="flex-row items-center px-4 py-3 border-b border-gray-200"
+                >
+                  <Ionicons name="information-circle-outline" size={20} color="#000" />
+                  <Text className="text-black ml-2">Sobre TravelQuest</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleVereditar}
+                  className="flex-row items-center px-4 py-3 border-b border-gray-200"
+                >
+                  <Ionicons name="person-outline" size={20} color="#000" />
+                  <Text className="text-black ml-2">Editar perfil</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  className="flex-row items-center px-4 py-3"
+                >
+                  <Ionicons name="log-out-outline" size={20} color="#C76F40" />
+                  <Text className="text-[#C76F40] ml-2 font-semibold">Cerrar sesión</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        )}
-        
+        </View>
+
         {/* Botones de acción */}
-        <View className="flex-row justify-around mt-6">
+        <View className="flex-row justify-between mb-8">
           <TouchableOpacity
-            className="bg-[#699D81] px-4 py-2 rounded-md"
             onPress={handleVerRanking}
+            className="bg-white/90 px-6 py-3 rounded-2xl shadow-md flex-1 mr-2"
           >
-            <Text className="text-white font-semibold">Ver Ranking</Text>
+            <Text className="text-black font-bold text-center">🏆 Ver Ranking</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity
-            className="bg-[#699D81] px-4 py-2 rounded-md"
             onPress={handleVerMisiones}
+            className="bg-white/90 px-6 py-3 rounded-2xl shadow-md flex-1 ml-2"
           >
-            <Text className="text-white font-semibold">Ver Misiones</Text>
+            <Text className="text-black font-bold text-center">🧭 Ver Misiones</Text>
           </TouchableOpacity>
         </View>
-      </View>
-      
-      {/* Contenido principal */}
-      <ScrollView className="flex-1 px-6 pt-4">
-        {loading ? (
-          <ActivityIndicator size="large" color="#699D81" style={{ marginTop: 20 }} />
-        ) : (
-          <>
-            {/* Sección de Logros */}
-            <View className="mb-6">
-              <Text className="text-black text-lg font-bold mb-2">
-                Logros ({userLogros.length}/{logros.length})
-              </Text>
-              <View className="bg-white rounded-lg shadow-sm p-4">
-                {logros.length > 0 ? (
-                  logros.map((logro) => (
-                    <View 
-                      key={logro.id} 
-                      className={`mb-4 p-3 rounded-md ${logro.unlocked ? 'bg-[#F0F7F2]' : 'bg-gray-100'}`}
-                    >
-                      <View className="flex-row items-center">
-                        <Text className="text-2xl mr-2">{logro.icono}</Text>
-                        <View className="flex-1">
-                          <Text className={`font-bold ${logro.unlocked ? 'text-[#699D81]' : 'text-gray-400'}`}>
-                            {logro.nombre}
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 160 }}>
+          {/* Sección logros */}
+          <View className="bg-white/80 p-4 rounded-2xl shadow-md">
+            <Text className="text-black font-bold text-base mb-4">
+              Logros ({userLogros.length}/{logros.length})
+            </Text>
+
+            {loading ? (
+              <ActivityIndicator size="large" color="#699D81" />
+            ) : (
+              logros.map((logro) => (
+                <View
+                  key={logro.id}
+                  className={`mb-4 p-3 rounded-xl ${
+                    logro.unlocked ? "bg-white/90" : "bg-gray-100/70"
+                  } shadow-sm`}
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center space-x-3 flex-1">
+                      <Text className="text-2xl">{logro.icono}</Text>
+                      <View className="flex-1">
+                        <Text className={`font-bold ${logro.unlocked ? "text-[#699D81]" : "text-gray-400"}`}>
+                          {logro.nombre}
+                        </Text>
+                        <Text className={logro.unlocked ? "text-black" : "text-gray-400"}>
+                          {logro.descripcion}
+                        </Text>
+                        {logro.unlocked && logro.unlocked_at && (
+                          <Text className="text-xs text-gray-500 mt-1">
+                            Desbloqueado: {new Date(logro.unlocked_at).toLocaleDateString()}
                           </Text>
-                          <Text className={logro.unlocked ? 'text-black' : 'text-gray-400'}>
-                            {logro.descripcion}
-                          </Text>
-                          {logro.unlocked && logro.unlocked_at && (
-                            <Text className="text-xs text-gray-500 mt-1">
-                              Desbloqueado: {new Date(logro.unlocked_at).toLocaleDateString()}
-                            </Text>
-                          )}
-                        </View>
-                        <View className="items-end">
-                          <Text className={`font-bold ${logro.unlocked ? 'text-[#C76F40]' : 'text-gray-400'}`}>
-                            +{logro.puntos}
-                          </Text>
-                          <View className="mt-1 flex-row items-center">
-                            <Text className={`text-xs mr-1 ${logro.unlocked ? 'text-[#699D81]' : 'text-gray-400'}`}>
-                              {logro.unlocked ? 'Completado' : 'Pendiente'}
-                            </Text>
-                            {logro.unlocked ? (
-                              <Ionicons name="checkmark-circle" size={14} color="#699D81" />
-                            ) : (
-                              <Ionicons name="lock-closed" size={14} color="#999" />
-                            )}
-                          </View>
-                        </View>
+                        )}
                       </View>
                     </View>
-                  ))
-                ) : (
-                  <Text className="text-gray-500 text-center py-2">Cargando logros...</Text>
-                )}
-              </View>
-            </View>
-          </>
-        )}
-      </ScrollView>
-    </View>
+                    <View className="items-end">
+                      <Text className={`font-bold ${logro.unlocked ? "text-[#C76F40]" : "text-gray-400"}`}>
+                        +{logro.puntos}
+                      </Text>
+                      <View className="mt-1 flex-row items-center">
+                        <Text className={`text-xs mr-1 ${logro.unlocked ? "text-[#699D81]" : "text-gray-400"}`}>
+                          {logro.unlocked ? "Completado" : "Pendiente"}
+                        </Text>
+                        <Ionicons
+                          name={logro.unlocked ? "checkmark-circle" : "lock-closed"}
+                          size={14}
+                          color={logro.unlocked ? "#699D81" : "#999"}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </ImageBackground>
   );
 }
-    

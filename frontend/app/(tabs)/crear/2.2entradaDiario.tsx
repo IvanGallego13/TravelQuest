@@ -119,7 +119,7 @@ export default function CreateJournalEntry() {
         >
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-
+        <View style={{ height: 50 }} />
         {/* Ciudad y fecha */}
         <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
           <Text className="text-black text-lg font-semibold">

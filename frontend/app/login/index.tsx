@@ -272,7 +272,7 @@ export default function Login() {
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-white/20 px-6 justify-center pb-20 "
+        className="flex-1 px-6 justify-center pb-20 "
       >
         {/* Contenedor central de login */}
         <View className="bg-white/80 p-6 rounded-2xl shadow-md">

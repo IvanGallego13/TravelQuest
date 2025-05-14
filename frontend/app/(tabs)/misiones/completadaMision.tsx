@@ -38,7 +38,7 @@ export default function MisionCompletada() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1 bg-white/20 justify-center items-center px-6">
+      <View className="flex-1 mt-40 items-center px-6">
 
         {/* Icono de éxito */}
         <Ionicons name="checkmark-circle" size={80} color="#699D81" />

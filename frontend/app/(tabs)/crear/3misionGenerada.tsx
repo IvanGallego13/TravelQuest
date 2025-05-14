@@ -182,7 +182,7 @@ useEffect(() => {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1 bg-white/20 pt-10">
+      <View className="flex-1 pt-10">
         
         {/* Botón volver */}
         <TouchableOpacity
@@ -192,8 +192,9 @@ useEffect(() => {
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
 
-        <ScrollView className="flex-1 px-6">
+        <ScrollView className="flex-1 px-6 pb-6">
 
+          <View style={{ height: 50 }} />
           {/* Etiqueta de categoría 
           <View className="bg-white/80 px-3 py-1 rounded-full self-start mt-16 mb-2 shadow-sm">
             <Text className="text-xs font-semibold text-black/60">Exploración urbana</Text>

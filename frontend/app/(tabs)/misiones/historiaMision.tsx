@@ -56,7 +56,7 @@ export default function HistoriaMision() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1 bg-white/20 px-6 pt-16 justify-start">
+      <View className="flex-1 px-6 pt-16 justify-start">
 
         {/* Título */}
         {titulo && !loading && (

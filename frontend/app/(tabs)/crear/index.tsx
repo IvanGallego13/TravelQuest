@@ -36,20 +36,20 @@ export default function OpcionesDeCrear() {
       resizeMode="cover"
     >
       {/* Capa blanca translúcida para aclarar imagen */}
-      <View className="flex-1 px-6 pt-12 bg-white/20">
+      <View className="flex-1 px-6 pt-12">
         
         {/* Add back arrow button */}
         <TouchableOpacity 
           onPress={irALocalizacion}
           className="absolute top-12 left-6 z-10 bg-white/80 p-2 rounded-full"
         >
-          <Ionicons name="arrow-back" size={24} color="#699D81" />
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
 
         {/* Ciudad como etiqueta moderna - Moved more to the right */}
         <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2 ml-14">
           <Text className="text-black text-lg font-semibold">
-            {ubicacion?.city || "Ubicación..."}
+            {ubicacion?.city || "Explorando..."}
           </Text>
           <Text className="text-black text-xl">📍</Text>
         </View>
@@ -83,7 +83,7 @@ export default function OpcionesDeCrear() {
         ) : (
           <View className="bg-white/80 p-2 rounded-3xl shadow-lg mb-10">
             <View className="h-48 bg-gray-300/70 rounded-2xl items-center justify-center">
-              <Text className="text-black">Cargando mapa...</Text>
+              <Text className="text-black">Preparando el mapa...</Text>
             </View>
           </View>
         )}
@@ -96,8 +96,8 @@ export default function OpcionesDeCrear() {
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-black font-bold text-lg">Comenzar una misión</Text>
-                <Text className="text-black/60 text-sm">Acepta tu próximo reto</Text>
+                <Text className="text-black font-bold text-lg">Iniciar nueva misión</Text>
+                <Text className="text-black/60 text-sm">Desbloquea una nueva aventura</Text>
               </View>
               <Text className="text-black text-2xl">→</Text>
             </View>
@@ -109,8 +109,8 @@ export default function OpcionesDeCrear() {
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-black font-bold text-lg">Rellenar cuaderno de viaje</Text>
-                <Text className="text-black/60 text-sm">Agrega tus recuerdos</Text>
+                <Text className="text-black font-bold text-lg">Escribir en el diario</Text>
+                <Text className="text-black/60 text-sm">Captura tus recuerdos del viaje</Text>
               </View>
               <Text className="text-black text-2xl">→</Text>
             </View>

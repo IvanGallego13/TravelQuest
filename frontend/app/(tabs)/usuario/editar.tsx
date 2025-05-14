@@ -57,7 +57,6 @@ export default function EditarUsuario() {
           setLoading(false);
         }
       };
-  
       cargarPerfil();
     }, [])
   );
@@ -136,37 +135,38 @@ export default function EditarUsuario() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1 bg-white/20 pt-14 px-6">
+      <View className="flex-1 pt-14 px-6">
         {/* Flecha para volver */}
         <TouchableOpacity onPress={() => router.push("/usuario/usuario")} className="absolute top-12 left-4 z-10 bg-white rounded-full p-1">
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 150 }} className="mt-4">
+        <ScrollView contentContainerStyle={{ paddingBottom: 150, paddingTop:20 }} className="mt-4">
 
+         {/* Encabezado con avatar, nombre y botón */}
+          <View className="flex-row items-center justify-end mb-6 space-x-4 space-x-reverse">
           {/* Avatar */}
-          <View className="items-center">
-              <View className="items-center">
-                <Image
-                  source={
-                    avatarUrl
-                      ? { uri: avatarUrl }
-                      : require("../../../assets/images/avatar.png")
-                  }
-                  className="w-24 h-24 rounded-full mb-4"
-                />
+          <Image
+            source={
+              avatarUrl
+                ? { uri: avatarUrl }
+                : require("../../../assets/images/avatar.png")
+            }
+            className="w-16 h-16 rounded-full"
+          />
 
-                <TouchableOpacity
-                  onPress={() => router.push("/usuario/editar-avatar")}
-                  className="bg-white/90 px-6 py-2 rounded-2xl shadow-md flex-row items-center justify-between w-60"
-                >
-                  <Text className="text-black font-bold text-base">Cambiar avatar</Text>
-                  <Text className="text-black text-xl">→</Text>
-                </TouchableOpacity>
-
-                <Text className="text-black mt-3 font-semibold text-lg text-center">{currentUsername}</Text>
-              </View>
+          {/* Nombre + botón */}
+          <View className="flex-1 items-start">
+            <Text className="text-white font-semibold text-lg ms-4">{currentUsername}</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/usuario/editar-avatar")}
+              className="bg-white/90 px-2 py-1 rounded-xl shadow-md mt-2 ms-4 flex-row items-center justify-between"
+            >
+              <Text className="text-black font-bold">Cambiar avatar</Text>
+              <Text className="text-black text-xl ml-2">→</Text>
+            </TouchableOpacity>
           </View>
+        </View>
 
           {/* Tarjeta de datos */}
           <View className="bg-white/90 rounded-2xl shadow-md p-6 space-y-5 mb-5">
@@ -177,7 +177,7 @@ export default function EditarUsuario() {
               <TextInput
                 value={email}
                 editable={false}
-                className="bg-gray-200 rounded-xl px-4 py-3 text-black"
+                className="bg-gray-300 rounded-xl px-4 py-3 text-black"
               />
             </View>
 
