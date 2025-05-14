@@ -61,7 +61,7 @@ export default function DetalleMisionCompletada() {
 
   return (
     <ImageBackground
-      source={require("../../../assets/images/nubes.png")}
+      source={require("../../../assets/images/fobdo.png")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

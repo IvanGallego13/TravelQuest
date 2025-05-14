@@ -31,7 +31,7 @@ export default function OpcionesDeCrear() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/caminante.png')}
+      source={require('../../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

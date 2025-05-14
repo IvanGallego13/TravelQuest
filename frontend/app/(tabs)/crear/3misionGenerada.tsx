@@ -178,7 +178,7 @@ useEffect(() => {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/catedral.png')}
+      source={require('../../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

@@ -62,7 +62,7 @@ export default function JournalIndex() {
   
   return (
     <ImageBackground
-      source={require('../../../assets/images/ciudad2.png')}
+      source={require('../../../assets/images/fonfo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

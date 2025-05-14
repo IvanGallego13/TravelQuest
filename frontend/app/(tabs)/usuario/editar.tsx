@@ -132,7 +132,7 @@ export default function EditarUsuario() {
 
   return (
     <ImageBackground
-      source={require("../../../assets/images/nubes.png")}
+      source={require("../../../assets/images/fondo.png")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

@@ -154,7 +154,7 @@ export default function Geolocalizacion() {
   
   return (
     <ImageBackground
-      source={require('../../assets/images/universo4.png')}
+      source={require('../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

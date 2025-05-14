@@ -266,7 +266,7 @@ export default function Login() {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/caminante.png')}
+      source={require('../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
