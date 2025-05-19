@@ -8,13 +8,12 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 
 // Definir tipos para logros y misiones
-interface Logro {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  categoria: string;
-  puntos: number;
-  icono: string;
+interface Logro {  id: string;
+  title: string;           // Changed from nombre
+  description: string;     // Changed from descripcion
+  category: string;        // Changed from categoria
+  points: number;          // Changed from puntos
+  icon: string;            // Changed from icono
   unlocked: boolean;
   unlocked_at?: string;
 }
@@ -74,28 +73,33 @@ export default function Usuario() {
         setScore(perfilData.profile.score);
       }
       
-      // Cargar todos los logros disponibles
-      const logrosRes = await apiFetch("/logros");
-      if (!logrosRes.ok) throw new Error("Error al cargar logros");
-      const todosLosLogros = await logrosRes.json();
-      
-      // Cargar logros del usuario
-      const misLogrosRes = await apiFetch("/logros/mis-logros");
-      if (!misLogrosRes.ok) throw new Error("Error al cargar mis logros");
-      const misLogrosData = await misLogrosRes.json();
-      
-      // Guardar IDs de logros desbloqueados por el usuario
-      const logrosDesbloqueados = misLogrosData.map((logro: any) => logro.achievement_id);
-      setUserLogros(logrosDesbloqueados);
-      
-      // Marcar logros desbloqueados
-      const logrosConEstado = todosLosLogros.map((logro: Logro) => ({
-        ...logro,
-        unlocked: logrosDesbloqueados.includes(logro.id),
-        unlocked_at: misLogrosData.find((l: any) => l.achievement_id === logro.id)?.unlocked_at
-      }));
-      
-      setLogros(logrosConEstado);
+      try {
+        // Intentar cargar logros directamente desde el perfil completo
+        if (perfilData.achievements) {
+          // Si los logros ya vienen en la respuesta del perfil
+          const logrosDesbloqueados = perfilData.achievements.map((logro: any) => logro.achievement_id);
+          setUserLogros(logrosDesbloqueados);
+          
+          // Si también tenemos todos los logros disponibles
+          if (perfilData.allAchievements) {
+            const logrosConEstado = perfilData.allAchievements.map((logro: Logro) => ({
+              ...logro,
+              unlocked: logrosDesbloqueados.includes(logro.id),
+              unlocked_at: perfilData.achievements.find((l: any) => l.achievement_id === logro.id)?.unlocked_at
+            }));
+            setLogros(logrosConEstado);
+          } else {
+            // Si no tenemos todos los logros, intentar cargarlos
+            await cargarTodosLosLogros(logrosDesbloqueados);
+          }
+        } else {
+          // Si no vienen en el perfil, intentar cargarlos por separado
+          await cargarLogrosUsuario();
+        }
+      } catch (logrosError) {
+        console.error("Error al cargar logros:", logrosError);
+        // No interrumpir la carga del resto del perfil si los logros fallan
+      }
       
     } catch (error) {
       console.error("Error al cargar datos:", error);
@@ -104,6 +108,78 @@ export default function Usuario() {
       setLoading(false);
     }
   };
+
+  // Función para cargar todos los logros disponibles
+  // Update the cargarTodosLosLogros function
+  // Update the cargarTodosLosLogros function
+  const cargarTodosLosLogros = async (logrosDesbloqueados: string[]) => {
+    try {
+      // Get ALL achievements from the achievements table
+      let logrosRes = await apiFetch("/achievements");
+      
+      // If that fails, try alternative endpoints
+      if (!logrosRes.ok) {
+        console.log("Intentando ruta alternativa para todos los logros...");
+        logrosRes = await apiFetch("/logros");
+        
+        if (!logrosRes.ok) {
+          throw new Error("No se pudo acceder a los logros disponibles");
+        }
+      }
+      
+      const todosLosLogros = await logrosRes.json();
+      console.log("📊 Todos los logros cargados:", todosLosLogros.length);
+      
+      // Mark which achievements are unlocked
+      const logrosConEstado = todosLosLogros.map((logro: any) => ({
+        id: logro.id,
+        title: logro.title,
+        description: logro.description,
+        category: logro.category,
+        points: logro.points,
+        icon: logro.icon,
+        unlocked: logrosDesbloqueados.includes(logro.id),
+        unlocked_at: null
+      }));
+      
+      setLogros(logrosConEstado);
+    } catch (error) {
+      console.error("Error cargando todos los logros:", error);
+      throw error;
+    }
+  };
+  
+  // Update the cargarLogrosUsuario function
+  const cargarLogrosUsuario = async () => {
+    try {
+      // Get user's unlocked achievements
+      let misLogrosRes = await apiFetch("/logros/mis-logros");
+      
+      if (!misLogrosRes.ok) {
+        console.log("Intentando ruta alternativa para mis logros...");
+        misLogrosRes = await apiFetch("/achievements/user");
+      
+      if (!misLogrosRes.ok) {
+        throw new Error("No se pudo acceder a los logros del usuario");
+      }
+    }
+    
+    const misLogrosData = await misLogrosRes.json();
+    console.log("🏆 Mis logros cargados:", misLogrosData.length);
+    
+    // Extract achievement IDs
+    const logrosDesbloqueados = misLogrosData.map((logro: any) => 
+      logro.achievement_id || logro.id
+    );
+    setUserLogros(logrosDesbloqueados);
+    
+    // Now load all available achievements
+    await cargarTodosLosLogros(logrosDesbloqueados);
+  } catch (error) {
+    console.error("Error cargando logros del usuario:", error);
+    throw error;
+  }
+};
 
   const handleLogout = async () => {
     try {
@@ -222,13 +298,13 @@ export default function Usuario() {
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center space-x-3 flex-1">
-                      <Text className="text-2xl">{logro.icono}</Text>
+                      <Text className="text-2xl">{logro.icon}</Text>
                       <View className="flex-1">
                         <Text className={`font-bold ${logro.unlocked ? "text-[#699D81]" : "text-gray-400"}`}>
-                          {logro.nombre}
+                          {logro.title}
                         </Text>
                         <Text className={logro.unlocked ? "text-black" : "text-gray-400"}>
-                          {logro.descripcion}
+                          {logro.description}
                         </Text>
                         {logro.unlocked && logro.unlocked_at && (
                           <Text className="text-xs text-gray-500 mt-1">
@@ -239,7 +315,7 @@ export default function Usuario() {
                     </View>
                     <View className="items-end">
                       <Text className={`font-bold ${logro.unlocked ? "text-[#C76F40]" : "text-gray-400"}`}>
-                        +{logro.puntos}
+                        +{logro.points}
                       </Text>
                       <View className="mt-1 flex-row items-center">
                         <Text className={`text-xs mr-1 ${logro.unlocked ? "text-[#699D81]" : "text-gray-400"}`}>

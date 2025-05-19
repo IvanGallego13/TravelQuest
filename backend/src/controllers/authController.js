@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { LOGROS } from '../controllers/logroController.js'; // Add this import
 
 /**
  * Registro de usuario con Supabase Auth
@@ -33,10 +34,46 @@ export const register = async (req, res) => {
     if (!existingProfile) {
       const { error: profileInsertError } = await supabase
         .from("profiles")
-        .insert([{ id: userId, username }]);
+        .insert([{ id: userId, username, score: 0 }]); // Initialize score to 0
 
       if (profileInsertError) {
         throw new Error(profileInsertError.message || "Error insertando perfil");
+      }
+      
+      // Award first achievement (PRIMERA_CIUDAD)
+      try {
+        console.log("🏆 Otorgando primer logro al usuario:", userId);
+        
+        const { error: achievementError } = await supabase
+          .from("user_achievements")
+          .insert({
+            user_id: userId,
+            achievement_id: LOGROS.PRIMERA_CIUDAD,
+            unlocked_at: new Date().toISOString()
+          });
+          
+        if (achievementError) {
+          console.error("❌ Error al otorgar primer logro:", achievementError);
+        } else {
+          console.log("✅ Primer logro otorgado correctamente");
+          
+          // Update user score
+          const { data: achievementData } = await supabase
+            .from('achievements')
+            .select('points')
+            .eq('id', LOGROS.PRIMERA_CIUDAD)
+            .single();
+            
+          if (achievementData) {
+            await supabase
+              .from('profiles')
+              .update({ score: achievementData.points })
+              .eq('id', userId);
+          }
+        }
+      } catch (achievementError) {
+        console.error("❌ Error al procesar logros:", achievementError);
+        // Continue with registration even if achievement fails
       }
     }
 

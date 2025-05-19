@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { checkAndAwardAchievements } from '../controllers/logroController.js';
 
 // Obtener todos los viajes
 export const getAllViajes = async (req, res) => {
@@ -95,6 +96,13 @@ export const updateViaje = async (req, res) => {
       .single();
 
     if (error) throw error;
+    
+    // Check if the trip is being marked as completed
+    if (estado === 'completado') {
+      // Award achievements for completing a trip
+      await checkAndAwardAchievements(req.user.id, 'COMPLETE_TRIP');
+    }
+    
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -115,4 +123,7 @@ export const deleteViaje = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}; 
+};
+
+// Remove this line that's causing the error
+// await checkAndAwardAchievements(userId, 'COMPLETE_TRIP');

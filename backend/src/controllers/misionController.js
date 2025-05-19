@@ -2,6 +2,7 @@ import { generateMission } from '../ia/generateMission.js';
 import { supabase } from '../config/supabaseClient.js';
 import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
 import { updateUserLevel } from './userController.js';
+import { checkAndAwardAchievements } from '../controllers/logroController.js';
 
 
 export const updateUserMissionStatus = async (req, res) => {

@@ -5,7 +5,7 @@ import fileUpload from 'express-fileupload';
 import { createClient } from '@supabase/supabase-js';
 
 // Rutas
-import userRoutes from './routes/userroutes.js';
+import userRoutes from './routes/userRoutes.js';
 import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
@@ -50,6 +50,7 @@ app.use('/api/viajes', viajeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ajustes', ajustesRoutes);
+// Register routes
 app.use('/api/logros', logrosRoutes);
 
 // Ruta raíz
