@@ -1,347 +1,291 @@
 import { supabase } from '../config/supabaseClient.js';
-import { updateUserLevel } from './userController.js';
+import { updateUserLevel } from './usercontroller.js';
 
-// Define all available achievements
+// Define achievement types
 export const LOGROS = {
-  // Exploración
   PRIMERA_CIUDAD: 'primera_ciudad',
   TROTAMUNDOS: 'trotamundos',
   CIUDADANO_MUNDO: 'ciudadano_mundo',
   MAPA_COMPLETO: 'mapa_completo',
-  
-  // Misiones
   PRIMERA_MISION: 'primera_mision',
   MISION_FACIL: 'mision_facil',
   MISION_MEDIA: 'mision_media',
   MISION_DIFICIL: 'mision_dificil',
   DIEZ_MISIONES: 'diez_misiones',
   CIEN_MISIONES: 'cien_misiones',
-  MARATON_MISIONES: 'maraton_misiones',
-  
-  // Viajes
-  PRIMER_VIAJE: 'primer_viaje',
-  CINCO_VIAJES: 'cinco_viajes',
-  DIEZ_VIAJES_PLANIFICADOS: 'diez_viajes_planificados',
-  
-  // Especiales
-  VIAJERO_DEL_TIEMPO: 'viajero_del_tiempo',
-  COLECCIONISTA: 'coleccionista',
-  
-  // Bonus
-  BONJOUR_PARIS: 'bonjour_paris',
-  DE_ARRIBA_A_ABAJO: 'de_arriba_a_abajo',
-  MISION_FALLIDA: 'mision_fallida'
+  // Add other achievement types as needed
 };
 
 /**
- * Obtener logros de un usuario
+ * Get all achievements for a user
  */
 export const getUserAchievements = async (userId) => {
   try {
-    // Get user's unlocked achievements
-    const { data: userAchievements, error: userAchievementsError } = await supabase
+    const { data, error } = await supabase
       .from('user_achievements')
-      .select(`
-        achievement_id,
-        unlocked_at,
-        achievements (
-          id,
-          title,
-          description,
-          points,
-          icon,
-          category
-        )
-      `)
+      .select('achievement_id, unlocked_at')
       .eq('user_id', userId);
-
-    if (userAchievementsError) throw userAchievementsError;
-
-    // Format the achievements for frontend
-    const formattedAchievements = userAchievements.map(achievement => ({
-      id: achievement.achievement_id,
-      nombre: achievement.achievements.title,
-      descripcion: achievement.achievements.description,
-      categoria: achievement.achievements.category,
-      puntos: achievement.achievements.points,
-      icono: achievement.achievements.icon,
-      unlocked: true,
-      unlocked_at: achievement.unlocked_at
-    }));
-
-    return formattedAchievements;
+      
+    if (error) throw error;
+    
+    return data || [];
   } catch (error) {
-    console.error('Error al obtener logros del usuario:', error);
+    console.error('Error getting user achievements:', error);
     throw error;
   }
 };
 
 /**
- * Verificar y otorgar logros basados en acciones del usuario
+ * Check and award achievements for a user
  */
-export const checkAndAwardAchievements = async (userId, action, data = {}) => {
+/**
+ * Checks and awards achievements for a user based on an action
+ * @param {string} userId - The user ID
+ * @param {string} action - The action that triggered the achievement check
+ * @returns {Promise<{newAchievements: Array, pointsEarned: number}>}
+ */
+export const checkAndAwardAchievements = async (userId, action = 'CHECK_MISSIONS') => {
   try {
+    console.log(`🏆 Verificando logros para usuario ${userId} por acción: ${action}`);
+    
+    if (!userId) {
+      throw new Error("Se requiere ID de usuario para verificar logros");
+    }
+    
+    // Get all achievements
+    const { data: allAchievements, error: achievementsError } = await supabase
+      .from('achievements')
+      .select('*');
+      
+    if (achievementsError) throw achievementsError;
+    
     // Get user's current achievements
     const { data: userAchievements, error: userAchievementsError } = await supabase
       .from('user_achievements')
-      .select('achievement_id')
+      .select('achievement_id, unlocked_at')
       .eq('user_id', userId);
-
+      
     if (userAchievementsError) throw userAchievementsError;
-
-    // Create a set of achievement IDs the user already has
-    const userAchievementIds = new Set(userAchievements.map(a => a.achievement_id));
-
-    // Get all achievements from the database
-    const { data: allAchievements, error: allAchievementsError } = await supabase
-      .from('achievements')
-      .select('*');
-
-    if (allAchievementsError) throw allAchievementsError;
-
-    // Create a map of all achievements
-    const achievementsMap = {};
-    allAchievements.forEach(a => {
-      achievementsMap[a.id] = {
-        id: a.id,
-        nombre: a.title,
-        descripcion: a.description,
-        categoria: a.category,
-        puntos: a.points,
-        icono: a.icon
-      };
-    });
-
-    // Array to store new achievements
-    const newAchievements = [];
-
-    // Check for achievements based on the action
-    switch (action) {
-      case 'VISIT_CITY':
-        await checkCityAchievements(userId, userAchievementIds, achievementsMap, newAchievements);
-        break;
+    
+    // Get user's completed missions
+    const { data: completedMissions, error: missionsError } = await supabase
+      .from('user_missions')
+      .select('mission_id, missions(city_id)')
+      .eq('user_id', userId)
+      .eq('status', 'completed');
       
-      case 'COMPLETE_MISSION':
-        await checkMissionAchievements(userId, userAchievementIds, achievementsMap, newAchievements, data);
-        break;
+    if (missionsError) throw missionsError;
+    
+    // Get user profile for current points
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('points, level')
+      .eq('id', userId)
+      .single();
       
-      case 'COMPLETE_TRIP':
-        await checkTripAchievements(userId, userAchievementIds, achievementsMap, newAchievements);
-        break;
+    if (profileError) throw profileError;
+    
+    // Extract IDs of achievements the user already has
+    const userAchievementIds = userAchievements.map(a => a.achievement_id);
+    
+    // Filter achievements that the user doesn't have yet
+    const availableAchievements = allAchievements.filter(
+      achievement => !userAchievementIds.includes(achievement.id)
+    );
+    
+    // Check each achievement condition
+    const newlyUnlockedAchievements = [];
+    let totalPointsEarned = 0;
+    
+    for (const achievement of availableAchievements) {
+      let unlocked = false;
       
-      case 'CHECK_SPECIAL_ACHIEVEMENTS':
-        await checkSpecialAchievements(userId, userAchievementIds, achievementsMap, newAchievements);
-        break;
-    }
-
-    // If there are new achievements, insert them and update points
-    if (newAchievements.length > 0) {
-      console.log(`🏆 Usuario ${userId} ha desbloqueado ${newAchievements.length} logros nuevos`);
-      
-      // Insert user achievements
-      const achievementsToInsert = newAchievements.map(logro => ({
-        user_id: userId,
-        achievement_id: logro.id,
-        unlocked_at: new Date().toISOString()
-      }));
-
-      const { error: insertError } = await supabase
-        .from('user_achievements')
-        .insert(achievementsToInsert);
-
-      if (insertError) throw insertError;
-
-      // Update the user's total points
-      const totalPoints = newAchievements.reduce((sum, a) => sum + a.puntos, 0);
-      
-      const { error: updatePointsError } = await supabase.rpc(
-        'increment_points',
-        { 
-          user_id: userId,
-          points_to_add: totalPoints 
-        }
-      );
-      
-      if (updatePointsError) {
-        console.error(`Error updating points for user ${userId}:`, updatePointsError);
-      } else {
-        console.log(`💯 Added ${totalPoints} points to user ${userId}`);
+      // Check different achievement types
+      switch (achievement.condition_type) {
+        case 'COMPLETE_FIRST_MISSION':
+          unlocked = completedMissions.length > 0;
+          break;
+          
+        case 'COMPLETE_N_MISSIONS':
+          unlocked = completedMissions.length >= achievement.condition_value;
+          break;
+          
+        case 'VISIT_N_CITIES':
+          // Get unique cities from completed missions
+          const visitedCities = new Set(
+            completedMissions
+              .map(m => m.missions?.city_id)
+              .filter(Boolean)
+          );
+          unlocked = visitedCities.size >= achievement.condition_value;
+          break;
+          
+        case 'REACH_LEVEL':
+          unlocked = userProfile.level >= achievement.condition_value;
+          break;
+          
+        // Add more achievement types as needed
       }
-
-      // Update the user's level after earning achievements
-      await updateUserLevel(userId);
       
-      return { newAchievements, pointsEarned: totalPoints };
+      // If achievement is unlocked, add it to the user's achievements
+      if (unlocked) {
+        const now = new Date().toISOString();
+        
+        const { error: insertError } = await supabase
+          .from('user_achievements')
+          .insert({
+            user_id: userId,
+            achievement_id: achievement.id,
+            unlocked_at: now
+          });
+          
+        if (insertError) {
+          console.error(`Error al guardar logro ${achievement.id}:`, insertError);
+          continue; // Skip this achievement if there's an error
+        }
+        
+        // Add points to user
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            points: userProfile.points + achievement.points 
+          })
+          .eq('id', userId);
+          
+        if (updateError) {
+          console.error('Error al actualizar puntos:', updateError);
+        } else {
+          totalPointsEarned += achievement.points;
+        }
+        
+        // Add to newly unlocked achievements
+        newlyUnlockedAchievements.push(achievement);
+      }
     }
-
-    return { newAchievements: [], pointsEarned: 0 };
+    
+    console.log(`✅ Verificación completada. Nuevos logros: ${newlyUnlockedAchievements.length}, Puntos: ${totalPointsEarned}`);
+    
+    return {
+      newAchievements: newlyUnlockedAchievements,
+      pointsEarned: totalPointsEarned
+    };
+    
   } catch (error) {
-    console.error('Error checking achievements:', error);
+    console.error('Error al verificar logros:', error);
     throw error;
   }
 };
 
-// Helper functions to check for specific achievements
-async function checkCityAchievements(userId, userAchievementIds, achievementsMap, newAchievements) {
-  // Check for first city achievement
-  if (!userAchievementIds.has(LOGROS.PRIMERA_CIUDAD)) {
-    newAchievements.push(achievementsMap[LOGROS.PRIMERA_CIUDAD]);
-  }
-
-  // Check for multiple cities achievements
-  const { data: visitedCities, error } = await supabase
-    .from('user_missions')
-    .select('city_id')
-    .eq('user_id', userId)
-    .is('completed_at', 'not.null');
-
-  if (error) throw error;
-
-  // Count unique cities
-  const uniqueCities = new Set(visitedCities.map(m => m.city_id));
-  const cityCount = uniqueCities.size;
-
-  if (cityCount >= 5 && !userAchievementIds.has(LOGROS.TROTAMUNDOS)) {
-    newAchievements.push(achievementsMap[LOGROS.TROTAMUNDOS]);
-  }
-
-  if (cityCount >= 15 && !userAchievementIds.has(LOGROS.CIUDADANO_MUNDO)) {
-    newAchievements.push(achievementsMap[LOGROS.CIUDADANO_MUNDO]);
-  }
-
-  // Check for Paris visits
-  const parisVisits = visitedCities.filter(m => m.city_id === 'paris').length;
-  if (parisVisits > 0 && !userAchievementIds.has(LOGROS.BONJOUR_PARIS)) {
-    newAchievements.push(achievementsMap[LOGROS.BONJOUR_PARIS]);
-  }
-}
-
-async function checkMissionAchievements(userId, userAchievementIds, achievementsMap, newAchievements, data) {
-  // First mission achievement
-  if (!userAchievementIds.has(LOGROS.PRIMERA_MISION)) {
-    newAchievements.push(achievementsMap[LOGROS.PRIMERA_MISION]);
-  }
-
-  // Check difficulty-based achievements
-  if (data.dificultad === 'facil' && !userAchievementIds.has(LOGROS.MISION_FACIL)) {
-    newAchievements.push(achievementsMap[LOGROS.MISION_FACIL]);
-  } else if (data.dificultad === 'media' && !userAchievementIds.has(LOGROS.MISION_MEDIA)) {
-    newAchievements.push(achievementsMap[LOGROS.MISION_MEDIA]);
-  } else if (data.dificultad === 'dificil' && !userAchievementIds.has(LOGROS.MISION_DIFICIL)) {
-    newAchievements.push(achievementsMap[LOGROS.MISION_DIFICIL]);
-  }
-
-  // Count total completed missions
-  const { count, error } = await supabase
-    .from('user_missions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .is('completed_at', 'not.null');
-
-  if (error) throw error;
-
-  if (count >= 10 && !userAchievementIds.has(LOGROS.DIEZ_MISIONES)) {
-    newAchievements.push(achievementsMap[LOGROS.DIEZ_MISIONES]);
-  }
-
-  if (count >= 100 && !userAchievementIds.has(LOGROS.CIEN_MISIONES)) {
-    newAchievements.push(achievementsMap[LOGROS.CIEN_MISIONES]);
-  }
-
-  // Check for missions completed in the same day
-  const today = new Date().toISOString().split('T')[0];
-  const { data: todayMissions, error: todayError } = await supabase
-    .from('user_missions')
-    .select('*')
-    .eq('user_id', userId)
-    .is('completed_at', 'not.null')
-    .ilike('completed_at', `${today}%`);
-
-  if (todayError) throw todayError;
-
-  if (todayMissions.length >= 5 && !userAchievementIds.has(LOGROS.MARATON_MISIONES)) {
-    newAchievements.push(achievementsMap[LOGROS.MARATON_MISIONES]);
-  }
-}
-
-async function checkTripAchievements(userId, userAchievementIds, achievementsMap, newAchievements) {
-  // First trip achievement
-  if (!userAchievementIds.has(LOGROS.PRIMER_VIAJE)) {
-    newAchievements.push(achievementsMap[LOGROS.PRIMER_VIAJE]);
-  }
-
-  // Count completed trips
-  const { data: trips, error } = await supabase
-    .from('viajes')
-    .select('*')
-    .eq('user_id', userId)
-    .is('fecha_fin', 'not.null');
-
-  if (error) throw error;
-
-  if (trips.length >= 5 && !userAchievementIds.has(LOGROS.CINCO_VIAJES)) {
-    newAchievements.push(achievementsMap[LOGROS.CINCO_VIAJES]);
-  }
-
-  // Count planned trips
-  const { data: plannedTrips, error: plannedError } = await supabase
-    .from('viajes')
-    .select('*')
-    .eq('user_id', userId)
-    .is('fecha_inicio', 'not.null')
-    .is('duracion', 'not.null');
-
-  if (plannedError) throw plannedError;
-
-  if (plannedTrips.length >= 10 && !userAchievementIds.has(LOGROS.DIEZ_VIAJES_PLANIFICADOS)) {
-    newAchievements.push(achievementsMap[LOGROS.DIEZ_VIAJES_PLANIFICADOS]);
-  }
-}
-
-async function checkSpecialAchievements(userId, userAchievementIds, achievementsMap, newAchievements) {
-  // Check for time traveler achievement (same city in different years)
-  const { data: trips, error } = await supabase
-    .from('viajes')
-    .select('ciudad_id, fecha_inicio')
-    .eq('user_id', userId)
-    .is('fecha_inicio', 'not.null');
-
-  if (error) throw error;
-
-  // Group trips by city
-  const citiesVisited = {};
-  trips.forEach(trip => {
-    if (!trip.fecha_inicio) return;
+/**
+ * Check a single achievement and award it if conditions are met
+ */
+async function checkSingleAchievement(
+  achievementCode,
+  conditionMet,
+  userId,
+  unlockedAchievementIds,
+  allAchievements,
+  newAchievements,
+  addPoints
+) {
+  try {
+    // Find the achievement in the database
+    const achievement = allAchievements.find(a => a.code === achievementCode);
     
-    const year = new Date(trip.fecha_inicio).getFullYear();
-    if (!citiesVisited[trip.ciudad_id]) {
-      citiesVisited[trip.ciudad_id] = new Set();
+    if (!achievement) {
+      console.warn(`Achievement with code ${achievementCode} not found`);
+      return false;
     }
-    citiesVisited[trip.ciudad_id].add(year);
-  });
-
-  // Check if any city was visited in different years
-  const timeTraveler = Object.values(citiesVisited).some(years => years.size > 1);
-  if (timeTraveler && !userAchievementIds.has(LOGROS.VIAJERO_DEL_TIEMPO)) {
-    newAchievements.push(achievementsMap[LOGROS.VIAJERO_DEL_TIEMPO]);
-  }
-
-  // Check for collector achievement (at least one achievement in each category)
-  if (!userAchievementIds.has(LOGROS.COLECCIONISTA)) {
-    const { data: userAchievements, error: achievementsError } = await supabase
-      .from('user_achievements')
-      .select(`
-        achievements (
-          category
-        )
-      `)
-      .eq('user_id', userId);
-
-    if (achievementsError) throw achievementsError;
-
-    const categories = new Set(userAchievements.map(a => a.achievements.category));
-    if (categories.size >= 4) { // At least one from exploracion, misiones, viajes, and bonus
-      newAchievements.push(achievementsMap[LOGROS.COLECCIONISTA]);
+    
+    // Check if already unlocked
+    if (unlockedAchievementIds.includes(achievement.id)) {
+      return false; // Already unlocked
     }
+    
+    // Check if condition is met
+    if (conditionMet) {
+      // Award the achievement
+      const { error } = await supabase
+        .from('user_achievements')
+        .insert({
+          user_id: userId,
+          achievement_id: achievement.id,
+          unlocked_at: new Date().toISOString()
+        });
+        
+      if (error) {
+        console.error(`Error awarding achievement ${achievementCode}:`, error);
+        return false;
+      }
+      
+      // Add to new achievements list
+      newAchievements.push(achievement);
+      
+      // Add points
+      addPoints(achievement.points || 0);
+      
+      console.log(`🏆 Achievement unlocked: ${achievement.title} (+${achievement.points} points)`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error(`Error checking achievement ${achievementCode}:`, error);
+    return false;
   }
 }
+
+/**
+ * Update user's score with achievement points
+ */
+async function updateUserScore(userId, pointsToAdd) {
+  try {
+    // Get current score
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('score')
+      .eq('id', userId)
+      .single();
+      
+    if (userError) throw userError;
+    
+    const currentScore = userData?.score || 0;
+    const newScore = currentScore + pointsToAdd;
+    
+    // Update score
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ score: newScore })
+      .eq('id', userId);
+      
+    if (updateError) throw updateError;
+    
+    console.log(`👤 User score updated: ${currentScore} → ${newScore} (+${pointsToAdd})`);
+    return newScore;
+  } catch (error) {
+    console.error('Error updating user score:', error);
+    throw error;
+  }
+}
+// Add this function to your logrocontroller.js file
+export const getAllAchievements = async (req, res) => {
+  try {
+    console.log("📊 Obteniendo todos los logros disponibles");
+    
+    // Get all achievements from the database
+    const { data: achievements, error } = await supabase
+      .from('achievements')
+      .select('*');
+      
+    if (error) throw error;
+    
+    console.log(`✅ ${achievements.length} logros encontrados`);
+    res.status(200).json(achievements);
+  } catch (error) {
+    console.error("❌ Error al obtener logros:", error.message);
+    res.status(500).json({ 
+      message: "Error al obtener logros", 
+      error: error.message 
+    });
+  }
+};

@@ -1,8 +1,10 @@
 import { generateMission } from '../ia/generateMission.js';
 import { supabase } from '../config/supabaseClient.js';
 import { validateImageByLabels, getImageLabels } from '../utils/validateImage.js';
-import { updateUserLevel } from './userController.js';
-import { checkAndAwardAchievements } from '../controllers/logroController.js';
+import { updateUserLevel } from './usercontroller.js';
+
+// Add this import at the top of the file
+import { checkAndAwardAchievements } from '../controllers/logrocontroller.js';
 
 
 export const updateUserMissionStatus = async (req, res) => {
@@ -53,6 +55,14 @@ export const updateUserMissionStatus = async (req, res) => {
       // Add this code to update the user level when a mission is completed
       if (status === "completed") {
         await updateUserLevel(userId);
+        
+        // Also check for achievements when a mission is completed
+        try {
+          await checkAndAwardAchievements(userId, 'COMPLETE_MISSION');
+        } catch (achievementError) {
+          console.error("Error checking achievements after mission completion:", achievementError);
+          // Don't fail the request if achievement checking fails
+        }
       }
       res.status(200).json({ message: "Misión actualizada correctamente" });
     } catch (error) {
@@ -347,4 +357,35 @@ export const getMissionHistory = async (req, res) => {
     res.status(500).json({ message: "Error al obtener historia", error: error.message });
   }
 };
+
+// Make sure this function is properly exported
+export const checkUserAchievements = async (req, res) => {
+  try {
+    // Get userId from the authenticated request
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Usuario no autenticado" });
+    }
+    
+    // Make sure this function exists and is imported
+    const achievements = await checkAndAwardAchievements(userId, 'CHECK_MISSIONS');
+    
+    // Return the achievements to the client
+    res.status(200).json({ 
+      message: "Logros verificados correctamente",
+      newAchievements: achievements?.newAchievements || [],
+      pointsEarned: achievements?.pointsEarned || 0
+    });
+  } catch (error) {
+    console.error("Error checking achievements:", error);
+    res.status(500).json({ error: "Error al verificar logros" });
+  }
+};
+
+// Make sure the checkAndAwardAchievements function is defined or imported
+// If it's not defined, you'll need to implement it or import it
+// Remove this loose try/catch block that's outside of any function
+// and move its functionality into the updateUserMissionStatus function
+// at the appropriate place where missions are completed
 

@@ -5,6 +5,7 @@ import {
     updateUserMissionStatus,
     validateMissionImage,
     getMissionHistory,
+    checkUserAchievements // Fixed: removed nested import and added directly to the list
 } from '../controllers/misionController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
@@ -19,5 +20,8 @@ router.post('/:missionId/validate-image', validateMissionImage);
 router.patch('/usuario/:missionId', updateUserMissionStatus);
 router.get("/mine", getMissionsForUser);
 router.get("/:id/historia", getMissionHistory)
+
+// Add this route
+router.post('/logros/check-all', authMiddleware, checkUserAchievements);
 
 export default router;

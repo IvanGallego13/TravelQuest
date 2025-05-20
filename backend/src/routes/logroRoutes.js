@@ -1,6 +1,11 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-import { getUserAchievements } from '../controllers/logroController.js';
+import { 
+  getUserAchievements, 
+  getAllAchievements, // Add this import
+  checkAndAwardAchievements 
+} from '../controllers/logrocontroller.js';
+import { checkUserAchievements } from '../controllers/misionController.js';
 
 const router = express.Router();
 
@@ -17,4 +22,10 @@ router.get('/mis-logros', authMiddleware, async (req, res) => {
     }
 });
 
-export default router; 
+// Add this route to get all achievements
+router.get('/', authMiddleware, getAllAchievements);
+
+// Add this route for checking achievements
+router.post('/check-all', authMiddleware, checkUserAchievements);
+
+export default router;

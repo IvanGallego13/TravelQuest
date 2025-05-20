@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, ImageBackground } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, ImageBackground, RefreshControl } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../hooks/useAuth";
@@ -8,7 +8,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 
 // Definir tipos para logros y misiones
-interface Logro {  id: string;
+interface Logro {  
+  id: string;
   title: string;           // Changed from nombre
   description: string;     // Changed from descripcion
   category: string;        // Changed from categoria
@@ -38,6 +39,7 @@ export default function Usuario() {
   const [userLogros, setUserLogros] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -111,7 +113,6 @@ export default function Usuario() {
 
   // Función para cargar todos los logros disponibles
   // Update the cargarTodosLosLogros function
-  // Update the cargarTodosLosLogros function
   const cargarTodosLosLogros = async (logrosDesbloqueados: string[]) => {
     try {
       // Get ALL achievements from the achievements table
@@ -121,9 +122,55 @@ export default function Usuario() {
       if (!logrosRes.ok) {
         console.log("Intentando ruta alternativa para todos los logros...");
         logrosRes = await apiFetch("/logros");
-        
+      
         if (!logrosRes.ok) {
-          throw new Error("No se pudo acceder a los logros disponibles");
+          // If both endpoints fail, create some default achievements
+          console.log("No se pudo acceder a los logros. Usando logros por defecto...");
+          
+          const defaultLogros = [
+            {
+              id: "1",
+              title: "Primera parada",
+              description: "Visita tu primera ciudad",
+              category: "exploración",
+              points: 10,
+              icon: "🌍"
+            },
+            {
+              id: "5",
+              title: "Primer paso",
+              description: "Completa tu primera misión",
+              category: "misiones",
+              points: 10,
+              icon: "🪂"
+            },
+            {
+              id: "6",
+              title: "Reto inicial",
+              description: "Completa una misión de dificultad fácil",
+              category: "misiones",
+              points: 10,
+              icon: "🎯"
+            },
+            {
+              id: "7",
+              title: "En marcha",
+              description: "Completa una misión de dificultad normal",
+              category: "misiones",
+              points: 20,
+              icon: "🚶"
+            }
+          ];
+          
+          // Mark which achievements are unlocked
+          const logrosConEstado = defaultLogros.map((logro: any) => ({
+            ...logro,
+            unlocked: logrosDesbloqueados.includes(logro.id),
+            unlocked_at: null
+          }));
+          
+          setLogros(logrosConEstado);
+          return;
         }
       }
       
@@ -133,11 +180,11 @@ export default function Usuario() {
       // Mark which achievements are unlocked
       const logrosConEstado = todosLosLogros.map((logro: any) => ({
         id: logro.id,
-        title: logro.title,
-        description: logro.description,
-        category: logro.category,
-        points: logro.points,
-        icon: logro.icon,
+        title: logro.title || logro.nombre,
+        description: logro.description || logro.descripcion,
+        category: logro.category || logro.categoria,
+        points: logro.points || logro.puntos,
+        icon: logro.icon || logro.icono,
         unlocked: logrosDesbloqueados.includes(logro.id),
         unlocked_at: null
       }));
@@ -159,27 +206,27 @@ export default function Usuario() {
         console.log("Intentando ruta alternativa para mis logros...");
         misLogrosRes = await apiFetch("/achievements/user");
       
-      if (!misLogrosRes.ok) {
-        throw new Error("No se pudo acceder a los logros del usuario");
+        if (!misLogrosRes.ok) {
+          throw new Error("No se pudo acceder a los logros del usuario");
+        }
       }
+      
+      const misLogrosData = await misLogrosRes.json();
+      console.log("🏆 Mis logros cargados:", misLogrosData.length);
+      
+      // Extract achievement IDs
+      const logrosDesbloqueados = misLogrosData.map((logro: any) => 
+        logro.achievement_id || logro.id
+      );
+      setUserLogros(logrosDesbloqueados);
+      
+      // Now load all available achievements
+      await cargarTodosLosLogros(logrosDesbloqueados);
+    } catch (error) {
+      console.error("Error cargando logros del usuario:", error);
+      throw error;
     }
-    
-    const misLogrosData = await misLogrosRes.json();
-    console.log("🏆 Mis logros cargados:", misLogrosData.length);
-    
-    // Extract achievement IDs
-    const logrosDesbloqueados = misLogrosData.map((logro: any) => 
-      logro.achievement_id || logro.id
-    );
-    setUserLogros(logrosDesbloqueados);
-    
-    // Now load all available achievements
-    await cargarTodosLosLogros(logrosDesbloqueados);
-  } catch (error) {
-    console.error("Error cargando logros del usuario:", error);
-    throw error;
-  }
-};
+  };
 
   const handleLogout = async () => {
     try {
@@ -202,18 +249,95 @@ export default function Usuario() {
   const handleVerSobre = () => {
     router.push("/usuario/sobre");
   };
+  
   const handleVereditar = () => {
     router.push("/usuario/editar");
   };
 
-   return (
+  // Function to manually check for achievements
+  const checkAchievements = async () => {
+    try {
+      setRefreshing(true);
+      
+      // First try the /logros/check-all endpoint
+      let checkRes = await apiFetch("/logros/check-all", {
+        method: "POST"
+      });
+      
+      // If that fails, try alternative endpoints
+      if (!checkRes.ok) {
+        console.log("Intentando ruta alternativa para verificar logros...");
+        
+        // Try the /achievements/check endpoint as an alternative
+        checkRes = await apiFetch("/achievements/check", {
+          method: "POST"
+        });
+        
+        // If that also fails, try one more alternative
+        if (!checkRes.ok) {
+          // Try a GET request to refresh achievements instead
+          checkRes = await apiFetch("/logros/refresh", {
+            method: "GET"
+          });
+          
+          if (!checkRes.ok) {
+            throw new Error("No se pudo encontrar un endpoint válido para verificar logros");
+          }
+        }
+      }
+      
+      const checkData = await checkRes.json();
+      
+      // Show notification if new achievements were unlocked
+      if (checkData.newAchievements && checkData.newAchievements.length > 0) {
+        Alert.alert(
+          "¡Logro desbloqueado!",
+          `Has desbloqueado "${checkData.newAchievements[0].title}" y ganado ${checkData.pointsEarned} puntos.`
+        );
+      } else {
+        // If no specific achievement data is returned, just refresh the data
+        await cargarDatos();
+        Alert.alert(
+          "Logros actualizados",
+          "Se han actualizado tus logros correctamente."
+        );
+      }
+      
+      // Refresh user data to show updated achievements
+      await cargarDatos();
+    } catch (error) {
+      console.error("Error checking achievements:", error);
+      
+      // Even if checking fails, try to refresh the data anyway
+      try {
+        await cargarDatos();
+      } catch (refreshError) {
+        console.error("Error refreshing data after achievement check failed:", refreshError);
+      }
+      
+      Alert.alert(
+        "Error", 
+        "No se pudieron verificar los logros. El servidor puede estar en mantenimiento."
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Function to handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await cargarDatos();
+    setRefreshing(false);
+  };
+
+  return (
     <ImageBackground
       source={require("../../../assets/images/fondo.png")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
       <View className="flex-1 px-6 pt-14">
-
         {/* Cabecera con avatar, nombre y menú */}
         <View className="flex-row justify-between items-center mb-6">
           <View className="flex-row items-center space-x-4">
@@ -279,7 +403,23 @@ export default function Usuario() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 160 }}>
+        <ScrollView 
+          contentContainerStyle={{ paddingBottom: 160 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Add refresh achievements button */}
+          <View className="mt-4 mb-2 flex-row justify-end">
+            <TouchableOpacity 
+              onPress={checkAchievements}
+              className="bg-[#3B82F6] py-2 px-4 rounded-lg flex-row items-center"
+            >
+              <Ionicons name="refresh" size={18} color="white" />
+              <Text className="text-white ml-2 font-medium">Verificar logros</Text>
+            </TouchableOpacity>
+          </View>
+          
           {/* Sección logros */}
           <View className="bg-white/80 p-4 rounded-2xl shadow-md">
             <Text className="text-black font-bold text-base mb-4">

@@ -1,5 +1,5 @@
 import { supabase } from '../config/supabaseClient.js';
-import { LOGROS } from '../controllers/logroController.js';
+import { LOGROS } from '../controllers/logrocontroller.js';
 
 /**
  * Actualiza el nivel del usuario basado en sus logros y misiones completadas
@@ -11,34 +11,41 @@ import { LOGROS } from '../controllers/logroController.js';
  * Actualiza el nivel del usuario basado en sus puntos
  * @param {string} userId - ID del usuario
  */
+// In the updateUserLevel function, change 'level' to 'score'
+
 export const updateUserLevel = async (userId) => {
   try {
-    // Get user's current score
+    // First, get the current score
     const { data: userData, error: userError } = await supabase
       .from('profiles')
-      .select('score')
+      .select('score') // Changed from 'level' to 'score'
       .eq('id', userId)
       .single();
 
-    if (userError) throw userError;
+    if (userError) {
+      console.error("Error getting user score:", userError);
+      throw userError;
+    }
 
-    // Calculate level based on points
-    // Simple formula: 1 level per 100 points
-    const score = userData.score || 0;
-    const level = Math.floor(score / 100) + 1;
+    // Calculate new score (add points for completing a mission)
+    const currentScore = userData?.score || 0; // Changed from 'level' to 'score'
+    const pointsToAdd = 10; // Points for completing a mission
+    const newScore = currentScore + pointsToAdd;
 
-    // Update user's level
-    const { error: updateError } = await supabase
+    // Update the user's score
+    const { error: levelError } = await supabase
       .from('profiles')
-      .update({ level })
+      .update({ score: newScore }) // Changed from 'level' to 'score'
       .eq('id', userId);
 
-    if (updateError) throw updateError;
+    if (levelError) {
+      console.error("Error updating user level:", levelError);
+      throw levelError;
+    }
 
-    console.log(`🆙 Usuario ${userId} actualizado a nivel ${level}`);
-    return level;
+    return { success: true, newScore };
   } catch (error) {
-    console.error('Error updating user level:', error);
+    console.error("Error updating user level:", error);
     throw error;
   }
 };

@@ -5,7 +5,7 @@ import fileUpload from 'express-fileupload';
 import { createClient } from '@supabase/supabase-js';
 
 // Rutas
-import userRoutes from './routes/userRoutes.js';
+import userRoutes from './routes/userroutes.js';  // Changed casing to match actual file
 import diarioRoutes from './routes/DiarioRoutes.js';
 import amigosRoutes from './routes/amigosRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
@@ -17,7 +17,7 @@ import viajeRoutes from './routes/viajeRoutes.js';
 import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
 import ajustesRoutes from './routes/ajustesRoutes.js';
-import logrosRoutes from './routes/logrosRoutes.js';
+import logroRoutes from './routes/logroRoutes.js';
 
 dotenv.config();
 
@@ -50,8 +50,8 @@ app.use('/api/viajes', viajeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ajustes', ajustesRoutes);
-// Register routes
-app.use('/api/logros', logrosRoutes);
+// Mount the routes
+app.use('/api/logros', logroRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

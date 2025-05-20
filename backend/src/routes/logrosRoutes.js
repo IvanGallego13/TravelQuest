@@ -1,7 +1,7 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-import { getUserAchievements, checkAndAwardAchievements } from '../controllers/logroController.js';
-import { supabase } from '../config/supabaseClient.js'; // Add this import
+import { getUserAchievements, checkAndAwardAchievements } from '../controllers/logrocontroller.js';
+import { supabase } from '../config/supabaseClient.js';
 
 const router = express.Router();
 
