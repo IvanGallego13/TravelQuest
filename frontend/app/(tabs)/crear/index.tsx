@@ -37,8 +37,8 @@ export default function OpcionesDeCrear() {
     >
       {/* Capa blanca translúcida para aclarar imagen */}
       <View className="flex-1 px-6 pt-12">
-        
-        {/* Add back arrow button */}
+
+        {/* Botón volver */}
         <TouchableOpacity 
           onPress={irALocalizacion}
           className="absolute top-12 left-6 z-10 bg-white/80 p-2 rounded-full"
@@ -46,7 +46,7 @@ export default function OpcionesDeCrear() {
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
 
-        {/* Ciudad como etiqueta moderna - Moved more to the right */}
+        {/* Etiqueta de ciudad */}
         <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2 ml-14">
           <Text className="text-black text-lg font-semibold">
             {ubicacion?.city || "Explorando..."}
@@ -54,7 +54,7 @@ export default function OpcionesDeCrear() {
           <Text className="text-black text-xl">📍</Text>
         </View>
 
-        {/* Mapa dentro de un marco blanco redondeado */}
+        {/* Mapa */}
         {ubicacion?.latitude && ubicacion?.longitude ? (
           <View className="bg-white/80 p-2 rounded-3xl shadow-lg mb-10">
             <View className="overflow-hidden rounded-2xl">
@@ -88,28 +88,30 @@ export default function OpcionesDeCrear() {
           </View>
         )}
 
-        {/* Botones estilo tarjeta separados */}
-        <View className="flex-col space-y-6 mb-6">
+        {/* Tarjeta contenedora para las acciones */}
+        <View className="bg-white/80 rounded-2xl p-4 shadow-md space-y-4 mb-10">
+          {/* Botón iniciar misión */}
           <TouchableOpacity
-            className="bg-white/80 px-6 py-4 mb-6 rounded-2xl shadow-md"
+            className="bg-white px-4 py-4 mb-5 rounded-xl border border-gray-200 shadow-sm"
             onPress={irASeleccionDificultad}
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-black font-bold text-lg">Iniciar nueva misión</Text>
+                <Text className="text-black font-bold text-lg">🧭 Iniciar nueva misión</Text>
                 <Text className="text-black/60 text-sm">Desbloquea una nueva aventura</Text>
               </View>
               <Text className="text-black text-2xl">→</Text>
             </View>
           </TouchableOpacity>
 
+          {/* Botón escribir en diario */}
           <TouchableOpacity
-            className="bg-white/80 px-6 py-4 rounded-2xl shadow-md"
+            className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
             onPress={irAEditarDiario}
           >
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-black font-bold text-lg">Escribir en el diario</Text>
+                <Text className="text-black font-bold text-lg">📓 Escribir en el diario</Text>
                 <Text className="text-black/60 text-sm">Captura tus recuerdos del viaje</Text>
               </View>
               <Text className="text-black text-2xl">→</Text>
@@ -119,6 +121,4 @@ export default function OpcionesDeCrear() {
       </View>
     </ImageBackground>
   );
-  
-  
 }
