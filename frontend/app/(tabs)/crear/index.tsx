@@ -19,6 +19,29 @@ export default function OpcionesDeCrear() {
       params: { cityId: ubicacion.cityId.toString() },
     });
   };
+
+  const irARetoIndividual = () => {
+  if (!ubicacion?.cityId) {
+    Alert.alert("Error", "No se ha detectado ninguna ciudad.");
+    return;
+  }
+  router.push({
+    pathname: "./crear/seleccion-retos",
+    params: { mode: "solo", cityId: ubicacion.cityId.toString() },
+  });
+};
+
+const irARetoGrupal = () => {
+  if (!ubicacion?.cityId) {
+    Alert.alert("Error", "No se ha detectado ninguna ciudad.");
+    return;
+  }
+  router.push({
+    pathname: "./crear/seleccion-retos",
+    params: { mode: "grupo", cityId: ubicacion.cityId.toString() },
+  });
+};
+
   
   const irAEditarDiario =()=>{
     router.push("./crear/2.2entradaDiario");
@@ -88,36 +111,67 @@ export default function OpcionesDeCrear() {
           </View>
         )}
 
-        {/* Tarjeta contenedora para las acciones */}
-        <View className="bg-white/80 rounded-2xl p-4 shadow-md space-y-4 mb-10">
-          {/* Botón iniciar misión */}
-          <TouchableOpacity
-            className="bg-white px-4 py-4 mb-5 rounded-xl border border-gray-200 shadow-sm"
-            onPress={irASeleccionDificultad}
-          >
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-black font-bold text-lg">🧭 Iniciar nueva misión</Text>
-                <Text className="text-black/60 text-sm">Desbloquea una nueva aventura</Text>
-              </View>
-              <Text className="text-black text-2xl">→</Text>
-            </View>
-          </TouchableOpacity>
+      {/* Tarjeta contenedora para las acciones */}
+<View className="bg-white/80 rounded-2xl p-4 shadow-md space-y-4 mb-10">
 
-          {/* Botón escribir en diario */}
-          <TouchableOpacity
-            className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
-            onPress={irAEditarDiario}
-          >
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-black font-bold text-lg">📓 Escribir en el diario</Text>
-                <Text className="text-black/60 text-sm">Captura tus recuerdos del viaje</Text>
-              </View>
-              <Text className="text-black text-2xl">→</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+  {/* Botón iniciar misión individual simple */}
+  <TouchableOpacity
+    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    onPress={irASeleccionDificultad}
+  >
+    <View className="flex-row items-center justify-between">
+      <View>
+        <Text className="text-black font-bold text-lg">🧭 Iniciar nueva misión</Text>
+        <Text className="text-black/60 text-sm">Desbloquea una nueva aventura</Text>
+      </View>
+      <Text className="text-black text-2xl">→</Text>
+    </View>
+  </TouchableOpacity>
+
+  {/* Botón reto individual */}
+  <TouchableOpacity
+    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    onPress={irARetoIndividual}
+  >
+    <View className="flex-row items-center justify-between">
+      <View>
+        <Text className="text-black font-bold text-lg">🎯 Reto individual</Text>
+        <Text className="text-black/60 text-sm">Haz un reto solo para ti</Text>
+      </View>
+      <Text className="text-black text-2xl">→</Text>
+    </View>
+  </TouchableOpacity>
+
+  {/* Botón reto grupal */}
+  <TouchableOpacity
+    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    onPress={irARetoGrupal}
+  >
+    <View className="flex-row items-center justify-between">
+      <View>
+        <Text className="text-black font-bold text-lg">👥 Reto grupal</Text>
+        <Text className="text-black/60 text-sm">Invita a amigos a compartir misiones</Text>
+      </View>
+      <Text className="text-black text-2xl">→</Text>
+    </View>
+  </TouchableOpacity>
+
+  {/* Botón escribir en diario */}
+  <TouchableOpacity
+    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    onPress={irAEditarDiario}
+  >
+    <View className="flex-row items-center justify-between">
+      <View>
+        <Text className="text-black font-bold text-lg">📓 Escribir en el diario</Text>
+        <Text className="text-black/60 text-sm">Captura tus recuerdos del viaje</Text>
+      </View>
+      <Text className="text-black text-2xl">→</Text>
+    </View>
+  </TouchableOpacity>
+
+</View>
+
       </View>
     </ImageBackground>
   );

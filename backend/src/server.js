@@ -18,6 +18,8 @@ import chatRoutes from './routes/chat.js';
 import authRoutes from './routes/auth.js';
 import ajustesRoutes from './routes/ajustesRoutes.js';
 import logrosRoutes from './routes/logrosRoutes.js';
+import groupChallengesRoutes from './routes/groupChallengesRoutes.js';
+
 
 dotenv.config();
 
@@ -51,6 +53,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ajustes', ajustesRoutes);
 app.use('/api/logros', logrosRoutes);
+app.use('/api/group-challenges', groupChallengesRoutes);
+
 
 // Ruta raíz
 app.get('/', (req, res) => {
