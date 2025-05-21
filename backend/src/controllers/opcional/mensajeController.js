@@ -64,3 +64,20 @@ export const deleteMessage = async (req, res) => {
 
     res.json({ message: 'Mensaje eliminado correctamente' });
 };
+
+/**
+ * Obtener todos los mensajes de un usuario (emisor o receptor)
+ */
+export const getAllMessagesForUser = async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('Mensajes')
+            .select('*')
+            .or(`id_emisor.eq.${userId},id_receptor.eq.${userId}`);
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

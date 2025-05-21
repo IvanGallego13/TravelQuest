@@ -187,3 +187,23 @@ export const getUserById = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener usuario' });
     }
 };
+
+/**
+ * Obtener datos de varios usuarios por sus IDs
+ */
+export const getUsersBulk = async (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Debes proporcionar un array de IDs.' });
+    }
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, username as nombre, avatar_url as foto_perfil')
+            .in('id', ids);
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

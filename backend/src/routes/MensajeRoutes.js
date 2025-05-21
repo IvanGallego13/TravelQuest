@@ -16,4 +16,7 @@ router.put('/:id_mensaje/read', authMiddleware, mensajeController.markMessageAsR
 // 🔴 Eliminar un mensaje
 router.delete('/:id_mensaje', authMiddleware, mensajeController.deleteMessage);
 
+// Obtener todos los mensajes de un usuario (emisor o receptor)
+router.get('/todos/:userId', authMiddleware, mensajeController.getAllMessagesForUser);
+
 export default router;
