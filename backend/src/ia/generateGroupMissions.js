@@ -43,14 +43,30 @@ IMPORTANTE:
     const response = await result.response;
     const raw = response.text().trim();
 
+    if (raw.startsWith("<")) {
+      console.error("❌ La respuesta de la IA parece ser HTML (fallo del modelo)");
+      throw new Error("La IA no respondió correctamente. Intenta de nuevo.");
+    }
+
+
     console.log("🧠 Respuesta IA (cruda):\n", raw);
 
     const cleaned = raw.replace(/```(json)?/g, "").trim();
-    const match = cleaned.match(/\[\s*{[\s\S]*}\s*]/);
+    const match = cleaned.match(/\[[\s\S]*?\]/);
 
-    if (!match) throw new Error("No se encontró JSON válido en la respuesta de la IA");
+    if (!match) {
+      console.error("❌ No se encontró array JSON en:\n", cleaned);
+      throw new Error("La IA no devolvió misiones válidas.");
+    }
 
-    const json = JSON.parse(match[0]);
+    let json;
+    try {
+      json = JSON.parse(match[0]);
+    } catch (e) {
+      console.error("❌ Error al hacer parse del JSON:\n", match[0]);
+      throw new Error("La IA devolvió un JSON inválido.");
+    }
+
 
     // Validación básica
     if (!Array.isArray(json)) throw new Error("La IA no devolvió una lista de misiones");
