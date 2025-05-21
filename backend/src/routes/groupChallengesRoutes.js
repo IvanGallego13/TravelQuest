@@ -1,12 +1,13 @@
 import express from 'express';
 import { 
-  createGroupChallenge,
-  generateMissionsForGroup
+  createOrAssignGroupChallenge
 } from '../controllers/groupChallenges.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { joinGroupChallenge } from '../controllers/groupChallenges.js';
 import { getGroupChallengeMissions } from '../controllers/groupChallenges.js';
 import { updateGroupMissionStatus } from '../controllers/groupChallenges.js';
+import { getActiveGroupChallenge } from "../controllers/groupChallenges.js";
+import { deleteActiveGroupChallenge } from "../controllers/groupChallenges.js";
 
 
 const router = express.Router();
@@ -15,14 +16,15 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Crear nuevo reto grupal
-router.post('/create', createGroupChallenge);
+router.post('/create', createOrAssignGroupChallenge);
 
-// Generar misiones para un reto grupal existente
-router.post('/:id/generate-missions', generateMissionsForGroup);
 
 router.post('/join', joinGroupChallenge);
 router.get('/:id/missions', getGroupChallengeMissions);
 router.patch('/:challengeId/missions/:missionId', updateGroupMissionStatus);
+router.get("/active", getActiveGroupChallenge);
+router.delete("/active", deleteActiveGroupChallenge);
+
 
 export default router;
 

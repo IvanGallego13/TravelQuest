@@ -26,7 +26,7 @@ export default function OpcionesDeCrear() {
     return;
   }
   router.push({
-    pathname: "./crear/seleccion-retos",
+    pathname: "/crear/seleccion-retos",
     params: { mode: "solo", cityId: ubicacion.cityId.toString() },
   });
 };
@@ -37,7 +37,7 @@ const irARetoGrupal = () => {
     return;
   }
   router.push({
-    pathname: "./crear/seleccion-retos",
+    pathname: "/crear/seleccion-retos",
     params: { mode: "grupo", cityId: ubicacion.cityId.toString() },
   });
 };
@@ -116,7 +116,7 @@ const irARetoGrupal = () => {
 
   {/* Botón iniciar misión individual simple */}
   <TouchableOpacity
-    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    className="bg-white px-4 py-4 mb-3 rounded-xl border border-gray-200 shadow-sm"
     onPress={irASeleccionDificultad}
   >
     <View className="flex-row items-center justify-between">
@@ -130,13 +130,13 @@ const irARetoGrupal = () => {
 
   {/* Botón reto individual */}
   <TouchableOpacity
-    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    className="bg-white px-4 py-4 mb-3 rounded-xl border border-gray-200 shadow-sm"
     onPress={irARetoIndividual}
   >
     <View className="flex-row items-center justify-between">
       <View>
         <Text className="text-black font-bold text-lg">🎯 Reto individual</Text>
-        <Text className="text-black/60 text-sm">Haz un reto solo para ti</Text>
+        <Text className="text-black/60 text-sm">Haz varias misiones</Text>
       </View>
       <Text className="text-black text-2xl">→</Text>
     </View>
@@ -144,7 +144,7 @@ const irARetoGrupal = () => {
 
   {/* Botón reto grupal */}
   <TouchableOpacity
-    className="bg-white px-4 py-4 rounded-xl border border-gray-200 shadow-sm"
+    className="bg-white px-4 py-4 mb-5 rounded-xl border border-gray-200 shadow-sm"
     onPress={irARetoGrupal}
   >
     <View className="flex-row items-center justify-between">

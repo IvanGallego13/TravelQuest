@@ -4,89 +4,82 @@ import { generateGroupMissions } from '../ia/generateGroupMissions.js';
 import { updateUserLevel } from './userController.js';
 
 
-export const createGroupChallenge = async (req, res) => {
-  console.log("📥 Body recibido para reto grupal:", req.body);
+
+
+export const createOrAssignGroupChallenge = async (req, res) => {
   const userId = req.user?.id;
-  const { title, description, is_solo } = req.body;
+  const { city_id, quantity, is_solo } = req.body;
 
-  if (!userId || !title) {
-    return res.status(400).json({
-      message: "Se requiere un título y un usuario autenticado.",
-    });
-  }
-
-  try {
-    // 1. Crear el reto con is_solo (por defecto false)
-    const { data: challenge, error: challengeError } = await supabase
-      .from("group_challenges")
-      .insert({
-        title,
-        description,
-        created_by: userId,
-        is_solo: is_solo ?? false
-      })
-      .select()
-      .single();
-
-    if (challengeError) throw challengeError;
-
-    // 2. Agregar al creador como primer (y único si es solo) miembro
-    const { error: memberError } = await supabase
-      .from("group_challenge_members")
-      .insert({
-        challenge_id: challenge.id,
-        user_id: userId
-      });
-
-    if (memberError) throw memberError;
-
-    res.status(201).json({
-      challenge: {
-        id: challenge.id,
-        title: challenge.title,
-        invite_code: challenge.invite_code,
-        is_solo: challenge.is_solo,
-        created_at: challenge.created_at
-      }
-    });
-  } catch (error) {
-    console.error("❌ Error al crear reto:", error.message);
-    res.status(500).json({ message: "Error al crear reto", error: error.message });
-  }
-};
-
-
-//POST /group-challenges/:id/generate-missions
-export const generateMissionsForGroup = async (req, res) => {
-  const userId = req.user?.id;
-  const challengeId = req.params.id;
-  const { city_id, quantity } = req.body;
-
-  console.log("🧠 Generar misiones IA para challenge:", challengeId);
-
-  // 1. Validación básica
-  if (!userId || !challengeId || !city_id || !quantity) {
+  if (!userId || !city_id || !quantity) {
     return res.status(400).json({ message: "Faltan datos requeridos" });
   }
 
   try {
-    // 2. Obtener nombre de ciudad
+    // 1. Buscar retos existentes en esa ciudad y tamaño que el usuario aún no haya hecho
+    const { data: availableChallenges, error: findError } = await supabase
+      .from("group_challenges")
+      .select("id")
+      .eq("is_solo", is_solo ?? false)
+      .eq("completed_at", null)
+      .in("id",
+        supabase
+          .from("group_challenge_missions")
+          .select("challenge_id")
+          .group("challenge_id")
+          .having("count(mission_id)", "=", quantity) // Retos con X misiones
+      );
+
+    if (findError) throw findError;
+
+    for (const ch of availableChallenges || []) {
+      // comprobar si el usuario ya es miembro o no
+      const { data: isMember, error: memberError } = await supabase
+        .from("group_challenge_members")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("challenge_id", ch.id)
+        .maybeSingle();
+
+      if (memberError) throw memberError;
+      if (!isMember) {
+        // Lo puede usar
+        await supabase
+          .from("group_challenge_members")
+          .insert({ challenge_id: ch.id, user_id: userId });
+
+        return res.status(200).json({ challenge_id: ch.id, reused: true });
+      }
+    }
+
+    // 2. Si no hay retos disponibles, crear uno nuevo
     const { data: cityData, error: cityError } = await supabase
       .from("cities")
       .select("name")
       .eq("id", city_id)
       .single();
 
-    if (cityError || !cityData?.name) {
-      throw new Error("Ciudad no encontrada");
-    }
+    if (cityError || !cityData?.name) throw new Error("Ciudad no encontrada");
 
-    const cityName = cityData.name;
+    const { data: challenge, error: createError } = await supabase
+      .from("group_challenges")
+      .insert({
+        title: `Reto de ${quantity} misiones`,
+        created_by: userId,
+        is_solo: is_solo ?? false,
+      })
+      .select()
+      .single();
 
-    // 3. Generar misiones usando IA (función que te pediré ahora)
-    const generatedMissions = await generateGroupMissions(cityName, quantity);
+    if (createError) throw createError;
 
-    // 4. Insertar misiones en `missions`
+    // Añadir usuario como miembro
+    await supabase
+      .from("group_challenge_members")
+      .insert({ challenge_id: challenge.id, user_id: userId });
+
+    // Generar misiones con IA
+    const generatedMissions = await generateGroupMissions(cityData.name, quantity);
+
     const { data: insertedMissions, error: insertError } = await supabase
       .from("missions")
       .insert(
@@ -94,17 +87,17 @@ export const generateMissionsForGroup = async (req, res) => {
           city_id,
           title: m.title,
           description: m.description,
-          difficulty: m.difficulty
+          difficulty: m.difficulty,
         }))
       )
       .select();
 
     if (insertError) throw insertError;
 
-    // 5. Vincular misiones al reto en `group_challenge_missions`
+    // Relacionar
     const relations = insertedMissions.map((m) => ({
-      challenge_id: challengeId,
-      mission_id: m.id
+      challenge_id: challenge.id,
+      mission_id: m.id,
     }));
 
     const { error: linkError } = await supabase
@@ -113,12 +106,13 @@ export const generateMissionsForGroup = async (req, res) => {
 
     if (linkError) throw linkError;
 
-    res.status(201).json({ missions: insertedMissions });
+    return res.status(201).json({ challenge_id: challenge.id, reused: false });
   } catch (error) {
-    console.error("❌ Error al generar misiones de grupo:", error.message);
-    res.status(500).json({ message: "Error al generar misiones de grupo", error: error.message });
+    console.error("❌ Error en createOrAssignGroupChallenge:", error.message);
+    res.status(500).json({ message: "Error al generar o asignar reto", error: error.message });
   }
 };
+
 
 export const joinGroupChallenge = async (req, res) => {
   const userId = req.user?.id;
@@ -331,3 +325,105 @@ export const getGroupChallengeMissions = async (req, res) => {
     res.status(500).json({ message: "Error al obtener misiones", error: error.message });
   }
 };
+export const getActiveGroupChallenge = async (req, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Usuario no autenticado" });
+  }
+
+  try {
+    // Buscar reto activo con last_active_at menor a 3 días
+    const { data: challenge, error } = await supabase
+      .from("group_challenges")
+      .select(`
+        id,
+        title,
+        description,
+        created_at,
+        completed_at,
+        is_solo,
+        invite_code
+      `)
+      .eq("completed_at", null)
+      .in("id",
+        supabase
+          .from("group_challenge_members")
+          .select("challenge_id")
+          .eq("user_id", userId)
+          .gte("last_active_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)) // últimos 3 días
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!challenge) {
+      return res.status(200).json(null); // no hay reto activo
+    }
+
+    res.status(200).json({ challenge });
+  } catch (err) {
+    console.error("❌ Error al buscar reto activo:", err.message);
+    res.status(500).json({ message: "Error interno", error: err.message });
+  }
+};
+
+export const deleteActiveGroupChallenge = async (req, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Usuario no autenticado" });
+  }
+
+  try {
+    // 1. Buscar el challenge activo del usuario (últimos 3 días)
+    const { data: activeMembership, error: membershipError } = await supabase
+      .from("group_challenge_members")
+      .select("challenge_id")
+      .eq("user_id", userId)
+      .gte("last_active_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)) // 3 días
+      .limit(1)
+      .maybeSingle();
+
+    if (membershipError) throw membershipError;
+
+    if (!activeMembership) {
+      return res.status(404).json({ message: "No tienes retos activos" });
+    }
+
+    const challengeId = activeMembership.challenge_id;
+
+    // 2. Eliminar al usuario del reto
+    const { error: deleteError } = await supabase
+      .from("group_challenge_members")
+      .delete()
+      .eq("challenge_id", challengeId)
+      .eq("user_id", userId);
+
+    if (deleteError) throw deleteError;
+
+    // 3. ¿El reto se ha quedado sin miembros?
+    const { data: members, error: countError } = await supabase
+      .from("group_challenge_members")
+      .select("user_id", { count: "exact", head: true })
+      .eq("challenge_id", challengeId);
+
+    if (countError) throw countError;
+
+    const hasNoMembers = members?.count === 0;
+
+    if (hasNoMembers) {
+      // Borrar el reto y relaciones si ya no queda nadie
+      await supabase.from("group_challenge_missions").delete().eq("challenge_id", challengeId);
+      await supabase.from("group_challenges").delete().eq("id", challengeId);
+      console.log(`🗑️ Reto ${challengeId} eliminado por quedar sin miembros`);
+    }
+
+    res.status(200).json({ message: "Reto eliminado correctamente" });
+  } catch (err) {
+    console.error("❌ Error al eliminar reto activo:", err.message);
+    res.status(500).json({ message: "Error al eliminar reto activo", error: err.message });
+  }
+};
+
