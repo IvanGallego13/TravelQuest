@@ -57,6 +57,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<{ nombre: string; foto_perfil?: string; id: string } | null>(null);
@@ -185,7 +186,35 @@ export default function ChatScreen() {
             filter: `conversation_id=eq.${conversationId}`
           }, (payload) => {
             console.log("📥 Nuevo mensaje recibido en tiempo real:", payload);
-            fetchMessages();
+            
+            // En lugar de llamar a fetchMessages (que podría mostrar carga),
+            // integramos directamente el nuevo mensaje en el estado
+            if (payload.new) {
+              const newMessage = payload.new;
+              
+              // Transformar los datos si es necesario para garantizar un formato consistente
+              const formattedMessage = {
+                id: newMessage.id,
+                content: newMessage.content || newMessage.contenido,
+                contenido: newMessage.content || newMessage.contenido,
+                sender_id: newMessage.sender_id,
+                receiver_id: newMessage.receiver_id || otherUser?.id,
+                sent_at: newMessage.sent_at || newMessage.created_at,
+                conversation_id: newMessage.conversation_id || conversationId
+              };
+              
+              // Actualizar el estado sin mostrar indicador de carga
+              setMessages(prevMessages => [...prevMessages, formattedMessage]);
+              
+              // Desplazarse al último mensaje
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }, 100);
+            } else {
+              // Si por alguna razón no tenemos los datos del nuevo mensaje, 
+              // hacemos una actualización completa en segundo plano
+              fetchMessages();
+            }
             
             // Vibrar para notificar al usuario
             try {
@@ -212,7 +241,8 @@ export default function ChatScreen() {
     // Configurar intervalo de polling como respaldo
     const interval = setInterval(() => {
       if (conversationId) {
-        fetchMessages();
+        // Ejecutar una versión silenciosa de fetchMessages
+        silentFetchMessages();
       }
     }, 5000);
     
@@ -226,14 +256,24 @@ export default function ChatScreen() {
   }, [id, conversationId]); // Añadir conversationId como dependencia para reiniciar suscripción cuando cambie
 
   const fetchMessages = async () => {
+    // Si ya se completó la carga inicial, no mostrar el indicador de carga para actualizaciones
+    const isInitialLoad = !initialLoadComplete;
+    
     if (!conversationId) {
       console.log("⏳ Esperando ID de conversación para buscar mensajes");
       // No mantener el estado de carga si no hay ID de conversación
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
       return;
     }
     
-    setLoading(true);
+    // Solo mostrar loading en la carga inicial
+    if (isInitialLoad) {
+      setLoading(true);
+    }
+    
     try {
       console.log("🔍 Buscando mensajes para conversación:", conversationId);
       
@@ -279,8 +319,57 @@ export default function ChatScreen() {
       console.error("❌ Error al obtener mensajes:", err);
       setMessages([]);
     } finally {
-      // Siempre salir del estado de carga
-      setLoading(false);
+      // Marcar que la carga inicial está completa
+      if (isInitialLoad) {
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
+    }
+  };
+
+  // Versión silenciosa de fetchMessages que no actualiza el estado de carga
+  const silentFetchMessages = async () => {
+    if (!conversationId) return;
+    
+    try {
+      console.log("🔄 Actualizando mensajes silenciosamente...");
+      
+      const res = await apiFetch(`/mensajes/${conversationId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Solo actualizar si hay diferencia en la cantidad de mensajes
+        if (data.length !== messages.length) {
+          console.log(`✅ Se encontraron ${data.length} mensajes (antes: ${messages.length})`);
+          
+          // Transformar los datos para garantizar consistencia
+          const formattedMessages = data.map((msg: any) => ({
+            id: msg.id,
+            content: msg.content || msg.contenido,
+            contenido: msg.content || msg.contenido,
+            sender_id: msg.sender_id,
+            receiver_id: msg.receiver_id || otherUser?.id, 
+            sent_at: msg.sent_at || msg.created_at,
+            conversation_id: msg.conversation_id || conversationId
+          }));
+          
+          // Actualizar el estado sin mostrar carga
+          setMessages(formattedMessages);
+          
+          // Desplazarse al último mensaje
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Error en actualización silenciosa:", err);
+      // No hacer nada en caso de error para evitar interrumpir la experiencia
     }
   };
 
@@ -372,7 +461,8 @@ export default function ChatScreen() {
         }
         
         // Actualizar mensajes desde el servidor después de un breve retraso
-        setTimeout(fetchMessages, 1000);
+        // pero usando la versión silenciosa para no mostrar la rueda de carga
+        setTimeout(silentFetchMessages, 1000);
       } else {
         // Intentar obtener el texto del error
         try {
@@ -460,9 +550,9 @@ export default function ChatScreen() {
       <View style={{ 
         flex: 1, 
         backgroundColor: '#f9f9f9',
-        paddingBottom: Platform.OS === 'ios' ? 160 : 140 // Ajustado para compensar la nueva posición de la barra
+        paddingBottom: Platform.OS === 'ios' ? 160 : 140
       }}>
-        {loading ? (
+        {loading && !initialLoadComplete ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#C76F40" />
             <Text style={{ marginTop: 10, color: '#C76F40' }}>Cargando...</Text>
@@ -472,7 +562,7 @@ export default function ChatScreen() {
             flex: 1, 
             justifyContent: 'center', 
             alignItems: 'center',
-            marginBottom: Platform.OS === 'ios' ? 80 : 60 // Ajuste para que el contenido no quede detrás de la barra
+            marginBottom: Platform.OS === 'ios' ? 80 : 60
           }}>
             <Ionicons name="chatbubble-ellipses-outline" size={60} color="#C76F40" />
             <Text style={{ 
@@ -511,7 +601,7 @@ export default function ChatScreen() {
         padding: 10,
         paddingBottom: Platform.OS === 'ios' ? 20 : 10,
         position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 80 : 60, // Ajuste para evitar solapamiento con la barra de navegación
+        bottom: Platform.OS === 'ios' ? 80 : 60,
         left: 0,
         right: 0,
         shadowColor: '#000',
