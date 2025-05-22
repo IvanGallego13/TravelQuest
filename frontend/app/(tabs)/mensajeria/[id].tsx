@@ -522,7 +522,7 @@ export default function ChatScreen() {
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity 
-            onPress={() => router.back()}
+            onPress={() => router.push('/(tabs)/mensajeria')}
             style={{ marginRight: 10 }}
           >
             <Ionicons name="chevron-back" size={28} color="#C76F40" />
