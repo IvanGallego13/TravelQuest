@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 import { randomUUID } from 'crypto';
 
 // Función para formatear IDs a formato UUID válido

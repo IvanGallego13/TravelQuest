@@ -61,11 +61,15 @@ export default function UsuariosCiudad() {
   const handleCrearChat = async (otherUserId: string) => {
     if (!userId) return;
     try {
+      console.log("Creando chat entre usuarios", userId, "y", otherUserId);
       // Crear conversación (si no existe)
       const res = await apiFetch('/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user1: userId, user2: otherUserId }),
+        body: JSON.stringify({ 
+          user_id1: userId, 
+          user_id2: otherUserId 
+        }),
       });
       
       if (!res.ok) {

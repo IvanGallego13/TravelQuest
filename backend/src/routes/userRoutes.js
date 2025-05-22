@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Rutas públicas
 router.get('/', userController.getAllUsers);
+router.get('/username/:username', userController.getUserByUsername);
 router.get('/:id', userController.getUserById);
 
 // Rutas protegidas (requieren autenticación)
