@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Alert } from 'react-native';
 import { apiFetch } from '../../../lib/api';
 import { getCurrentUserId } from '../../../lib/user';
+import { Ionicons } from '@expo/vector-icons';
 
 interface User {
   id: string;
@@ -117,9 +118,18 @@ export default function UsuariosCiudad() {
             <View style={styles.userItem}>
               <View style={styles.avatar}>
                 {item.foto_perfil ? (
-                  <Image source={{ uri: item.foto_perfil }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                  <Image 
+                    source={{ uri: item.foto_perfil }} 
+                    style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff3e9' }} 
+                    defaultSource={require('../../../assets/images/avatar.png')}
+                  />
                 ) : (
-                  <View style={styles.avatarPlaceholder} />
+                  <View style={styles.avatarPlaceholder}>
+                    <Image
+                      source={require('../../../assets/images/avatar.png')}
+                      style={{ width: 40, height: 40, borderRadius: 20 }}
+                    />
+                  </View>
                 )}
               </View>
               <Text style={styles.name}>{item.nombre}</Text>

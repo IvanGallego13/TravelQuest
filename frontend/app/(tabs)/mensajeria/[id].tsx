@@ -530,10 +530,16 @@ export default function ChatScreen() {
           {otherUser?.foto_perfil ? (
             <Image 
               source={{ uri: otherUser.foto_perfil }} 
-              style={{ width: 40, height: 40, borderRadius: 20 }} 
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff3e9' }} 
+              defaultSource={require('../../../assets/images/avatar.png')}
             />
           ) : (
-            <Ionicons name="person-circle" size={40} color="#C76F40" />
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff3e9', justifyContent: 'center', alignItems: 'center' }}>
+              <Image
+                source={require('../../../assets/images/avatar.png')}
+                style={{ width: 40, height: 40, borderRadius: 20 }}
+              />
+            </View>
           )}
           <Text style={{ 
             fontSize: 20, 

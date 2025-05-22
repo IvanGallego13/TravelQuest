@@ -135,10 +135,20 @@ export default function Usuario() {
       <View className="pt-14 pb-6 px-6 bg-white">
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center">
-            <Image
-              source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/avatar.png")}
-              className="w-16 h-16 rounded-full mr-4"
-            />
+            <View className="w-16 h-16 rounded-full mr-4 overflow-hidden bg-[#fff3e9] justify-center items-center">
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  className="w-16 h-16 rounded-full"
+                  defaultSource={require("../../../assets/images/avatar.png")}
+                />
+              ) : (
+                <Image
+                  source={require("../../../assets/images/avatar.png")}
+                  className="w-16 h-16 rounded-full"
+                />
+              )}
+            </View>
             <View>
               <Text className="text-black text-xl font-bold">{username}</Text>
               <Text className="text-black text-base">Nivel {score}</Text>

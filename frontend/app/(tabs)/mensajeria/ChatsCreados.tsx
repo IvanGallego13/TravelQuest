@@ -87,10 +87,14 @@ export default function ChatsCreados() {
     <TouchableOpacity style={styles.chatItem} onPress={() => handleOpenChat(item)}>
       <View style={styles.avatar}>
         {item.user.foto_perfil ? (
-          <Image source={{ uri: item.user.foto_perfil }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+          <Image 
+            source={{ uri: item.user.foto_perfil }} 
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff3e9' }} 
+            defaultSource={require('../../../assets/images/avatar.png')}
+          />
         ) : (
           <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person-circle" size={40} color="#C76F40" />
+            <Ionicons name="person" size={24} color="#C76F40" />
           </View>
         )}
       </View>
