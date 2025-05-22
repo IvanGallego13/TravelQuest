@@ -99,7 +99,8 @@ export default function UsuariosCiudad() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text style={styles.header}>Usuarios en tu ciudad</Text>
+      <Text style={styles.header}>Usuarios activos en tu ciudad</Text>
+      <Text style={styles.subHeader}>Usuarios geolocalizados en los últimos 2 minutos</Text>
       
       {error ? (
         <View style={styles.errorContainer}>
@@ -128,7 +129,7 @@ export default function UsuariosCiudad() {
             </View>
           )}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>No hay usuarios en tu ciudad.</Text>}
+          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>No hay usuarios activos en tu ciudad en los últimos 2 minutos.</Text>}
         />
       )}
     </View>
@@ -140,6 +141,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#C76F40',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  subHeader: {
+    fontSize: 12,
+    color: '#888',
     marginBottom: 16,
     textAlign: 'center',
   },

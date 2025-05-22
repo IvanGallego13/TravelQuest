@@ -108,27 +108,18 @@ export const getUsuariosEnMismaCiudad = async (req, res) => {
     const cityId = myLoc[0].city_id;
     console.log("🏙️ Ciudad encontrada:", cityId);
     
-    // Consulta directa a la base de datos
-    console.log("🔢 Consultando todos los usuarios con city_id =", cityId);
-    const { data: countCheck, error: countError } = await supabase
-      .from('user_locations')
-      .select('user_id')
-      .eq('city_id', cityId);
+    // Calcular el tiempo límite (2 minutos atrás)
+    const dosMinutosAtras = new Date();
+    dosMinutosAtras.setMinutes(dosMinutosAtras.getMinutes() - 2);
+    const tiempoLimite = dosMinutosAtras.toISOString();
+    console.log("⏱️ Filtrando usuarios localizados después de:", tiempoLimite);
     
-    if (countError) {
-      console.error("❌ Error en consulta de conteo:", countError);
-    } else {
-      console.log(`ℹ️ Total usuarios en la ciudad ${cityId}: ${countCheck?.length || 0}`);
-      if (countCheck && countCheck.length > 0) {
-        console.log("👥 IDs de usuarios en esta ciudad:", countCheck.map(u => u.user_id));
-      }
-    }
-    
-    // Buscar todos los usuarios con ese city_id
+    // Buscar todos los usuarios con ese city_id que se hayan geolocalizado en los últimos 2 minutos
     const { data: usersLoc, error: usersLocError } = await supabase
       .from('user_locations')
-      .select('user_id')
-      .eq('city_id', cityId);
+      .select('user_id, last_seen_at')
+      .eq('city_id', cityId)
+      .gte('last_seen_at', tiempoLimite);
     
     if (usersLocError) {
       console.error("❌ Error al buscar usuarios en la misma ciudad:", usersLocError);
@@ -136,10 +127,10 @@ export const getUsuariosEnMismaCiudad = async (req, res) => {
     }
     
     const userIds = usersLoc.map(u => u.user_id).filter(id => id !== userId);
-    console.log("👥 Usuarios encontrados en la misma ciudad (excluyendo al usuario actual):", userIds);
+    console.log("👥 Usuarios encontrados en la misma ciudad en los últimos 2 minutos (excluyendo al usuario actual):", userIds);
     
     if (userIds.length === 0) {
-      console.log("⚠️ No hay otros usuarios en esta ciudad");
+      console.log("⚠️ No hay otros usuarios recientes en esta ciudad");
       return res.json([]);
     }
     
