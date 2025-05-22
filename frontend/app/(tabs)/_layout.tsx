@@ -34,6 +34,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="crear/retos"
+        options={{
+          title: 'Retos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="diario/diario"
         options={{
           title: 'Diario',
@@ -54,6 +61,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
+      
 
       {/* Tabs ocultos */}
       <Tabs.Screen name="crear/2dificultad" options={{ href: null }} />
@@ -68,6 +76,7 @@ export default function TabLayout() {
       <Tabs.Screen name="usuario/sobre" options={{ href: null }} />
       <Tabs.Screen name="misiones/completadaMision" options={{ href: null }} />
       <Tabs.Screen name="misiones/historiaMision" options={{ href: null }} />
+      <Tabs.Screen name="crear/seleccion-retos" options={{ href: null }} />
     </Tabs>
   );
 }

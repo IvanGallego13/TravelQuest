@@ -70,6 +70,11 @@ export const createOrAssignGroupChallenge = async (req, res) => {
 
     if (cityError || !cityData?.name) throw new Error("Ciudad no encontrada");
 
+    //depurar
+    console.log("🧭 Nombre de la ciudad:", cityData.name);
+    console.log("🎯 Llamando a IA con", quantity, "misiones...");
+    //depurar
+
     const { data: challenge, error: createError } = await supabase
       .from("group_challenges")
       .insert({
@@ -89,6 +94,10 @@ export const createOrAssignGroupChallenge = async (req, res) => {
       .insert({ challenge_id: challenge.id, user_id: userId });
 
     const generatedMissions = await generateGroupMissions(cityData.name, quantity);
+    
+    //depurar
+    console.log("✅ Misiones generadas:", generatedMissions);
+    //depurar
 
     const { data: insertedMissions, error: insertError } = await supabase
       .from("missions")
@@ -98,6 +107,9 @@ export const createOrAssignGroupChallenge = async (req, res) => {
           title: m.title,
           description: m.description,
           difficulty: m.difficulty,
+          keywords: m.keywords,
+          nombre_objeto: m.nombre_objeto,
+          historia: m.historia
         }))
       )
       .select();
@@ -202,7 +214,7 @@ export const joinGroupChallenge = async (req, res) => {
     res.status(500).json({ message: "Error al unirse al reto", error: error.message });
   }
 };
-
+//Actualizar el estado de las misiones y asignar puntos si completada
 export const updateGroupMissionStatus = async (req, res) => {
   const userId = req.user?.id;
   const { challengeId, missionId } = req.params;
@@ -213,7 +225,7 @@ export const updateGroupMissionStatus = async (req, res) => {
   }
 
   try {
-    // Ver si ya existe esta fila
+    // Ver si ya existe esta fila en user_group_mission_status
     const { data: existing, error: findError } = await supabase
       .from("user_group_mission_status")
       .select("*")
@@ -224,9 +236,7 @@ export const updateGroupMissionStatus = async (req, res) => {
 
     if (findError) throw findError;
 
-    const updateFields = {
-      status,
-    };
+    const updateFields = { status };
 
     if (status === "completed") {
       updateFields.completed_at = new Date().toISOString();
@@ -256,20 +266,42 @@ export const updateGroupMissionStatus = async (req, res) => {
       if (insertError) throw insertError;
     }
 
-    // 🎯 Si completó la misión → dar puntos
     if (status === "completed") {
+      // 🎯 Sumar puntos y actualizar nivel
       await updateUserLevel(userId);
 
-      // 1. Contar misiones totales del reto
+      // ✅ Insertar también en user_missions si no existe
+      const { data: existingSolo, error: existSoloErr } = await supabase
+        .from("user_missions")
+        .select("id")
+        .eq("mission_id", missionId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existSoloErr) throw existSoloErr;
+
+      if (!existingSolo) {
+        const { error: insertSoloError } = await supabase
+          .from("user_missions")
+          .insert({
+            mission_id: missionId,
+            user_id: userId,
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            source: "group", // opcional, por si luego quieres filtrar de dónde vino
+          });
+
+        if (insertSoloError) throw insertSoloError;
+      }
+
+      // ✅ Ver si todas las misiones del reto están completadas
       const { data: totalMissions, error: countError1 } = await supabase
         .from("group_challenge_missions")
         .select("mission_id", { count: "exact", head: true })
         .eq("challenge_id", challengeId);
 
       if (countError1) throw countError1;
-      const total = totalMissions.count;
 
-      // 2. Contar cuántas misiones han sido completadas por alguien
       const { data: completedMissions, error: countError2 } = await supabase
         .from("user_group_mission_status")
         .select("mission_id", { count: "exact", head: true })
@@ -277,10 +309,8 @@ export const updateGroupMissionStatus = async (req, res) => {
         .eq("status", "completed");
 
       if (countError2) throw countError2;
-      const completadas = completedMissions.count;
 
-      // 3. Si están todas, marcar reto como finalizado
-      if (completadas >= total) {
+      if (completedMissions.count >= totalMissions.count) {
         await supabase
           .from("group_challenges")
           .update({ completed_at: new Date().toISOString() })
@@ -296,6 +326,7 @@ export const updateGroupMissionStatus = async (req, res) => {
     res.status(500).json({ message: "Error actualizando estado", error: error.message });
   }
 };
+
 
 export const getGroupChallengeMissions = async (req, res) => {
   const userId = req.user?.id;
@@ -462,6 +493,32 @@ export const deleteActiveGroupChallenge = async (req, res) => {
   } catch (err) {
     console.error("❌ Error al eliminar reto activo:", err.message);
     res.status(500).json({ message: "Error al eliminar reto activo", error: err.message });
+  }
+};
+//quitat asignacion de una mision en un reto
+export const unassignGroupMission = async (req, res) => {
+  const userId = req.user?.id;
+  const { challengeId, missionId } = req.params;
+
+  if (!userId || !challengeId || !missionId) {
+    return res.status(400).json({ message: "Faltan datos" });
+  }
+
+  try {
+    const { error: deleteError } = await supabase
+      .from("user_group_mission_status")
+      .delete()
+      .eq("challenge_id", challengeId)
+      .eq("mission_id", missionId)
+      .eq("user_id", userId)
+      .eq("status", "assigned"); // solo si estaba asignada
+
+    if (deleteError) throw deleteError;
+
+    res.status(200).json({ message: "Asignación eliminada correctamente" });
+  } catch (error) {
+    console.error("❌ Error al desasignar misión grupal:", error.message);
+    res.status(500).json({ message: "Error al desasignar misión", error: error.message });
   }
 };
 

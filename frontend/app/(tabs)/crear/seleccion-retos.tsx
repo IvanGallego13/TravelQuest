@@ -33,7 +33,7 @@ export default function SeleccionRetos() {
 
       const challengeId = data.challenge_id;
       router.push({
-        pathname: "./retos",
+        pathname: "./retos/retos",
         params: { id: challengeId },
       });
     } catch (err: any) {

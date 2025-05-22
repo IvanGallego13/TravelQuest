@@ -1,14 +1,15 @@
 import express from 'express';
-import { 
-  createOrAssignGroupChallenge
-} from '../controllers/groupChallenges.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-import { joinGroupChallenge } from '../controllers/groupChallenges.js';
-import { getGroupChallengeMissions } from '../controllers/groupChallenges.js';
-import { updateGroupMissionStatus } from '../controllers/groupChallenges.js';
-import { getActiveGroupChallenge } from "../controllers/groupChallenges.js";
-import { deleteActiveGroupChallenge } from "../controllers/groupChallenges.js";
-import { getGroupChallengeById } from '../controllers/groupChallenges.js';
+import { createOrAssignGroupChallenge,
+  joinGroupChallenge,
+  getGroupChallengeMissions,
+  updateGroupMissionStatus,
+  getActiveGroupChallenge,
+  deleteActiveGroupChallenge,
+  getGroupChallengeById,
+  unassignGroupMission
+ } from '../controllers/groupChallenges.js';
+
 
 
 
@@ -27,6 +28,7 @@ router.patch('/:challengeId/missions/:missionId', updateGroupMissionStatus);
 router.get('/:id', getGroupChallengeById);
 router.get("/active", getActiveGroupChallenge);
 router.delete("/active", deleteActiveGroupChallenge);
+router.delete("/:challengeId/missions/:missionId/unassign", unassignGroupMission);
 
 
 export default router;
