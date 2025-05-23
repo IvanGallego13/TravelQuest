@@ -31,8 +31,7 @@ export default function MisionCompletada() {
   const handleExplorar = () => {
     router.replace("/(tabs)/crear");
   };
-
-  return (
+return (
     <ImageBackground
       source={require('../../../assets/images/fondo.png')}
       style={{ flex: 1 }}
@@ -40,44 +39,68 @@ export default function MisionCompletada() {
     >
       <View className="flex-1 mt-40 items-center px-6">
 
-        {/* Icono de éxito */}
-        <Ionicons name="checkmark-circle" size={80} color="#699D81" />
+        {/* Card completa: icono + mensaje + botones */}
+        <View
+          className="bg-white/80 rounded-2xl p-6 space-y-6 w-full"
+          style={{
+            elevation: 12,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+          }}
+        >
+          {/* Icono de éxito */}
+          <View className="items-center">
+            <Ionicons name="checkmark-circle" size={80} color="#699D81" />
+          </View>
 
-        {/* Mensaje principal + puntos ganados con fondo blanco semitransparente */}
-        <View className="bg-white/80 px-6 py-4 rounded-xl shadow-md mb-6">
-          <Text className="text-3xl font-bold text-black text-center mb-2">
-            ¡Misión completada!
-          </Text>
-          <Text className="text-lg text-black text-center">
-            Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
-          </Text>
-        {/* Pregunta */}
-          <Text className="text-lg text-black text-center mb-8">
-            ¿Quieres saber más sobre lo que fotografiaste?
-          </Text>
+          {/* Mensaje principal */}
+          <View>
+            <Text className="text-3xl font-bold text-black text-center mb-2">
+              ¡Misión completada!
+            </Text>
+            <Text className="text-lg text-black text-center">
+              Esta misión te suma <Text className="font-bold">{puntosGanados}</Text> puntos de nivel 🎉
+            </Text>
+            <Text className="text-lg text-black text-center mt-2 mb-4">
+              ¿Quieres saber más sobre lo que fotografiaste?
+            </Text>
+          </View>
+
+          {/* Botones de acción */}
+          <View className="flex-col space-y-4">
+            <TouchableOpacity
+              onPress={handleVerHistoria}
+              className="bg-white px-6 py-4 mb-5 rounded-2xl border border-gray-200 flex-row items-center justify-between"
+              style={{
+                elevation: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+              }}
+            >
+              <Text className="text-black font-bold text-lg">🎯 Ver historia</Text>
+              <Text className="text-black text-xl">→</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleExplorar}
+              className="bg-white px-6 py-4 rounded-2xl border border-gray-200 flex-row items-center justify-between"
+              style={{
+                elevation: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+              }}
+            >
+              <Text className="text-black font-bold text-lg">🌍 Seguir explorando</Text>
+              <Text className="text-black text-xl">→</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Botones de acción */}
-        <View className="flex-col space-y-6 w-full">
-
-          <TouchableOpacity
-            onPress={handleVerHistoria}
-            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between mb-3"
-          >
-            <Text className="text-black font-bold text-lg">🎯 Ver historia</Text>
-            <Text className="text-black text-xl">→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleExplorar}
-            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between"
-          >
-            <Text className="text-black font-bold text-lg">🌍 Seguir explorando</Text>
-            <Text className="text-black text-xl">→</Text>
-          </TouchableOpacity>
-
-        </View>
-
       </View>
     </ImageBackground>
   );

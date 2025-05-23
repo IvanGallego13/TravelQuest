@@ -21,11 +21,12 @@
   },
   "homepage": "https://github.com/IvanGallego13/TravelQuest#readme",
   "devDependencies": {
+    "@types/react": "~18.3.12",
     "concurrently": "^8.0.0",
-    "typescript": "^5.3.3",
-    "@types/react": "~18.3.12"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
     "dotenv": "^16.4.7",
     "expo-camera": "^16.0.18"
   }

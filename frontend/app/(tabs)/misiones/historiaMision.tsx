@@ -51,48 +51,64 @@ export default function HistoriaMision() {
     }
   }, [missionId]);
   return (
-    <ImageBackground
-      source={require('../../../assets/images/fondo.png')}
-      style={{ flex: 1 }}
-      resizeMode="cover"
-    >
-      <View className="flex-1 px-6 pt-16 justify-start">
+  <ImageBackground
+    source={require('../../../assets/images/fondo.png')}
+    style={{ flex: 1 }}
+    resizeMode="cover"
+  >
+    <View className="flex-1 px-6 pt-16 justify-start">
 
-        {/* Título */}
-        {titulo && !loading && (
-          <Text className="text-2xl font-bold text-black text-center mb-6">{titulo}</Text>
+      {/* Título */}
+      <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6">
+        <Text className="text-xl font-bold text-black text-left">🧠 Píldora cultural</Text>
+      </View>
+
+      {/* Card completa: historia + botón */}
+      <View
+        className="bg-white/80 rounded-2xl shadow-md p-4 space-y-6"
+        style={{
+          elevation: 12,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+        }}
+      >
+        {/* Contenido scrollable */}
+        {loading ? (
+          <View className="h-[400px] justify-center items-center">
+            <ActivityIndicator size="large" color="#699D81" />
+            <Text className="text-black mt-4">Cargando historia...</Text>
+          </View>
+        ) : historia ? (
+          <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false}>
+            <Text className="text-black text-base leading-7 text-justify whitespace-pre-line">
+              {historia}
+            </Text>
+          </ScrollView>
+        ) : (
+          <Text className="text-black italic text-center">
+            No se pudo mostrar la historia para esta misión.
+          </Text>
         )}
 
-        {/* Contenedor scrollable con altura fija */}
-        <View className="bg-white/80 rounded-2xl shadow-md p-4 mb-8" style={{ height: 500 }}>
-          {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <ActivityIndicator size="large" color="#699D81" />
-              <Text className="text-black mt-4">Cargando historia...</Text>
-            </View>
-          ) : historia ? (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text className="text-black text-base leading-7 text-justify whitespace-pre-line">
-                {historia}
-              </Text>
-            </ScrollView>
-          ) : (
-            <Text className="text-black italic text-center">
-              No se pudo mostrar la historia para esta misión.
-            </Text>
-          )}
-        </View>
-
-        {/* Botón fijo abajo */}
+        {/* Botón dentro de la card */}
         <TouchableOpacity
-          className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-center"
+          className="bg-white px-6 py-4 mt-5 rounded-2xl border border-gray-200 flex-row items-center justify-center"
           onPress={() => router.replace("/(tabs)/crear")}
+          style={{
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          }}
         >
           <Text className="text-black font-bold text-lg">🌍 Seguir explorando</Text>
         </TouchableOpacity>
-
       </View>
-    </ImageBackground>
-  );
-  
+    </View>
+  </ImageBackground>
+);
+
 }

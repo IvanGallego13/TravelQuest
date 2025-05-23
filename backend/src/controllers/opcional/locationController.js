@@ -58,3 +58,40 @@ export const getCityFromName = async (req, res) => {
         res.status(500).json({ error: "Error en el servidor." });
     }
 };
+
+// Guardar o actualizar la ubicación del usuario
+export const saveUserLocation = async (req, res) => {
+  const { user_id, city_id } = req.body;
+  if (!user_id || !city_id) return res.status(400).json({ error: 'Faltan datos' });
+  try {
+    // Verificar si ya existe
+    const { data: existing, error: findError } = await supabase
+      .from('user_locations')
+      .select('*')
+      .eq('user_id', user_id)
+      .maybeSingle();
+    if (findError) return res.status(500).json({ error: findError.message });
+    if (existing) {
+      // Actualizar
+      const { data, error } = await supabase
+        .from('user_locations')
+        .update({ city_id, last_seen_at: new Date().toISOString() })
+        .eq('user_id', user_id)
+        .select()
+        .single();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json(data);
+    } else {
+      // Insertar
+      const { data, error } = await supabase
+        .from('user_locations')
+        .insert([{ user_id, city_id, last_seen_at: new Date().toISOString() }])
+        .select()
+        .single();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(201).json(data);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

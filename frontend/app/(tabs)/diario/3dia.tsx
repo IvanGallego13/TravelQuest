@@ -85,7 +85,14 @@ export default function DayDetail() {
               entries.map((entry) => (
                 <View
                   key={entry.id}
-                  className="mb-4 p-3 rounded-xl bg-white/90 shadow-sm"
+                  className="mb-4 p-3 rounded-xl bg-white/90"
+                   style={{
+                    elevation: 12, // Aumentar más sombra
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                  }}
                 >
                   {/* Imagen */}
                   {entry.image ? (

@@ -90,10 +90,19 @@ export default function Dificultad() {
           <Text className="text-black text-lg">🎯</Text> 
         </View>
 
-        {/* Opciones de dificultad */}
-        <View className="flex-col space-y-6 mt-15">
+        {/* Card contenedora */}
+        <View className="bg-white/80 rounded-2xl p-4 shadow-md space-y-6 mb-10">
+
+          {/* Opción Fácil */}
           <TouchableOpacity
-            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md mb-20"
+            className="bg-white px-4 py-5 mb-10 rounded-xl border border-gray-200"
+             style={{
+              elevation: 12, // Aumentar más sombra
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+            }}
             onPress={() => seleccionarDificultad('facil')}
           >
             <View className="flex-row items-center justify-between mb-1">
@@ -103,8 +112,16 @@ export default function Dificultad() {
             <Text className="text-black/60 text-sm">Gana 10 puntos 🔥</Text>
           </TouchableOpacity>
 
+          {/* Opción Media */}
           <TouchableOpacity
-            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md mb-20"
+            className="bg-white px-4 py-5 mb-10 rounded-xl border border-gray-200"
+            style={{
+              elevation: 12, // Aumentar más sombra
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+            }}
             onPress={() => seleccionarDificultad('media')}
           >
             <View className="flex-row items-center justify-between mb-1">
@@ -114,8 +131,16 @@ export default function Dificultad() {
             <Text className="text-black/60 text-sm">Gana 20 puntos 🔥🔥</Text>
           </TouchableOpacity>
 
+          {/* Opción Difícil */}
           <TouchableOpacity
-            className="bg-white/80 px-6 py-6 rounded-2xl shadow-md"
+            className="bg-white px-4 py-5 rounded-xl border border-gray-200"
+            style={{
+              elevation: 12, // Aumentar más sombra
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+            }}
             onPress={() => seleccionarDificultad('dificil')}
           >
             <View className="flex-row items-center justify-between mb-1">
@@ -124,6 +149,7 @@ export default function Dificultad() {
             </View>
             <Text className="text-black/60 text-sm">Gana 30 puntos 🔥🔥🔥</Text>
           </TouchableOpacity>
+
         </View>
       </View>
     </ImageBackground>

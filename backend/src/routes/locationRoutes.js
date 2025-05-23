@@ -1,5 +1,5 @@
 import express from 'express';
-import { getCityFromCoordinates, getCityFromName } from '../controllers/opcional/locationController.js';
+import { getCityFromCoordinates, getCityFromName, saveUserLocation } from '../controllers/opcional/locationController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -9,5 +9,7 @@ router.post('/from-coordinates', authMiddleware, getCityFromCoordinates);
 
 // 📌 Buscar información de una ciudad por nombre
 router.post('/from-name', authMiddleware, getCityFromName);
+
+router.post('/user_location', saveUserLocation);
 
 export default router;

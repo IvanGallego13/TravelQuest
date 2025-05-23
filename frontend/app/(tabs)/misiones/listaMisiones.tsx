@@ -78,45 +78,55 @@ export default function MissionList() {
         transition={{ delay: index * 100, type: "timing" }}
         className="mb-4"
       >
-        <TouchableOpacity
-          onPress={() => handlePressMission(mission)}
-          className={`p-3 rounded-xl ${isCompleted ? "bg-white/90" : "bg-gray-100/70"} shadow-sm`}
-        >
-          <View className="flex-row justify-between">
-            <View className="flex-1 pr-3">
-              <Text className={`font-bold text-base ${isCompleted ? "text-black" : "text-gray-400"}`}>
-                {mission.title}
-              </Text>
-              <Text className={isCompleted ? "text-black" : "text-gray-400"} numberOfLines={1}>
-                {mission.description}
-              </Text>
-              <Text className="text-xs text-gray-500 mt-1 italic">{dateText}</Text>
+        {/* Fondo gris claro envolvente */}
+        <View className="bg-gray-300 p-3 rounded-xl">
 
-              <View className="mt-2 flex-row items-center">
-                <Text className={`text-xs mr-1 ${isCompleted ? "text-[#699D81]" : "text-gray-400"}`}>
-                  {isCompleted ? "Completado" : "Por hacer"}
+          <TouchableOpacity
+            onPress={() => handlePressMission(mission)}
+            className={`p-3 rounded-xl bg-white`}
+            style={{
+              elevation: 6,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 4,
+            }}
+          >
+            <View className="flex-row justify-between">
+              <View className="flex-1 pr-3">
+                <Text className="font-bold text-base text-black">
+                  {mission.title}
                 </Text>
-                <Ionicons
-                  name={isCompleted ? "checkmark-circle" : "time-outline"}
-                  size={14}
-                  color={isCompleted ? "#699D81" : "#999"}
-                />
+                <Text className="text-black" numberOfLines={1}>
+                  {mission.description}
+                </Text>
+                <Text className="text-xs text-gray-500 mt-1 italic">{dateText}</Text>
+                <View className="mt-2 flex-row items-center">
+                  <Text className="text-xs mr-1 text-[#699D81]">
+                    Completado
+                  </Text>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={14}
+                    color="#699D81"
+                  />
+                </View>
               </View>
-            </View>
 
-            {isCompleted && mission.image_url && (
-              <Image
-                source={{ uri: mission.image_url }}
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 10,
-                  marginLeft: 4,
-                }}
-              />
-            )}
-          </View>
-        </TouchableOpacity>
+              {isCompleted && mission.image_url && (
+                <Image
+                  source={{ uri: mission.image_url }}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 10,
+                    marginLeft: 4,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
       </MotiView>
     );
   };
@@ -129,7 +139,7 @@ export default function MissionList() {
       >
       <TouchableOpacity
         onPress={() => router.push("/login/localizacion")}
-        className="absolute top-6 left-4 z-10 bg-white/70 rounded-full p-2 shadow-md"
+        className="absolute top-6 left-4 z-10 bg-white rounded-full p-2 shadow-md"
         >
         <Ionicons name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
@@ -138,7 +148,7 @@ export default function MissionList() {
         <ScrollView contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
           {/* Tarjeta misiones pendientes */}
           {pending.length > 0 && (
-            <View className="mb-8 bg-white/80 p-4 rounded-2xl shadow-md">
+            <View className="mb-8 bg-white/95 p-4 rounded-2xl shadow-md">
               <Text className="text-black font-bold text-base mb-4">
                 🕒 Misiones pendientes ({pending.length})
               </Text>
@@ -148,7 +158,7 @@ export default function MissionList() {
 
           {/* Tarjeta misiones completadas */}
           {completed.length > 0 && (
-            <View className="bg-white/80 p-4 rounded-2xl shadow-md">
+            <View className="bg-white/95 p-4 rounded-2xl shadow-md">
               <Text className="text-black font-bold text-base mb-4">
                 ✅ Misiones completadas ({completed.length})
               </Text>

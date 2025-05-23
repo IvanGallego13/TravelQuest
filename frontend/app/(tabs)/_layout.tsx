@@ -34,6 +34,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="crear/retos"
+        options={{
+          title: 'Retos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="diario/diario"
         options={{
           title: 'Diario',
@@ -54,6 +61,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="mensajeria/index"
+        options={{
+          title: 'Mensajes',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bubble.left.and.bubble.right.fill" color={color} />,
+        }}
+      />
 
       {/* Tabs ocultos */}
       <Tabs.Screen name="crear/2dificultad" options={{ href: null }} />
@@ -68,6 +82,11 @@ export default function TabLayout() {
       <Tabs.Screen name="usuario/sobre" options={{ href: null }} />
       <Tabs.Screen name="misiones/completadaMision" options={{ href: null }} />
       <Tabs.Screen name="misiones/historiaMision" options={{ href: null }} />
+      <Tabs.Screen name="mensajeria/ChatsCreados" options={{ href: null }} />
+      <Tabs.Screen name="mensajeria/nuevo" options={{ href: null }} />
+      <Tabs.Screen name="mensajeria/UsuariosCiudad" options={{ href: null }} />
+      <Tabs.Screen name="mensajeria/[id]" options={{ href: null }} />
+      
     </Tabs>
   );
 }

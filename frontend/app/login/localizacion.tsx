@@ -6,6 +6,8 @@ import { useRouter } from "expo-router";
 import { useUbicacion } from "../../hooks/useUbicacion";
 import { supabase } from "../../lib/supabase";
 import LightWebCesiumMap from "../../components/3d-map/LightWebCesiumMap";
+import { getCurrentUserId } from "../../lib/user";
+import { apiFetch } from "../../lib/api";
 
 // Define the CesiumMapRef interface
 interface CesiumMapRef {
@@ -140,8 +142,25 @@ export default function Geolocalizacion() {
         cityId: ciudadFinal.id,
       });
 
+      // 7. Guardar ubicación en la base de datos
+      try {
+        const userId = await getCurrentUserId();
+        if (userId) {
+          await apiFetch('/location/user_location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userId,
+              city_id: ciudadFinal.id
+            })
+          });
+        }
+      } catch (error) {
+        console.error("Error guardando ubicación:", error);
+      }
+
       setTimeout(() => {
-        // 7. Navegar a la pantalla siguiente
+        // 8. Navegar a la pantalla siguiente
         router.replace("/(tabs)/crear");
       }, 2000);
     } catch (err) {
