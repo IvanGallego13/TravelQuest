@@ -101,7 +101,7 @@ export default function UsuariosCiudad() {
   return (
     <View style={{ flex: 1 }}>
       <Text style={styles.header}>Usuarios activos en tu ciudad</Text>
-      <Text style={styles.subHeader}>Usuarios geolocalizados en los últimos 2 minutos</Text>
+      <Text style={styles.subHeader}>Usuarios geolocalizados en las últimas 24 horas</Text>
       
       {error ? (
         <View style={styles.errorContainer}>
@@ -139,7 +139,7 @@ export default function UsuariosCiudad() {
             </View>
           )}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>No hay usuarios activos en tu ciudad en los últimos 2 minutos.</Text>}
+          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>No hay usuarios activos en tu ciudad en las últimas 24 horas.</Text>}
         />
       )}
     </View>

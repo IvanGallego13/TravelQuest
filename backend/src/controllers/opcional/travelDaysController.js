@@ -108,13 +108,13 @@ export const getUsuariosEnMismaCiudad = async (req, res) => {
     const cityId = myLoc[0].city_id;
     console.log("🏙️ Ciudad encontrada:", cityId);
     
-    // Calcular el tiempo límite (2 minutos atrás)
+    // Calcular el tiempo límite (24 horas atrás)
     const dosMinutosAtras = new Date();
-    dosMinutosAtras.setMinutes(dosMinutosAtras.getMinutes() - 2);
+    dosMinutosAtras.setHours(dosMinutosAtras.getHours() - 24);
     const tiempoLimite = dosMinutosAtras.toISOString();
     console.log("⏱️ Filtrando usuarios localizados después de:", tiempoLimite);
     
-    // Buscar todos los usuarios con ese city_id que se hayan geolocalizado en los últimos 2 minutos
+    // Buscar todos los usuarios con ese city_id que se hayan geolocalizado en las últimas 24 horas
     const { data: usersLoc, error: usersLocError } = await supabase
       .from('user_locations')
       .select('user_id, last_seen_at')
@@ -127,7 +127,7 @@ export const getUsuariosEnMismaCiudad = async (req, res) => {
     }
     
     const userIds = usersLoc.map(u => u.user_id).filter(id => id !== userId);
-    console.log("👥 Usuarios encontrados en la misma ciudad en los últimos 2 minutos (excluyendo al usuario actual):", userIds);
+    console.log("👥 Usuarios encontrados en la misma ciudad en las últimas 24 horas (excluyendo al usuario actual):", userIds);
     
     if (userIds.length === 0) {
       console.log("⚠️ No hay otros usuarios recientes en esta ciudad");

@@ -94,33 +94,10 @@ export default function ChatScreen() {
           setConversationId(id);
           
           // Buscar detalles de la conversación para obtener información del otro usuario
-          try {
-            const convRes = await apiFetch(`/conversations/details/${id}`);
-            if (convRes.ok) {
-              const convData = await convRes.json();
-              console.log("✅ Detalles de conversación:", convData);
-              
-              // Determinar cuál es el otro usuario
-              const otherUserId = convData.user_1_id === currentUserId 
-                ? convData.user_2_id 
-                : convData.user_1_id;
-              
-              // Buscar información del otro usuario
-              const userRes = await apiFetch(`/users/${otherUserId}`);
-              if (userRes.ok) {
-                const userData = await userRes.json();
-                setOtherUser(userData);
-              } else {
-                // Si no podemos obtener el usuario, usar un valor por defecto
-                setOtherUser({ id: otherUserId, nombre: 'Usuario' });
-              }
-            }
-            // Continuar incluso si no se puede obtener detalles de la conversación
-            setTimeout(fetchMessages, 500);
-          } catch (err) {
-            console.error("❌ Error al obtener detalles de conversación:", err);
-            // Continuar de todas formas
-          }
+          await fetchOtherUserInfo(id, currentUserId);
+          
+          // Continuar incluso si no se puede obtener detalles de la conversación
+          setTimeout(fetchMessages, 500);
         } else {
           // Intentar crear una conversación con el usuario especificado
           try {
@@ -507,6 +484,50 @@ export default function ChatScreen() {
       </View>
     );
   };
+
+  // Función para obtener información actualizada del otro usuario
+  const fetchOtherUserInfo = async (conversationId: string, currentUserId: string) => {
+    try {
+      const convRes = await apiFetch(`/conversations/details/${conversationId}`);
+      if (convRes.ok) {
+        const convData = await convRes.json();
+        console.log("✅ Detalles de conversación:", convData);
+        
+        // Determinar cuál es el otro usuario
+        const otherUserId = convData.user_1_id === currentUserId 
+          ? convData.user_2_id 
+          : convData.user_1_id;
+        
+        // Buscar información del otro usuario
+        const userRes = await apiFetch(`/users/${otherUserId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          console.log("✅ Información actualizada del usuario:", userData);
+          setOtherUser(userData);
+        } else {
+          // Si no podemos obtener el usuario, usar un valor por defecto
+          setOtherUser({ id: otherUserId, nombre: 'Usuario' });
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("❌ Error al obtener detalles de conversación:", err);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    // Si tenemos ID de conversación y de usuario, configurar intervalo para actualizar info de usuario
+    if (conversationId && userId) {
+      const userInfoInterval = setInterval(() => {
+        // Actualizar información del usuario periódicamente (cada 30 segundos)
+        fetchOtherUserInfo(conversationId, userId);
+      }, 30000); // 30 segundos
+      
+      return () => clearInterval(userInfoInterval);
+    }
+  }, [conversationId, userId]);
 
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
