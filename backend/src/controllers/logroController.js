@@ -70,7 +70,7 @@ export const checkAndAwardAchievements = async (userId, action = 'CHECK_MISSIONS
     // Get user's completed missions
     const { data: completedMissions, error: missionsError } = await supabase
       .from('user_missions')
-      .select('mission_id, missions(city_id)')
+      .select('mission_id, missions(city_id, difficulty)')
       .eq('user_id', userId)
       .eq('status', 'completed');
       
@@ -97,6 +97,18 @@ export const checkAndAwardAchievements = async (userId, action = 'CHECK_MISSIONS
     const newlyUnlockedAchievements = [];
     let totalPointsEarned = 0;
     
+    // Count missions by difficulty
+    const easyMissions = completedMissions.filter(m => m.missions?.difficulty === 'facil').length;
+    const mediumMissions = completedMissions.filter(m => m.missions?.difficulty === 'media').length;
+    const hardMissions = completedMissions.filter(m => m.missions?.difficulty === 'dificil').length;
+    
+    // Get unique cities from completed missions
+    const visitedCities = new Set(
+      completedMissions
+        .map(m => m.missions?.city_id)
+        .filter(Boolean)
+    );
+    
     for (const achievement of availableAchievements) {
       let unlocked = false;
       
@@ -111,12 +123,6 @@ export const checkAndAwardAchievements = async (userId, action = 'CHECK_MISSIONS
           break;
           
         case 'VISIT_N_CITIES':
-          // Get unique cities from completed missions
-          const visitedCities = new Set(
-            completedMissions
-              .map(m => m.missions?.city_id)
-              .filter(Boolean)
-          );
           unlocked = visitedCities.size >= achievement.condition_value;
           break;
           
@@ -124,7 +130,72 @@ export const checkAndAwardAchievements = async (userId, action = 'CHECK_MISSIONS
           unlocked = userProfile.level >= achievement.condition_value;
           break;
           
+        case 'COMPLETE_EASY_MISSION':
+          unlocked = easyMissions > 0;
+          break;
+          
+        case 'COMPLETE_MEDIUM_MISSION':
+          unlocked = mediumMissions > 0;
+          break;
+          
+        case 'COMPLETE_HARD_MISSION':
+          unlocked = hardMissions > 0;
+          break;
+          
+        case 'COMPLETE_CITY_MISSIONS':
+          // Check if any city has all its missions completed
+          if (visitedCities.size > 0) {
+            for (const cityId of visitedCities) {
+              // Get all missions for this city
+              const { data: cityMissions, error: cityError } = await supabase
+                .from('missions')
+                .select('id')
+                .eq('city_id', cityId);
+                
+              if (cityError) {
+                console.error(`Error getting missions for city ${cityId}:`, cityError);
+                continue;
+              }
+              
+              // Get completed missions for this city
+              const cityMissionIds = cityMissions.map(m => m.id);
+              const completedCityMissions = completedMissions
+                .filter(m => cityMissionIds.includes(m.mission_id))
+                .length;
+                
+              // If all missions for this city are completed, unlock the achievement
+              if (completedCityMissions === cityMissions.length && cityMissions.length > 0) {
+                unlocked = true;
+                break;
+              }
+            }
+          }
+          break;
+          
         // Add more achievement types as needed
+        // You can also check by code if needed
+        default:
+          // Check by code if condition_type is not recognized
+          if (achievement.code === 'primera_mision') {
+            unlocked = completedMissions.length > 0;
+          } else if (achievement.code === 'mision_facil') {
+            unlocked = easyMissions > 0;
+          } else if (achievement.code === 'mision_media') {
+            unlocked = mediumMissions > 0;
+          } else if (achievement.code === 'mision_dificil') {
+            unlocked = hardMissions > 0;
+          } else if (achievement.code === 'primera_ciudad') {
+            unlocked = visitedCities.size > 0;
+          } else if (achievement.code === 'trotamundos') {
+            unlocked = visitedCities.size >= 5;
+          } else if (achievement.code === 'ciudadano_mundo') {
+            unlocked = visitedCities.size >= 15;
+          } else if (achievement.code === 'diez_misiones') {
+            unlocked = completedMissions.length >= 10;
+          } else if (achievement.code === 'cien_misiones') {
+            unlocked = completedMissions.length >= 100;
+          }
+          break;
       }
       
       // If achievement is unlocked, add it to the user's achievements
@@ -267,6 +338,7 @@ async function updateUserScore(userId, pointsToAdd) {
     throw error;
   }
 }
+
 // Add this function to your logrocontroller.js file
 export const getAllAchievements = async (req, res) => {
   try {

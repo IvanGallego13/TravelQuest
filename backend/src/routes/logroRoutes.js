@@ -2,10 +2,9 @@ import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { 
   getUserAchievements, 
-  getAllAchievements, // Add this import
+  getAllAchievements,
   checkAndAwardAchievements 
 } from '../controllers/logrocontroller.js';
-import { checkUserAchievements } from '../controllers/misionController.js';
 
 const router = express.Router();
 
@@ -25,7 +24,28 @@ router.get('/mis-logros', authMiddleware, async (req, res) => {
 // Add this route to get all achievements
 router.get('/', authMiddleware, getAllAchievements);
 
-// Add this route for checking achievements
-router.post('/check-all', authMiddleware, checkUserAchievements);
+// Fix the check-all endpoint to use our own function instead of importing from misionController
+router.post('/check-all', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        if (!userId) {
+            return res.status(401).json({ error: "Usuario no autenticado" });
+        }
+        
+        // Use the checkAndAwardAchievements function directly
+        const achievements = await checkAndAwardAchievements(userId, 'CHECK_ALL');
+        
+        // Return the achievements to the client
+        res.status(200).json({ 
+            message: "Logros verificados correctamente",
+            newAchievements: achievements?.newAchievements || [],
+            pointsEarned: achievements?.pointsEarned || 0
+        });
+    } catch (error) {
+        console.error("Error checking achievements:", error);
+        res.status(500).json({ error: "Error al verificar logros" });
+    }
+});
 
 export default router;
