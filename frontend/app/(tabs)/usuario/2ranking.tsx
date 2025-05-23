@@ -1,4 +1,4 @@
-import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -97,101 +97,98 @@ export default function Ranking() {
     router.back();
   };
 
-  return (
-    <View className="flex-1 bg-[#F4EDE0] px-4 pt-10">
-      {/* Back button and refresh button */}
-      <View className="flex-row justify-between items-center mb-4">
-        <TouchableOpacity 
-          onPress={handleBack}
-          className="bg-white/70 rounded-full p-2 shadow-md"
-        >
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
+   return (
+    <ImageBackground
+      source={require("../../../assets/images/fondo.png")}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+      <View className="flex-1 px-6 pt-14">
         
-        <TouchableOpacity 
-          onPress={fetchRankingData}
-          disabled={refreshing}
-          className="bg-white/70 rounded-full p-2 shadow-md"
-        >
-          <Ionicons name="refresh" size={24} color={refreshing ? "#999" : "#000"} />
-        </TouchableOpacity>
-      </View>
+        {/* Flechas y recarga */}
+        <View className="flex-row justify-between items-center mb-6">
+          <TouchableOpacity 
+            onPress={handleBack}
+            className="bg-white/80 rounded-full p-2 shadow-md"
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
 
-      {/* Current user avatar and level */}
-      <View className="items-center mb-6">
+          <TouchableOpacity 
+            onPress={fetchRankingData}
+            disabled={refreshing}
+            className="bg-white/80 rounded-full p-2 shadow-md"
+          >
+            <Ionicons name="refresh" size={24} color={refreshing ? "#999" : "#000"} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Avatar usuario actual */}
+        <View className="items-center mb-6">
+          {loading ? (
+            <ActivityIndicator size="large" color="#699D81" />
+          ) : (
+            <>
+              <Image 
+                source={currentUser?.avatar_url ? { uri: currentUser.avatar_url } : defaultAvatar} 
+                className="w-24 h-24 rounded-full mb-2"
+              />
+              <Text className="text-black font-bold text-base">Nivel {currentUser?.score || 0}</Text>
+            </>
+          )}
+        </View>
+
+        {/* Título ranking */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-4 flex-row items-center gap-2">
+          <Text className="text-black text-lg font-bold">🏅 Ranking Global</Text>
+        </View>
+
+        {/* Lista o loader */}
         {loading ? (
-          <ActivityIndicator size="large" color="#699D81" />
+          <ActivityIndicator size="large" color="#699D81" style={{ marginTop: 20 }} />
         ) : (
           <>
-            <Image 
-              source={currentUser?.avatar_url ? { uri: currentUser.avatar_url } : defaultAvatar} 
-              className="w-20 h-20 rounded-full mb-2" 
+            {/* Lista de usuarios */}
+            <FlatList
+              data={users}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              className="mb-6"
+              renderItem={({ item }) => (
+                <View className="bg-white/90 rounded-xl px-4 py-3 mb-3 shadow-sm flex-row justify-between items-center">
+                  <View className="flex-row items-center space-x-3">
+                    <Text className="text-black font-bold w-6 text-center">{item.position}</Text>
+                    <Image 
+                      source={item.avatar_url ? { uri: item.avatar_url } : defaultAvatar} 
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <Text className="text-black text-sm">{item.username}</Text>
+                  </View>
+                  <Text className="text-[#C76F40] font-bold text-sm">Nivel {item.score}</Text>
+                </View>
+              )}
             />
-            <Text className="text-black font-bold text-base">
-              Nivel {currentUser?.score || 0}
-            </Text>
+
+            {/* Posición del usuario si está fuera del top */}
+            {currentUser && currentUser.position > 10 && (
+              <>
+                <Text className="text-black font-bold text-base mb-2">Tu posición</Text>
+                <View className="bg-white/90 rounded-xl px-4 py-3 shadow-sm flex-row justify-between items-center mb-10">
+                  <View className="flex-row items-center space-x-3">
+                    <Text className="text-black font-bold w-6 text-center">{currentUser.position}</Text>
+                    <Image 
+                      source={currentUser.avatar_url ? { uri: currentUser.avatar_url } : defaultAvatar}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <Text className="text-black text-sm">{currentUser.username}</Text>
+                  </View>
+                  <Text className="text-[#699D81] font-bold text-sm">Nivel {currentUser.score}</Text>
+                </View>
+              </>
+            )}
           </>
         )}
       </View>
-
-      {/* Ranking title */}
-      <Text className="text-black font-bold text-lg mb-4">Ranking Global</Text>
-
-      {/* Loading indicator or ranking list */}
-      {loading ? (
-        <ActivityIndicator size="large" color="#699D81" style={{ marginTop: 20 }} />
-      ) : (
-        <>
-          {/* Global ranking list */}
-          <FlatList
-            data={users}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            className="mb-6"
-            renderItem={({ item }) => (
-              <View
-                className="flex-row items-center justify-between bg-white px-3 py-1 h-12 mb-2 rounded-md border border-[#699D81]"
-              >
-                <View className="flex-row items-center space-x-2">
-                  <Text className="text-black font-bold text-xs w-5 text-center">{item.position}</Text>
-                  <Image 
-                    source={item.avatar_url ? { uri: item.avatar_url } : defaultAvatar} 
-                    style={{ width: 20, height: 20, borderRadius: 999 }}
-                  />
-                  <Text className="text-black text-sm">{item.username}</Text>
-                </View>
-                <Text className="text-[#C76F40] font-semibold text-sm">
-                  Nivel {item.score}
-                </Text>
-              </View>
-            )}
-          />
-
-          {/* Current user position (if not in top visible users) */}
-          {currentUser && currentUser.position > 10 && (
-            <>
-              <Text className="text-black font-bold text-base mb-2">Tu posición</Text>
-              <View className="flex-row items-center justify-between bg-white px-3 py-1 h-12 mb-10 rounded-md border border-[#699D81]">
-                <View className="flex-row items-center space-x-2">
-                  <Text className="text-black font-bold text-xs w-5 text-center">
-                    {currentUser.position}
-                  </Text>
-                  <Image 
-                    source={currentUser.avatar_url ? { uri: currentUser.avatar_url } : defaultAvatar} 
-                    style={{ width: 20, height: 20, borderRadius: 999 }} 
-                  />
-                  <Text className="text-black text-sm">{currentUser.username}</Text>
-                </View>
-                <Text className="text-[#699D81] font-semibold text-sm">
-                  Nivel {currentUser.score}
-                </Text>
-              </View>
-            </>
-          )}
-        </>
-      )}
-    </View>
+    </ImageBackground>
   );
 }
-
-

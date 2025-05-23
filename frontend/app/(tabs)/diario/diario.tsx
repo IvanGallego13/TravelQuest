@@ -60,67 +60,68 @@ export default function JournalIndex() {
     });
   };
   
-  return (
+   return (
     <ImageBackground
-      source={require('../../../assets/images/ciudad2.png')}
+      source={require('../../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1 px-6 pt-12 justify-start">
+      <View className="flex-1 px-6 pt-14">
 
-        {/* Título viajes */}
-        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-8 flex-row items-center gap-2">
-          <Text className="text-black text-xl font-bold">
-            Viajes
-          </Text>
+
+        {/* Título sección */}
+        <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
+          <Text className="text-black text-xl font-bold">Viajes</Text>
           <Text className="text-black text-2xl">🌍</Text>
         </View>
 
-        {/* Lista de viajes */}
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#699D81" />
-          ) : (
-            trips.map((trip) => (
-              <TouchableOpacity
-                key={trip.id}
-                onPress={() => goToTripDetail(trip.id, trip.city, trip.image)}
-                className="bg-white/80 mb-6 p-5 rounded-2xl shadow-md"
-              >
-                <View className="flex-row items-center">
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 160 }}>
 
-                  {/* Imagen del viaje */}
-                  {trip.image ? (
-                    <Image
-                      source={{ uri: trip.image }}
-                      className="w-20 h-20 rounded-xl mr-4"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="w-20 h-20 bg-gray-300 rounded-xl items-center justify-center mr-4">
-                      <Text className="text-xs text-gray-500 text-center">Sin imagen</Text>
+          {/* Tarjeta agrupadora de viajes */}
+          <View className="bg-white/80 p-4 rounded-2xl shadow-md">
+            <Text className="text-black font-bold text-base mb-4">
+              Historial de viajes ({trips.length})
+            </Text>
+
+            {loading ? (
+              <ActivityIndicator size="large" color="#699D81" />
+            ) : (
+              trips.map((trip) => (
+                <TouchableOpacity
+                  key={trip.id}
+                  onPress={() => goToTripDetail(trip.id, trip.city, trip.image)}
+                  className="mb-4 p-3 rounded-xl bg-white/90 shadow-sm"
+                >
+                  <View className="flex-row items-center justify-between">
+                    {/* Icono + ciudad + fecha */}
+                    <View className="flex-row items-center space-x-3 flex-1">
+                      <Text className="text-2xl">🧳</Text>
+                      <View className="flex-1">
+                        <Text className="text-black font-bold">{trip.city}</Text>
+                        <Text className="text-gray-600 text-sm">
+                          {new Date(trip.date).toLocaleDateString('es-ES')}
+                        </Text>
+                      </View>
                     </View>
-                  )}
 
-                  {/* Información del viaje */}
-                  <View className="flex-1">
-                    <Text className="text-black font-bold text-lg">{trip.city}</Text>
-                    <Text className="text-gray-600 text-sm mt-1">
-                      {new Date(trip.date).toLocaleDateString("es-ES")}
-                    </Text>
+                    {/* Imagen miniatura si hay */}
+                    {trip.image ? (
+                      <Image
+                        source={{ uri: trip.image }}
+                        style={{ width: 50, height: 50, borderRadius: 10 }}
+                      />
+                    ) : (
+                      <View className="w-[50px] h-[50px] bg-gray-300 rounded-xl items-center justify-center">
+                        <Text className="text-[10px] text-gray-500 text-center">Sin imagen</Text>
+                      </View>
+                    )}
                   </View>
-
-                  {/* Icono decorativo de viaje */}
-                  <Text className="text-3xl">🧳</Text>
-
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
         </ScrollView>
-
       </View>
     </ImageBackground>
   );
- 
 }

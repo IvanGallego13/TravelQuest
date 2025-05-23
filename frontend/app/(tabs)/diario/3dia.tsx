@@ -40,17 +40,17 @@ export default function DayDetail() {
       fetchEntries();
     }, [idDay])
   );
-  return (
+   return (
     <ImageBackground
-      source={require('../../../assets/images/ciudad2.png')}
+      source={require("../../../assets/images/fondo.png")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      <View className="flex-1  px-6 pt-12 justify-start">
+      <View className="flex-1 px-6 pt-8">
 
-        {/* Botón volver */}
-        <TouchableOpacity 
-          onPress={() => 
+        {/* Flecha volver */}
+        <TouchableOpacity
+          onPress={() =>
             router.replace({
               pathname: "/diario/2ciudad",
               params: { bookId, city, image },
@@ -61,50 +61,62 @@ export default function DayDetail() {
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
 
-        <ScrollView contentContainerStyle={{ paddingTop: 70, paddingBottom: 20 }}>
-          
-          {/* Fecha del día como badge */}
+        <ScrollView contentContainerStyle={{ paddingTop: 70, paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
+
+          {/* Badge fecha + ciudad */}
           {entries.length > 0 && (
-            <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-8 flex-row items-center gap-2">
+            <View className="bg-white/80 px-4 py-2 rounded-xl shadow-md self-start mb-6 flex-row items-center gap-2">
               <Text className="text-black text-lg font-semibold">
-              {city} · {new Date(entries[0].created_at).toLocaleDateString("es-ES")}
+                {city} · {new Date(entries[0].created_at).toLocaleDateString("es-ES")}
               </Text>
               <Text className="text-black text-xl">🗓️</Text>
             </View>
           )}
 
-          {/* Lista de entradas */}
-          {loading ? (
-            <ActivityIndicator size="large" color="#699D81" />
-          ) : (
-            entries.map((entry) => (
-              <View key={entry.id} className="bg-white/80 rounded-2xl shadow-md mb-8 p-4">
-                
-                {/* Imagen */}
-                {entry.image ? (
-                  <Image
-                    source={{ uri: entry.image }}
-                    resizeMode="cover"
-                    className="w-full h-48 rounded-2xl mb-4"
-                  />
-                ) : (
-                  <View className="w-full h-48 bg-gray-300 rounded-2xl items-center justify-center mb-4">
-                    <Text className="text-gray-600">Sin imagen</Text>
-                  </View>
-                )}
+          {/* Tarjeta agrupadora de entradas */}
+          <View className="bg-white/80 p-4 rounded-2xl shadow-md">
+            <Text className="text-black font-bold text-base mb-4">
+              Entradas del día ({entries.length})
+            </Text>
 
-                {/* Texto */}
-                <Text className="text-black text-base leading-relaxed">
-                  {entry.description}
-                </Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#699D81" />
+            ) : (
+              entries.map((entry) => (
+                <View
+                  key={entry.id}
+                  className="mb-4 p-3 rounded-xl bg-white/90"
+                   style={{
+                    elevation: 12, // Aumentar más sombra
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                  }}
+                >
+                  {/* Imagen */}
+                  {entry.image ? (
+                    <Image
+                      source={{ uri: entry.image }}
+                      resizeMode="cover"
+                      className="w-full h-48 rounded-xl mb-3"
+                    />
+                  ) : (
+                    <View className="w-full h-48 bg-gray-300 rounded-xl items-center justify-center mb-3">
+                      <Text className="text-gray-600">Sin imagen</Text>
+                    </View>
+                  )}
 
-              </View>
-            ))
-          )}
+                  {/* Descripción */}
+                  <Text className="text-black text-base leading-relaxed">{entry.description}</Text>
+                </View>
+              ))
+            )}
+          </View>
 
           {/* Botón añadir nueva entrada */}
           <TouchableOpacity
-            className="bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between self-start"
+            className="mt-8 bg-white/90 px-6 py-4 rounded-2xl shadow-md flex-row items-center justify-between self-start"
             onPress={() =>
               router.push({
                 pathname: "/crear/2.2entradaDiario",
@@ -117,9 +129,7 @@ export default function DayDetail() {
           </TouchableOpacity>
 
         </ScrollView>
-
       </View>
     </ImageBackground>
   );
- 
 }

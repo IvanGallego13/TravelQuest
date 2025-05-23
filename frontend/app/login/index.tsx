@@ -264,24 +264,35 @@ export default function Login() {
     router.push("/login/register");
   };
 
-  return (
+   return (
     <ImageBackground
-      source={require('../../assets/images/caminante.png')}
+      source={require('../../assets/images/fondo.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-white/20 px-6 justify-center pb-20 "
+        className="flex-1 px-6 justify-center pb-20 items-center"
       >
-        {/* Contenedor central de login */}
-        <View className="bg-white/80 p-6 rounded-2xl shadow-md">
-          
-          {/* Título */}
-          <View className="items-center mb-8">
-            <Text className="text-2xl font-bold text-black">TravelQuest</Text>
-          </View>
+        {/* Logo arriba */}
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={{ width: 150, height: 120 }}
+          className="mb-4"
+          resizeMode="contain"
+        />
+        <Text
+          className="text-white font-bold text-center mb-6"
+          style={{
+          fontSize: 40,
+          fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+        }}
+>
+  TravelQuest
+</Text>
 
+        {/* Card central */}
+        <View className="bg-white/80 p-6 rounded-2xl shadow-md w-full max-w-md mt-2">
           {/* Input Usuario */}
           <Text className="text-black text-lg font-semibold mb-1">Usuario:</Text>
           <TextInput
@@ -326,17 +337,6 @@ export default function Login() {
               <Text className="text-black text-xl">→</Text>
             </View>
           </TouchableOpacity>
-
-          {/* Botón Google (comentado por ahora) */}
-          {/*
-          <TouchableOpacity
-            onPress={handleGoogleLogin}
-            className="bg-white border border-[#C76F40] px-6 py-4 rounded-2xl shadow-md"
-          >
-            <Text className="text-[#C76F40] font-semibold text-center">Iniciar sesión con Google</Text>
-          </TouchableOpacity>
-          */}
-          
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>

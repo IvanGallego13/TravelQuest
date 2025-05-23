@@ -11,7 +11,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveTintColor: '#C76F40',
+        tabBarActiveTintColor: '#504382',
         tabBarInactiveTintColor: '#999',
         tabBarStyle: {
           backgroundColor: 'rgba(255,255,255,0.95)',
@@ -31,6 +31,13 @@ export default function TabLayout() {
         options={{
           title: 'Crear',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.pencil" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="crear/retos"
+        options={{
+          title: 'Retos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
       <Tabs.Screen
