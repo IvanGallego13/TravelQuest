@@ -118,7 +118,15 @@ export const getConversationDetails = async (req, res) => {
   
   console.log("🔍 Obteniendo detalles de conversación:", id);
   
+  // Validar que el ID existe
+  if (!id) {
+    console.error("❌ ID de conversación no proporcionado");
+    return res.status(400).json({ error: 'ID de conversación no proporcionado' });
+  }
+  
   try {
+    // Verificar si la conversación existe
+    console.log("📊 Buscando conversación en base de datos con ID:", id);
     const { data, error } = await supabase
       .from('conversations')
       .select('id, user_1_id, user_2_id, created_at, status, created_by')
@@ -126,20 +134,34 @@ export const getConversationDetails = async (req, res) => {
       .single();
       
     if (error) {
-      console.error("❌ Error al obtener conversación:", error);
+      console.error("❌ Error al obtener conversación:", error.message, "- Código:", error.code);
+      
+      // Si el error es de PostgreSQL y es de tipo 22P02, es un error de formato de UUID
+      if (error.code === '22P02') {
+        console.log("🔧 Error de formato UUID para ID:", id);
+        return res.status(400).json({ error: 'Formato de ID inválido' });
+      }
+      
+      // Si es PGRST116, significa que no se encontró ningún registro
+      if (error.code === 'PGRST116') {
+        console.log("📭 No se encontró conversación con ID:", id);
+        return res.status(404).json({ error: 'Conversación no encontrada' });
+      }
+      
       return res.status(500).json({ error: error.message });
     }
     
     if (!data) {
-      console.error("❌ Conversación no encontrada:", id);
+      console.error("❌ Conversación no encontrada (data null):", id);
       return res.status(404).json({ error: 'Conversación no encontrada' });
     }
     
-    console.log("✅ Conversación obtenida:", data);
+    console.log("✅ Conversación obtenida exitosamente:", data);
     res.json(data);
   } catch (err) {
-    console.error("❌ Error general al obtener conversación:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error general al obtener conversación:", err.message);
+    console.error("❌ Stack trace:", err.stack);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -291,7 +313,21 @@ export const rejectConversation = async (req, res) => {
       return res.status(400).json({ error: 'La conversación ya ha sido procesada' });
     }
     
-    // Eliminar la conversación completamente para ambos usuarios
+    // Primero eliminar todos los mensajes asociados a esta conversación
+    console.log("🗑️ Eliminando mensajes de la conversación:", id);
+    const { error: messagesError } = await supabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', id);
+      
+    if (messagesError) {
+      console.error("❌ Error al eliminar mensajes:", messagesError);
+      // Continuar aunque falle la eliminación de mensajes
+    } else {
+      console.log("✅ Mensajes eliminados correctamente");
+    }
+    
+    // Luego eliminar la conversación completamente para ambos usuarios sin notificación
     const { error } = await supabase
       .from('conversations')
       .delete()
@@ -302,10 +338,66 @@ export const rejectConversation = async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
     
-    console.log("✅ Conversación eliminada por rechazo:", id);
-    res.status(200).json({ message: 'Conversación rechazada y eliminada' });
+    console.log("✅ Conversación y mensajes eliminados por rechazo (sin notificación al emisor):", id);
+    res.status(200).json({ message: 'Conversación rechazada y eliminada completamente' });
   } catch (err) {
     console.error("❌ Error general al rechazar conversación:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Eliminar una conversación
+export const deleteConversation = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  
+  try {
+    // Verificar que la conversación existe y que el usuario es parte de ella
+    const { data: conversation, error: getError } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (getError || !conversation) {
+      console.error("❌ Error al obtener conversación:", getError);
+      return res.status(404).json({ error: 'Conversación no encontrada' });
+    }
+    
+    // Verificar que el usuario actual es parte de la conversación
+    if (conversation.user_1_id !== userId && conversation.user_2_id !== userId) {
+      return res.status(403).json({ error: 'No autorizado para eliminar esta conversación' });
+    }
+    
+    // Primero eliminar todos los mensajes asociados a esta conversación
+    console.log("🗑️ Eliminando mensajes de la conversación:", id);
+    const { error: messagesError } = await supabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', id);
+      
+    if (messagesError) {
+      console.error("❌ Error al eliminar mensajes:", messagesError);
+      // Continuar aunque falle la eliminación de mensajes
+    } else {
+      console.log("✅ Mensajes eliminados correctamente");
+    }
+    
+    // Luego eliminar la conversación
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      console.error("❌ Error al eliminar conversación:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    console.log("✅ Conversación y mensajes eliminados completamente:", id);
+    res.status(200).json({ message: 'Conversación eliminada completamente' });
+  } catch (err) {
+    console.error("❌ Error general al eliminar conversación:", err);
     res.status(500).json({ error: err.message });
   }
 }; 

@@ -13,6 +13,7 @@ router.get('/:userId', conversationController.getUserConversations);
 // Rutas para aceptar y rechazar conversaciones (requieren autenticación)
 router.put('/:id/accept', authMiddleware, conversationController.acceptConversation);
 router.put('/:id/reject', authMiddleware, conversationController.rejectConversation);
+router.delete('/:id', authMiddleware, conversationController.deleteConversation);
 
 // También podríamos agregar versiones protegidas:
 // router.post('/', authMiddleware, conversationController.createConversation);

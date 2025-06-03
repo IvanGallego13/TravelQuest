@@ -65,91 +65,163 @@ export default function ChatScreen() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationStatus, setConversationStatus] = useState<string>('accepted');
   const [isCreator, setIsCreator] = useState(false);
+  const [shouldStop, setShouldStop] = useState(false);
   const router = useRouter();
+
+  // Función para limpiar todos los procesos y redirigir
+  const cleanupAndRedirect = () => {
+    console.log("🧹 Limpiando todos los procesos y redirigiendo...");
+    setShouldStop(true);
+    setLoading(false);
+    router.push('/(tabs)/mensajeria');
+  };
 
   useEffect(() => {
     const setup = async () => {
-      console.log("🔄 Iniciando configuración del chat con ID o username:", id);
-      
-      // Establecer un timeout para evitar carga infinita
-      const timeoutId = setTimeout(() => {
-        console.log("⚠️ Timeout alcanzado - saliendo del estado de carga");
-        setLoading(false);
-      }, 5000);
-      
       try {
-        const currentUserId = await getCurrentUserId();
-        setUserId(currentUserId);
-        console.log("👤 Usuario actual:", currentUserId);
+        console.log("🔄 Iniciando configuración del chat con ID o username:", id);
         
-        if (!currentUserId) {
-          console.error("❌ ID de usuario actual no encontrado");
-          Alert.alert("Error", "No se pudo identificar tu usuario. Por favor, inicia sesión nuevamente.");
-          setLoading(false);
-          clearTimeout(timeoutId);
-          return;
-        }
+        // Establecer un timeout para evitar carga infinita
+        const timeoutId = setTimeout(() => {
+          console.log("⚠️ Timeout alcanzado - saliendo del estado de carga");
+          console.log("📊 Estado actual al timeout:", {
+            conversationId,
+            otherUser: otherUser?.nombre,
+            userId: userId,
+            shouldStop,
+            initialLoadComplete
+          });
+          // Solo activar cleanup si realmente no hay datos cargados
+          if (!otherUser && !conversationId) {
+            cleanupAndRedirect();
+          } else {
+            console.log("⚠️ Hay datos parciales, no activando cleanup");
+            setLoading(false);
+          }
+        }, 15000); // Aumentar timeout a 15 segundos
         
-        // Si el id parece ser un id numérico simple de conversación, usarlo directamente
-        if (/^\d+$/.test(id)) {
-          console.log("🔍 Usando ID numérico de conversación directamente:", id);
-          setConversationId(id);
+        try {
+          const currentUserId = await getCurrentUserId();
+          setUserId(currentUserId);
+          console.log("👤 Usuario actual:", currentUserId);
           
-          // Buscar detalles de la conversación para obtener información del otro usuario
-          await fetchOtherUserInfo(id, currentUserId);
+          if (!currentUserId) {
+            console.error("❌ ID de usuario actual no encontrado");
+            clearTimeout(timeoutId);
+            cleanupAndRedirect();
+            return;
+          }
           
-          // Continuar incluso si no se puede obtener detalles de la conversación
-          setTimeout(fetchMessages, 500);
-        } else {
-          // Intentar crear una conversación con el usuario especificado
-          try {
-            console.log("🔍 Buscando usuario para crear conversación:", id);
-            const userRes = await apiFetch(`/users/username/${id}`);
+          // Validar que el ID proporcionado existe
+          if (!id) {
+            console.error("❌ ID de conversación no proporcionado");
+            clearTimeout(timeoutId);
+            cleanupAndRedirect();
+            return;
+          }
+          
+          // Si el id parece ser un id numérico simple de conversación, usarlo directamente
+          if (/^\d+$/.test(id)) {
+            console.log("🔍 Usando ID numérico de conversación directamente:", id);
+            const conversationIdStr = id.toString();
+            setConversationId(conversationIdStr);
             
-            if (userRes.ok) {
-              const userData = await userRes.json();
-              console.log("✅ Usuario encontrado:", userData);
-              setOtherUser(userData);
+            try {
+              // Buscar detalles de la conversación para obtener información del otro usuario
+              const success = await fetchOtherUserInfo(conversationIdStr, currentUserId);
               
-              // Crear conversación
-              const convRes = await apiFetch('/conversations', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                  user_id1: currentUserId, 
-                  user_id2: userData.id 
-                }),
-              });
-              
-              if (convRes.ok) {
-                const convData = await convRes.json();
-                console.log("✅ Conversación creada/encontrada:", convData);
-                setConversationId(convData.id);
-                setConversationStatus(convData.status || 'accepted');
-                setIsCreator(convData.created_by === currentUserId);
+              if (success) {
+                // Continuar con la carga de mensajes
                 setTimeout(fetchMessages, 500);
               } else {
-                console.error("❌ Error al crear conversación");
-                Alert.alert("Error", "No se pudo iniciar la conversación");
+                console.error("❌ No se pudo obtener información de la conversación:", conversationIdStr);
+                // Dar más tiempo antes de activar shouldStop
+                console.log("⚠️ Reintentando obtener información en 2 segundos...");
+                setTimeout(async () => {
+                  const retrySuccess = await fetchOtherUserInfo(conversationIdStr, currentUserId);
+                  if (retrySuccess) {
+                    fetchMessages();
+                  } else {
+                    console.log("❌ Segundo intento fallido, activando cleanup");
+                    clearTimeout(timeoutId);
+                    cleanupAndRedirect();
+                  }
+                }, 2000);
               }
-            } else {
-              console.error("❌ Usuario no encontrado:", id);
-              Alert.alert("Error", "No se encontró el usuario especificado");
+            } catch (convError) {
+              console.error("❌ Error al obtener información de la conversación:", convError);
+              // Dar una oportunidad más antes de cleanup
+              setTimeout(() => {
+                clearTimeout(timeoutId);
+                cleanupAndRedirect();
+              }, 1000);
             }
-          } catch (err) {
-            console.error("❌ Error general:", err);
-            Alert.alert("Error", "Ocurrió un problema al configurar la conversación");
+          } else {
+            // Intentar crear una conversación con el usuario especificado
+            try {
+              console.log("🔍 Buscando usuario para crear conversación:", id);
+              const userRes = await apiFetch(`/users/username/${id}`) as Response;
+              
+              if (userRes.ok) {
+                const userData = await userRes.json();
+                console.log("✅ Usuario encontrado:", userData);
+                setOtherUser(userData);
+                
+                // Crear conversación
+                const convRes = await apiFetch('/conversations', {
+                  method: 'POST',
+                  body: JSON.stringify({ 
+                    user_id1: currentUserId, 
+                    user_id2: userData.id 
+                  }),
+                }) as Response;
+                
+                if (convRes.ok) {
+                  const convData = await convRes.json();
+                  console.log("✅ Conversación creada/encontrada:", convData);
+                  setConversationId(convData.id);
+                  setConversationStatus(convData.status || 'accepted');
+                  setIsCreator(convData.created_by === currentUserId);
+                  setTimeout(fetchMessages, 500);
+                } else {
+                  console.error("❌ Error al crear conversación");
+                  clearTimeout(timeoutId);
+                  cleanupAndRedirect();
+                  return;
+                }
+              } else {
+                console.error("❌ Usuario no encontrado:", id);
+                clearTimeout(timeoutId);
+                cleanupAndRedirect();
+                return;
+              }
+            } catch (err) {
+              console.error("❌ Error general al buscar usuario:", err);
+              clearTimeout(timeoutId);
+              cleanupAndRedirect();
+              return;
+            }
           }
+        } catch (err) {
+          console.error("❌ Error en setup:", err);
+          clearTimeout(timeoutId);
+          cleanupAndRedirect();
+          return;
+        } finally {
+          // Asegurar que el estado de carga se apague
+          setLoading(false);
+          clearTimeout(timeoutId);
         }
-      } catch (err) {
-        console.error("❌ Error en setup:", err);
-      } finally {
-        // Asegurar que el estado de carga se apague
-        setLoading(false);
-        clearTimeout(timeoutId);
+      } catch (outerError) {
+        console.error("❌ Error crítico en setup:", outerError);
+        cleanupAndRedirect();
       }
     };
     
-    setup();
+    // Solo ejecutar setup si shouldStop no está activado
+    if (!shouldStop) {
+      setup();
+    }
     
     // Configurar suscripción a cambios en la tabla messages
     const setupRealtimeSubscription = () => {
@@ -221,11 +293,36 @@ export default function ChatScreen() {
     
     // Configurar intervalo de polling como respaldo
     const interval = setInterval(() => {
-      if (conversationId) {
-        // Ejecutar una versión silenciosa de fetchMessages
-        silentFetchMessages();
+      // No ejecutar si shouldStop está activado
+      if (shouldStop) {
+        console.log("🛑 Deteniendo intervalo de mensajes por shouldStop");
+        clearInterval(interval);
+        return;
       }
-    }, 5000);
+
+      // No ejecutar si no hay conversationId válido
+      if (!conversationId || !isValidId(conversationId)) {
+        console.log("🛑 Deteniendo intervalo de mensajes por conversationId inválido");
+        setShouldStop(true);
+        clearInterval(interval);
+        return;
+      }
+
+      // No ejecutar si no hay userId
+      if (!userId) {
+        console.log("🛑 Deteniendo intervalo de mensajes por userId inexistente");
+        setShouldStop(true);
+        clearInterval(interval);
+        return;
+      }
+
+      // Ejecutar una versión silenciosa de fetchMessages
+      silentFetchMessages().catch((error) => {
+        console.error("❌ Error en silentFetchMessages desde intervalo:", error);
+        setShouldStop(true);
+        clearInterval(interval);
+      });
+    }, 2000); // Reducir frecuencia a 2 segundos
     
     // Iniciar suscripción en tiempo real
     const cleanupSubscription = setupRealtimeSubscription();
@@ -310,7 +407,7 @@ export default function ChatScreen() {
 
   // Versión silenciosa de fetchMessages que no actualiza el estado de carga
   const silentFetchMessages = async () => {
-    if (!conversationId) return;
+    if (!conversationId || shouldStop) return;
     
     try {
       console.log("🔄 Actualizando mensajes silenciosamente...");
@@ -319,7 +416,7 @@ export default function ChatScreen() {
         headers: {
           'Content-Type': 'application/json'
         }
-      });
+      }) as Response;
       
       if (res.ok) {
         const data = await res.json();
@@ -347,10 +444,15 @@ export default function ChatScreen() {
             flatListRef.current?.scrollToEnd({ animated: true });
           }, 100);
         }
+      } else if (res.status === 404 || res.status === 500) {
+        // Si la conversación no existe, activar shouldStop
+        console.log("🛑 Conversación no encontrada en silentFetchMessages, activando shouldStop");
+        setShouldStop(true);
       }
     } catch (err) {
       console.error("❌ Error en actualización silenciosa:", err);
-      // No hacer nada en caso de error para evitar interrumpir la experiencia
+      // Activar shouldStop en caso de errores persistentes
+      setShouldStop(true);
     }
   };
 
@@ -498,75 +600,169 @@ export default function ChatScreen() {
 
   // Función para obtener información actualizada del otro usuario
   const fetchOtherUserInfo = async (conversationId: string, currentUserId: string) => {
+    // Si ya se determinó que debemos parar, no hacer más peticiones
+    if (shouldStop) {
+      console.log("🛑 Deteniendo fetchOtherUserInfo debido a shouldStop");
+      return false;
+    }
+
     try {
+      if (!conversationId || !isValidId(conversationId)) {
+        console.error("❌ ID de conversación inválido:", conversationId);
+        // No activar shouldStop inmediatamente, dar una oportunidad más
+        return false;
+      }
+
       console.log("🔍 Buscando información de conversación:", conversationId);
-      const res = await apiFetch(`/conversations/details/${conversationId}`);
       
-      if (!res.ok) {
-        console.error("❌ Error al obtener detalles de conversación");
+      try {
+        const res = await apiFetch(`/conversations/details/${conversationId}`) as Response;
         
-        // Si el error es 404, significa que la conversación fue rechazada y eliminada
-        if (res.status === 404) {
-          Alert.alert(
-            "Chat no disponible", 
-            "Este chat ya no existe. Es posible que haya sido rechazado o eliminado.",
-            [{ text: "Volver", onPress: () => router.push('/(tabs)/mensajeria') }]
-          );
+        if (!res.ok) {
+          console.error("❌ Error al obtener detalles de conversación:", res.status, res.statusText);
+          
+          // Solo activar shouldStop en casos definitivos (404 y 500)
+          if (res.status === 404) {
+            console.log("📝 Conversación no encontrada (404), activando shouldStop");
+            setShouldStop(true);
+            cleanupAndRedirect();
+            return false;
+          }
+          
+          // Para otros errores, no activar shouldStop inmediatamente
+          if (res.status === 500) {
+            console.log("⚠️ Error de servidor (500), reintentando más tarde...");
+          }
+          
+          return false;
         }
         
+        const conversation = await res.json();
+        console.log("✅ Detalles de conversación:", conversation);
+        
+        // Verificar que los datos son válidos pero con más tolerancia
+        if (!conversation) {
+          console.error("❌ Respuesta de conversación vacía");
+          return false;
+        }
+        
+        if (!conversation.user_1_id || !conversation.user_2_id) {
+          console.error("❌ Datos de conversación incompletos:", conversation);
+          return false;
+        }
+        
+        // Determinar cuál es el otro usuario en la conversación
+        const otherUserId = conversation.user_1_id === currentUserId 
+          ? conversation.user_2_id 
+          : conversation.user_1_id;
+        
+        // Guardar el estado de la conversación
+        setConversationStatus(conversation.status || 'accepted');
+        setIsCreator(conversation.created_by === currentUserId);
+        
+        console.log("🔍 Buscando información del otro usuario:", otherUserId);
+        const userRes = await apiFetch(`/users/${otherUserId}`) as Response;
+        
+        if (!userRes.ok) {
+          console.error("❌ Error al obtener información del usuario:", userRes.status);
+          
+          // Solo activar shouldStop para 404 definitivos
+          if (userRes.status === 404) {
+            console.log("📝 Usuario no encontrado (404), posible inconsistencia de datos");
+            setShouldStop(true);
+            cleanupAndRedirect();
+            return false;
+          }
+          
+          return false;
+        }
+        
+        const userData = await userRes.json();
+        console.log("✅ Datos del otro usuario obtenidos:", userData);
+        
+        // Verificar que los datos del usuario son válidos
+        if (!userData || !userData.id) {
+          console.error("❌ Datos de usuario inválidos:", userData);
+          return false;
+        }
+        
+        // Mapear los datos correctamente al formato esperado
+        const formattedUser = {
+          id: userData.id,
+          nombre: userData.username || userData.nombre || 'Usuario',
+          foto_perfil: userData.avatar_url || userData.foto_perfil,
+          username: userData.username
+        };
+        
+        console.log("✅ Usuario formateado:", formattedUser);
+        setOtherUser(formattedUser);
+        
+        return true;
+      } catch (apiError) {
+        console.error("❌ Error en la petición API:", apiError);
+        // No activar shouldStop por errores de red, dar más oportunidades
         return false;
       }
-      
-      const conversation = await res.json();
-      console.log("✅ Detalles de conversación:", conversation);
-      
-      // Determinar cuál es el otro usuario en la conversación
-      const otherUserId = conversation.user_1_id === currentUserId 
-        ? conversation.user_2_id 
-        : conversation.user_1_id;
-      
-      // Guardar el estado de la conversación
-      setConversationStatus(conversation.status || 'accepted');
-      setIsCreator(conversation.created_by === currentUserId);
-      
-      console.log("🔍 Buscando información del otro usuario:", otherUserId);
-      const userRes = await apiFetch(`/users/${otherUserId}`);
-      
-      if (!userRes.ok) {
-        console.error("❌ Error al obtener información del usuario");
-        return false;
-      }
-      
-      const userData = await userRes.json();
-      console.log("✅ Datos del otro usuario:", userData);
-      setOtherUser(userData);
-      
-      return true;
     } catch (err) {
       console.error("❌ Error general al obtener información de usuario:", err);
-      
-      // Si hay un error al obtener información, redirigir al usuario
-      Alert.alert(
-        "Error", 
-        "No se pudo obtener información del chat. Volviendo a la lista de chats.",
-        [{ text: "Aceptar", onPress: () => router.push('/(tabs)/mensajeria') }]
-      );
-      
+      // No activar shouldStop por errores generales
       return false;
     }
   };
 
   useEffect(() => {
     // Si tenemos ID de conversación y de usuario, configurar intervalo para actualizar info de usuario
-    if (conversationId && userId) {
-      const userInfoInterval = setInterval(() => {
-        // Actualizar información del usuario periódicamente (cada 30 segundos)
-        fetchOtherUserInfo(conversationId, userId);
-      }, 30000); // 30 segundos
+    if (conversationId && userId && !shouldStop && initialLoadComplete) {
+      // Esperar un poco antes de iniciar el intervalo para dar tiempo a la carga inicial
+      const delayTimeout = setTimeout(() => {
+        const userInfoInterval = setInterval(async () => {
+          // No ejecutar si shouldStop está activado
+          if (shouldStop) {
+            console.log("🛑 Deteniendo intervalo de actualización de usuario por shouldStop");
+            clearInterval(userInfoInterval);
+            return;
+          }
+
+          // Verificar que aún tenemos datos válidos
+          if (!conversationId || !isValidId(conversationId)) {
+            console.log("🛑 Deteniendo intervalo de actualización por conversationId inválido");
+            clearInterval(userInfoInterval);
+            return;
+          }
+
+          if (!userId) {
+            console.log("🛑 Deteniendo intervalo de actualización por userId inexistente");
+            clearInterval(userInfoInterval);
+            return;
+          }
+
+          // Actualizar información del usuario periódicamente pero con manejo de errores silencioso
+          try {
+            const success = await fetchOtherUserInfo(conversationId, userId);
+            // Si no se pudo obtener la información y ya han pasado múltiples intentos, detener
+            if (!success && otherUser === null) {
+              console.log("🔄 No se pudo obtener información del usuario después de múltiples intentos");
+              clearInterval(userInfoInterval);
+            }
+          } catch (error) {
+            console.error("❌ Error en intervalo de actualización:", error);
+            // Solo limpiar intervalo, no activar shouldStop
+            clearInterval(userInfoInterval);
+          }
+        }, 10000); // Aumentar intervalo a 10 segundos
+        
+        // Limpiar intervalos cuando el componente se desmonte
+        return () => {
+          console.log("🧹 Limpiando intervalo de actualización de usuario");
+          clearInterval(userInfoInterval);
+        };
+      }, 5000); // Esperar 5 segundos antes de iniciar el intervalo
       
-      return () => clearInterval(userInfoInterval);
+      return () => {
+        clearTimeout(delayTimeout);
+      };
     }
-  }, [conversationId, userId]);
+  }, [conversationId, userId, shouldStop, initialLoadComplete]);
 
   return (
     <ImageBackground  source={require("../../../assets/images/fondo.png")}

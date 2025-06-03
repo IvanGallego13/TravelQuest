@@ -45,17 +45,47 @@ export default function ChatsCreados() {
     });
   }, []);
 
-  const fetchConversations = async (myId: string) => {
-    setLoading(true);
+  // Auto-actualización cada segundo
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (userId) {
+      intervalId = setInterval(() => {
+        // Actualizar conversaciones silenciosamente cada 3 segundos (sin mostrar loading)
+        fetchConversations(userId, false);
+      }, 3000); // Cambiar de 1000 a 3000 para reducir carga
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [userId]);
+
+  const fetchConversations = async (myId: string, showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    
     try {
       // Obtener conversaciones donde el usuario es participante
-      const res = await apiFetch(`/conversations/user/${myId}`);
-      const data = await res.json();
-      setConversations(data);
+      const res = await apiFetch(`/conversations/user/${myId}`) as Response;
+      
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data);
+      } else {
+        console.error("❌ Error al obtener conversaciones:", res.status);
+        // No limpiar conversaciones en caso de error para evitar parpadeos
+      }
     } catch (err) {
-      setConversations([]);
+      console.error("❌ Error en fetchConversations:", err);
+      // No limpiar conversaciones en caso de error
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -102,7 +132,7 @@ export default function ChatsCreados() {
       const res = await apiFetch(`/conversations/${conversation.id}/accept`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
-      });
+      }) as Response;
       
       if (!res.ok) {
         const errorData = await res.text();
@@ -113,7 +143,7 @@ export default function ChatsCreados() {
       
       // Actualizar la lista de conversaciones
       Alert.alert("Éxito", "Has aceptado la solicitud de chat");
-      if (userId) fetchConversations(userId);
+      if (userId) fetchConversations(userId, false);
     } catch (err) {
       console.error("Error al aceptar chat:", err);
       Alert.alert("Error", "No se pudo aceptar la solicitud de chat");
@@ -127,7 +157,7 @@ export default function ChatsCreados() {
       const res = await apiFetch(`/conversations/${conversation.id}/reject`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
-      });
+      }) as Response;
       
       if (!res.ok) {
         const errorData = await res.text();
@@ -147,6 +177,52 @@ export default function ChatsCreados() {
       console.error("Error al rechazar chat:", err);
       Alert.alert("Error", "No se pudo rechazar la solicitud de chat");
     }
+  };
+
+  const handleDeleteChat = async (conversation: Conversation) => {
+    if (!userId) return;
+    
+    // Mostrar confirmación antes de eliminar
+    Alert.alert(
+      "Eliminar chat",
+      "¿Estás seguro de que quieres eliminar este chat? Esta acción no se puede deshacer.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await apiFetch(`/conversations/${conversation.id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+              }) as Response;
+              
+              if (!res.ok) {
+                const errorData = await res.text();
+                console.error("Error al eliminar chat:", res.status, errorData);
+                Alert.alert("Error", "No se pudo eliminar el chat");
+                return;
+              }
+              
+              // Eliminar la conversación de la lista local inmediatamente
+              setConversations(prevConversations => 
+                prevConversations.filter(conv => conv.id !== conversation.id)
+              );
+              
+              // Mostrar confirmación
+              Alert.alert("Éxito", "Chat eliminado correctamente");
+            } catch (err) {
+              console.error("Error al eliminar chat:", err);
+              Alert.alert("Error", "No se pudo eliminar el chat");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderItem = ({ item }: { item: Conversation }) => (
@@ -207,6 +283,19 @@ export default function ChatsCreados() {
           >
             <Ionicons name="close" size={20} color="#fff" />
             <Text style={styles.actionButtonText}>Rechazar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Botón de eliminar chat (aparece solo después de aceptar) */}
+      {!item.isPending && (
+        <View style={styles.deleteButtonContainer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.deleteButton]} 
+            onPress={() => handleDeleteChat(item)}
+          >
+            <Ionicons name="trash" size={20} color="#fff" />
+            <Text style={styles.actionButtonText}>Eliminar</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -330,5 +419,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: 4,
+  },
+  deleteButtonContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  deleteButton: {
+    backgroundColor: '#FF5252',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
   },
 }); 

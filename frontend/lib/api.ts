@@ -6,8 +6,17 @@ const TOKEN_KEY = 'travelquest_token';
 const DEFAULT_TIMEOUT = 45000; // Increase timeout to 45 seconds
 const MAX_RETRIES = 2; // Maximum number of retry attempts
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}, retryCount = 0) {
-  const url = `${API_URL}${endpoint}`;
+export async function apiFetch(endpoint: string, options: RequestInit = {}, retryCount = 0): Promise<Response> {
+  // Validar que el endpoint esté definido
+  if (!endpoint) {
+    console.error("❌ Error: Endpoint no especificado");
+    throw new Error("Endpoint no especificado");
+  }
+  
+  // Asegurarse de que el endpoint comienza con /
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  const url = `${API_URL}${normalizedEndpoint}`;
   console.log(`🌐 Llamando a: ${url} (intento ${retryCount + 1}/${MAX_RETRIES + 1})`);
 
   try {
@@ -36,7 +45,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, retr
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     } else {
-      console.warn("⚠️ No hay token disponible para la petición:", endpoint);
+      console.warn("⚠️ No hay token disponible para la petición:", normalizedEndpoint);
     }
 
     // Create the final request options
@@ -62,7 +71,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, retr
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.warn(`⏱️ La petición a ${endpoint} ha excedido el tiempo límite de ${DEFAULT_TIMEOUT/1000} segundos`);
+      console.warn(`⏱️ La petición a ${normalizedEndpoint} ha excedido el tiempo límite de ${DEFAULT_TIMEOUT/1000} segundos`);
     }, DEFAULT_TIMEOUT);
     
     const response = await fetch(url, {
@@ -72,23 +81,48 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, retr
     
     clearTimeout(timeoutId);
     
-    console.log(`📥 Respuesta de ${endpoint}: ${response.status}`);
+    console.log(`📥 Respuesta de ${normalizedEndpoint}: ${response.status}`);
     return response;
     
   } catch (error: any) {
-    // Handle timeout errors with retry logic
-    if (error.name === 'AbortError') {
-      console.error(`⏱️ Timeout en la petición a ${endpoint}`);
+    // Handle network errors
+    if (error.message && error.message.includes('Network request failed')) {
+      console.error(`📶 Error de red: ${error.message}`);
       
-      // Retry logic
       if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Reintentando petición a ${endpoint} (${retryCount + 1}/${MAX_RETRIES})...`);
-        return apiFetch(endpoint, options, retryCount + 1);
+        const backoff = Math.min(1000 * (retryCount + 1), 3000); // Exponential backoff with max 3 seconds
+        console.log(`🔄 Reintentando en ${backoff/1000} segundos...`);
+        
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(apiFetch(normalizedEndpoint, options, retryCount + 1));
+          }, backoff);
+        });
       }
     }
     
-    console.error(`❌ Error en fetch a ${endpoint}:`, error);
-    throw error;
+    // Handle timeout errors with retry logic
+    if (error.name === 'AbortError') {
+      console.error(`⏱️ Timeout en la petición a ${normalizedEndpoint}`);
+      
+      // Retry logic
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 Reintentando petición a ${normalizedEndpoint} (${retryCount + 1}/${MAX_RETRIES})...`);
+        return apiFetch(normalizedEndpoint, options, retryCount + 1);
+      }
+    }
+    
+    console.error(`❌ Error en fetch a ${normalizedEndpoint}:`, error);
+    
+    // Crear una respuesta de error para mantener consistencia en la interfaz
+    const errorResponse = new Response(JSON.stringify({ 
+      error: error.message || 'Error de conexión' 
+    }), { 
+      status: 0, 
+      statusText: error.message || 'Error de conexión'
+    });
+    
+    return errorResponse;
   }
 }
 
