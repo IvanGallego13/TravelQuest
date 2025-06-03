@@ -367,12 +367,6 @@ export default function ChatScreen() {
       return;
     }
     
-    // No permitir enviar mensajes si la conversación fue rechazada
-    if (conversationStatus === 'rejected') {
-      Alert.alert("Chat rechazado", "Esta solicitud de chat ha sido rechazada.");
-      return;
-    }
-    
     try {
       // Verificar que tenemos los datos necesarios
       if (!userId) {
@@ -640,28 +634,6 @@ export default function ChatScreen() {
                 {isCreator 
                   ? 'Has enviado una solicitud de chat. Espera a que el destinatario la acepte.' 
                   : 'Has recibido una solicitud de chat. Ve a "Chats creados" para aceptarla o rechazarla.'}
-              </Text>
-            </View>
-          )}
-
-          {/* Mensaje de chat rechazado */}
-          {conversationStatus === 'rejected' && (
-            <View style={{
-              backgroundColor: '#FFEBEE',
-              padding: 16,
-              marginHorizontal: 16,
-              marginTop: 16,
-              borderRadius: 8,
-              borderLeftWidth: 4,
-              borderLeftColor: '#F44336',
-              flexDirection: 'row',
-              alignItems: 'center'
-            }}>
-              <Ionicons name="close-circle" size={24} color="#F44336" style={{ marginRight: 8 }} />
-              <Text style={{ flex: 1, color: '#333' }}>
-                {isCreator 
-                  ? 'El destinatario ha rechazado tu solicitud de chat.' 
-                  : 'Has rechazado esta solicitud de chat.'}
               </Text>
             </View>
           )}

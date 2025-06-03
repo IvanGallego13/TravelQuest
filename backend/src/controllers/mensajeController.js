@@ -28,7 +28,7 @@ export const sendMessage = async (req, res) => {
         console.log("🔍 Verificando existencia de la conversación:", conversation_id);
         const { data: convData, error: convError } = await supabase
             .from('conversations')
-            .select('id')
+            .select('id, status')
             .eq('id', conversation_id)
             .single();
             
@@ -42,7 +42,7 @@ export const sendMessage = async (req, res) => {
                 // Intentar buscar por ID numérico
                 const { data: numericConvData, error: numericConvError } = await supabase
                     .from('conversations')
-                    .select('id')
+                    .select('id, status')
                     .eq('id', parseInt(conversation_id))
                     .single();
                     
@@ -52,6 +52,12 @@ export const sendMessage = async (req, res) => {
                 }
                 
                 console.log("✅ Conversación encontrada por ID numérico:", numericConvData);
+                
+                // Verificar el estado de la conversación
+                if (numericConvData.status !== 'accepted') {
+                    console.error("❌ No se puede enviar mensaje en una conversación con estado:", numericConvData.status);
+                    return res.status(403).json({ error: `No se pueden enviar mensajes en una conversación que no ha sido aceptada` });
+                }
             } else {
                 return res.status(404).json({ error: `Conversación con ID ${conversation_id} no encontrada` });
             }
@@ -60,6 +66,12 @@ export const sendMessage = async (req, res) => {
         if (!convData) {
             console.error("❌ Conversación no encontrada:", conversation_id);
             return res.status(404).json({ error: `Conversación con ID ${conversation_id} no encontrada` });
+        }
+        
+        // Verificar el estado de la conversación
+        if (convData.status !== 'accepted') {
+            console.error("❌ No se puede enviar mensaje en una conversación con estado:", convData.status);
+            return res.status(403).json({ error: `No se pueden enviar mensajes en una conversación que no ha sido aceptada` });
         }
         
         console.log("✅ Conversación verificada:", convData);

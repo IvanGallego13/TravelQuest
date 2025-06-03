@@ -291,7 +291,7 @@ export const rejectConversation = async (req, res) => {
       return res.status(400).json({ error: 'La conversación ya ha sido procesada' });
     }
     
-    // Eliminar la conversación en lugar de actualizar su estado
+    // Eliminar la conversación completamente para ambos usuarios
     const { error } = await supabase
       .from('conversations')
       .delete()
@@ -302,6 +302,7 @@ export const rejectConversation = async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
     
+    console.log("✅ Conversación eliminada por rechazo:", id);
     res.status(200).json({ message: 'Conversación rechazada y eliminada' });
   } catch (err) {
     console.error("❌ Error general al rechazar conversación:", err);

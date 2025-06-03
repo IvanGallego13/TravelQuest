@@ -150,7 +150,10 @@ export default function ChatsCreados() {
   };
 
   const renderItem = ({ item }: { item: Conversation }) => (
-    <View style={[styles.chatItem, item.isPending && !item.isCreator && styles.pendingChat]}>
+    <View style={[
+      styles.chatItem, 
+      item.isPending && !item.isCreator && styles.pendingChat
+    ]}>
       <TouchableOpacity 
         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
         onPress={() => handleOpenChat(item)}
