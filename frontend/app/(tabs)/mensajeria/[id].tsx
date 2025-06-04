@@ -347,6 +347,12 @@ export default function ChatScreen() {
                     });
                   }
                   
+                  // Verificar estado de conversación inmediatamente después de configurar usuario
+                  console.log("🔄 Verificando estado de conversación inmediatamente después de configurar usuario");
+                  setTimeout(async () => {
+                    await checkAndUpdateConversationId();
+                  }, 200);
+                  
                   // Forzar carga de mensajes después de crear/encontrar conversación
                   console.log("✅ Conversación configurada, forzando carga de mensajes para ID:", convData.id);
                   setTimeout(async () => {
@@ -929,6 +935,12 @@ export default function ChatScreen() {
         setConversationStatus(conversation.status || 'accepted');
         setIsCreator(conversation.created_by === currentUserId);
         
+        console.log("📊 Estado de conversación configurado:", {
+          status: conversation.status || 'accepted',
+          isCreator: conversation.created_by === currentUserId,
+          conversationId: conversationId
+        });
+        
         console.log("🔍 Buscando información del otro usuario:", otherUserId);
         const userRes = await apiFetch(`/users/${otherUserId}`) as Response;
         
@@ -957,10 +969,16 @@ export default function ChatScreen() {
         console.log("✅ Usuario formateado:", formattedUser);
         setOtherUser(formattedUser);
         
+        // Verificar estado de conversación inmediatamente después de configurar usuario
+        console.log("🔄 Verificando estado de conversación inmediatamente después de configurar usuario");
+        setTimeout(async () => {
+          await checkAndUpdateConversationId();
+        }, 200);
+        
         // Cargar mensajes inmediatamente después de obtener info del usuario
         console.log("🔄 Cargando mensajes inmediatamente después de obtener usuario");
         setTimeout(() => {
-          fetchMessages();
+          silentFetchMessages();
         }, 500);
         
         // Segundo intento para asegurar carga
@@ -1092,7 +1110,7 @@ export default function ChatScreen() {
     if (!userId || !otherUser?.id) return;
     
     try {
-      console.log("🔍 Verificando conversación actual entre", userId, "y", otherUser.id);
+      console.log("🔍 Verificando estado de conversación actual entre", userId, "y", otherUser.id);
       
       // Buscar la conversación más reciente entre estos usuarios
       const res = await apiFetch(`/conversations/user/${userId}`) as Response;
@@ -1125,29 +1143,50 @@ export default function ChatScreen() {
             });
           }
           
-          // Actualizar estado de la conversación
+          // Actualizar estado de la conversación SIEMPRE (esto es clave)
           const newStatus = currentConversation.status || 'accepted';
-          if (newStatus !== conversationStatus) {
-            console.log("🔄 Estado de conversación actualizado:", {
-              anterior: conversationStatus,
-              nuevo: newStatus
-            });
-            setConversationStatus(newStatus);
-          }
-          
-          // Actualizar si soy el creador
           const newIsCreator = currentConversation.isCreator || false;
-          if (newIsCreator !== isCreator) {
-            setIsCreator(newIsCreator);
+          
+          console.log("📊 Estados de conversación:", {
+            anteriorStatus: conversationStatus,
+            nuevoStatus: newStatus,
+            anteriorIsCreator: isCreator,
+            nuevoIsCreator: newIsCreator
+          });
+          
+          // Actualizar estado incluso si parece igual para forzar re-render
+          setConversationStatus(newStatus);
+          setIsCreator(newIsCreator);
+          
+          // Si el estado cambió a accepted, forzar actualización inmediata
+          if (newStatus === 'accepted' && conversationStatus !== 'accepted') {
+            console.log("✅ ¡Conversación recién aceptada! Actualizando todo inmediatamente");
+            
+            // Múltiples actualizaciones para asegurar sincronización
+            setTimeout(() => {
+              silentFetchMessages();
+            }, 100);
+            
+            setTimeout(() => {
+              silentFetchMessages();
+            }, 500);
+            
+            setTimeout(() => {
+              silentFetchMessages();
+            }, 1000);
           }
           
           // Cargar mensajes si el ID cambió
           if (currentConversation.id !== conversationId) {
             setTimeout(() => {
-              fetchMessages();
-            }, 500);
+              silentFetchMessages();
+            }, 300);
           }
+        } else {
+          console.log("⚠️ No se encontró conversación activa con este usuario");
         }
+      } else {
+        console.error("❌ Error al obtener conversaciones:", res.status);
       }
     } catch (err) {
       console.error("❌ Error al verificar conversación actual:", err);
@@ -1161,14 +1200,18 @@ export default function ChatScreen() {
       console.log("🔄 Iniciando verificación periódica de conversación");
       checkAndUpdateConversationId();
       
-      // Luego verificar cada 5 segundos para actualizaciones más rápidas
+      // Determinar frecuencia basada en el estado de conversación
+      const intervalTime = conversationStatus === 'pending' ? 2000 : 5000; // 2s si pendiente, 5s si no
+      console.log(`⏰ Configurando intervalo de verificación cada ${intervalTime/1000}s (estado: ${conversationStatus})`);
+      
+      // Luego verificar periódicamente
       const interval = setInterval(() => {
         checkAndUpdateConversationId();
-      }, 5000);
+      }, intervalTime);
       
       return () => clearInterval(interval);
     }
-  }, [userId, otherUser?.id]);
+  }, [userId, otherUser?.id, conversationStatus]); // Agregar conversationStatus como dependencia
 
   // Efecto adicional para verificar cuando se completa la carga inicial
   useEffect(() => {
@@ -1182,18 +1225,52 @@ export default function ChatScreen() {
 
   // Efecto para reaccionar a cambios en el estado de conversación
   useEffect(() => {
+    console.log("🔄 Estado de conversación cambió a:", conversationStatus);
+    
     if (conversationStatus === 'accepted' && conversationId && userId) {
       console.log("✅ Conversación aceptada, actualizando información inmediatamente");
+      
       // Actualizar información del usuario inmediatamente
-      fetchOtherUserInfo(conversationId, userId);
+      if (conversationId && userId) {
+        fetchOtherUserInfo(conversationId, userId);
+      }
+      
       // También verificar conversación por si hay cambios
-      checkAndUpdateConversationId();
-      // Cargar mensajes
       setTimeout(() => {
-        fetchMessages();
-      }, 500);
+        checkAndUpdateConversationId();
+      }, 100);
+      
+      // Cargar mensajes múltiples veces para asegurar sincronización
+      setTimeout(() => {
+        silentFetchMessages();
+      }, 200);
+      
+      setTimeout(() => {
+        silentFetchMessages();
+      }, 800);
+      
+      setTimeout(() => {
+        silentFetchMessages();
+      }, 1500);
     }
-  }, [conversationStatus]);
+    
+    // Si está pendiente, verificar más frecuentemente
+    if (conversationStatus === 'pending') {
+      console.log("⏳ Conversación pendiente, configurando verificaciones frecuentes");
+      
+      const pendingCheckInterval = setInterval(() => {
+        console.log("🔍 Verificación automática para conversación pendiente");
+        checkAndUpdateConversationId();
+      }, 3000); // Cada 3 segundos para conversaciones pendientes
+      
+      // Limpiar después de 2 minutos para evitar bucles infinitos
+      setTimeout(() => {
+        clearInterval(pendingCheckInterval);
+      }, 120000);
+      
+      return () => clearInterval(pendingCheckInterval);
+    }
+  }, [conversationStatus, conversationId, userId]);
 
   // Efecto para cargar mensajes cuando se obtiene conversationId o información del usuario
   useEffect(() => {
