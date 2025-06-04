@@ -45,17 +45,54 @@ export default function ChatsCreados() {
     });
   }, []);
 
-  const fetchConversations = async (myId: string) => {
-    setLoading(true);
+  // Auto-actualización cada segundo
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (userId) {
+      intervalId = setInterval(() => {
+        // Actualizar conversaciones silenciosamente cada 3 segundos (sin mostrar loading)
+        fetchConversations(userId, false);
+      }, 3000); // Cambiar de 1000 a 3000 para reducir carga
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [userId]);
+
+  const fetchConversations = async (myId: string, showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    
     try {
       // Obtener conversaciones donde el usuario es participante
-      const res = await apiFetch(`/conversations/user/${myId}`);
-      const data = await res.json();
-      setConversations(data);
+      const res = await apiFetch(`/conversations/user/${myId}`) as Response;
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Filtrar conversaciones válidas (que tienen datos de usuario)
+        const validConversations = data.filter((conv: Conversation) => 
+          conv.user && conv.user.id && conv.user.nombre && conv.user.nombre !== 'Usuario desconocido'
+        );
+        
+        console.log(`✅ Se encontraron ${data.length} conversaciones, ${validConversations.length} válidas`);
+        setConversations(validConversations);
+      } else {
+        console.error("❌ Error al obtener conversaciones:", res.status);
+        // No limpiar conversaciones en caso de error para evitar parpadeos
+      }
     } catch (err) {
-      setConversations([]);
+      console.error("❌ Error en fetchConversations:", err);
+      // No limpiar conversaciones en caso de error
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -102,7 +139,7 @@ export default function ChatsCreados() {
       const res = await apiFetch(`/conversations/${conversation.id}/accept`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
-      });
+      }) as Response;
       
       if (!res.ok) {
         const errorData = await res.text();
@@ -113,7 +150,7 @@ export default function ChatsCreados() {
       
       // Actualizar la lista de conversaciones
       Alert.alert("Éxito", "Has aceptado la solicitud de chat");
-      if (userId) fetchConversations(userId);
+      if (userId) fetchConversations(userId, false);
     } catch (err) {
       console.error("Error al aceptar chat:", err);
       Alert.alert("Error", "No se pudo aceptar la solicitud de chat");
@@ -127,7 +164,7 @@ export default function ChatsCreados() {
       const res = await apiFetch(`/conversations/${conversation.id}/reject`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
-      });
+      }) as Response;
       
       if (!res.ok) {
         const errorData = await res.text();
@@ -149,8 +186,68 @@ export default function ChatsCreados() {
     }
   };
 
+  const handleDeleteChat = async (conversation: Conversation) => {
+    if (!userId) return;
+    
+    // Mostrar confirmación antes de eliminar
+    Alert.alert(
+      "Eliminar chat",
+      "¿Estás seguro de que quieres eliminar este chat? Esta acción no se puede deshacer.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              console.log("🗑️ Eliminando conversación:", conversation.id);
+              
+              // Eliminar inmediatamente de la lista local para feedback instantáneo
+              setConversations(prevConversations => 
+                prevConversations.filter(conv => conv.id !== conversation.id)
+              );
+              
+              const res = await apiFetch(`/conversations/${conversation.id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+              }) as Response;
+              
+              if (res.ok) {
+                console.log("✅ Conversación eliminada exitosamente del servidor");
+                // Actualizar la lista para asegurar consistencia
+                if (userId) {
+                  setTimeout(() => fetchConversations(userId, false), 500);
+                }
+              } else {
+                console.error("❌ Error al eliminar chat en servidor:", res.status);
+                // Si falló en el servidor, restaurar la conversación en la lista
+                if (userId) {
+                  fetchConversations(userId, false);
+                }
+                Alert.alert("Error", "No se pudo eliminar el chat en el servidor");
+              }
+            } catch (err) {
+              console.error("❌ Error al eliminar chat:", err);
+              // Si hubo error, actualizar la lista para mostrar el estado real
+              if (userId) {
+                fetchConversations(userId, false);
+              }
+              Alert.alert("Error", "Ocurrió un error al eliminar el chat");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderItem = ({ item }: { item: Conversation }) => (
-    <View style={[styles.chatItem, item.isPending && !item.isCreator && styles.pendingChat]}>
+    <View style={[
+      styles.chatItem, 
+      item.isPending && !item.isCreator && styles.pendingChat
+    ]}>
       <TouchableOpacity 
         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
         onPress={() => handleOpenChat(item)}
@@ -204,6 +301,19 @@ export default function ChatsCreados() {
           >
             <Ionicons name="close" size={20} color="#fff" />
             <Text style={styles.actionButtonText}>Rechazar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Botón de eliminar chat (aparece solo después de aceptar) */}
+      {!item.isPending && (
+        <View style={styles.deleteButtonContainer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.deleteButton]} 
+            onPress={() => handleDeleteChat(item)}
+          >
+            <Ionicons name="trash" size={20} color="#fff" />
+            <Text style={styles.actionButtonText}>Eliminar</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -327,5 +437,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: 4,
+  },
+  deleteButtonContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  deleteButton: {
+    backgroundColor: '#FF5252',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
   },
 }); 
