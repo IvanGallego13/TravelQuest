@@ -27,9 +27,10 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "cli": "^1.0.1",
     "dotenv": "^16.4.7",
     "expo-camera": "~16.1.6",
-    "react-native": "0.79.2",
-    "react": "19.0.0"
+    "react": "19.0.0",
+    "react-native": "0.79.2"
   }
 }
