@@ -10,6 +10,9 @@ router.get('/details/:id', conversationController.getConversationDetails);
 router.get('/user/:userId', conversationController.getUserConversations);
 router.get('/:userId', conversationController.getUserConversations);
 
+// DEBUG: Ruta temporal para listar todas las conversaciones
+router.get('/debug/all', conversationController.debugListAllConversations);
+
 // Rutas para aceptar y rechazar conversaciones (requieren autenticación)
 router.put('/:id/accept', authMiddleware, conversationController.acceptConversation);
 router.put('/:id/reject', authMiddleware, conversationController.rejectConversation);

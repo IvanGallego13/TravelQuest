@@ -54,6 +54,22 @@ interface Message {
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  
+  // Verificación mínima - solo verificar si hay ID
+  useEffect(() => {
+    if (!id) {
+      console.log("❌ No hay ID proporcionado, redirigiendo");
+      router.replace('/(tabs)/mensajeria');
+      return;
+    }
+  }, [id]);
+  
+  // Si no hay ID, no renderizar nada
+  if (!id) {
+    return null;
+  }
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -66,20 +82,118 @@ export default function ChatScreen() {
   const [conversationStatus, setConversationStatus] = useState<string>('accepted');
   const [isCreator, setIsCreator] = useState(false);
   const [shouldStop, setShouldStop] = useState(false);
-  const router = useRouter();
 
-  // Función para limpiar todos los procesos y redirigir
-  const cleanupAndRedirect = () => {
-    console.log("🧹 Limpiando todos los procesos y redirigiendo...");
-    setShouldStop(true);
-    setLoading(false);
-    router.push('/(tabs)/mensajeria');
+  // Lista negra de IDs de conversaciones que no existen para evitar bucles infinitos
+  const [blacklistedIds, setBlacklistedIds] = useState<Set<string>>(new Set());
+
+  // Referencias para los intervalos para poder limpiarlos correctamente
+  const messageIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const userInfoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const userInfoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Función para verificar si un ID está en la lista negra
+  const isBlacklisted = (conversationId: string) => {
+    return blacklistedIds.has(conversationId);
   };
+
+  // Función para agregar un ID a la lista negra
+  const addToBlacklist = (conversationId: string) => {
+    console.log("🚫 Agregando ID a lista negra:", conversationId);
+    setBlacklistedIds(prev => new Set([...prev, conversationId]));
+    // NO activar shouldStop inmediatamente aquí - dejar que el flujo normal lo maneje
+  };
+
+  // Función para limpiar todos los intervalos
+  const clearAllIntervals = () => {
+    console.log("🧹 Limpiando TODOS los intervalos y procesos");
+    
+    try {
+      if (messageIntervalRef.current) {
+        clearInterval(messageIntervalRef.current);
+        messageIntervalRef.current = null;
+        console.log("✅ Intervalo de mensajes limpiado");
+      }
+      
+      if (userInfoIntervalRef.current) {
+        clearInterval(userInfoIntervalRef.current);
+        userInfoIntervalRef.current = null;
+        console.log("✅ Intervalo de usuario limpiado");
+      }
+      
+      if (userInfoTimeoutRef.current) {
+        clearTimeout(userInfoTimeoutRef.current);
+        userInfoTimeoutRef.current = null;
+        console.log("✅ Timeout de usuario limpiado");
+      }
+      
+      // Limpiar cualquier otro timeout/interval que pueda estar ejecutándose
+      for (let i = 1; i < 10000; i++) {
+        clearTimeout(i);
+        clearInterval(i);
+      }
+      
+      console.log("✅ Todos los procesos limpiados completamente");
+    } catch (error) {
+      console.error("❌ Error al limpiar intervalos:", error);
+    }
+  };
+
+  const cleanupAndRedirect = () => {
+    console.log("🔄 Iniciando limpieza y redirección");
+    setShouldStop(true);
+    clearAllIntervals();
+    setTimeout(() => {
+      router.replace('/(tabs)/mensajeria');
+    }, 100);
+  };
+
+  // Efecto para limpiar inmediatamente cuando shouldStop se activa
+  useEffect(() => {
+    if (shouldStop) {
+      console.log("🛑 shouldStop activado - limpiando y redirigiendo");
+      clearAllIntervals();
+      setLoading(false);
+      
+      // Solo redirigir si realmente no hay datos válidos O si la conversación está en lista negra
+      const hasValidData = otherUser && conversationId;
+      const isCurrentConversationBlacklisted = conversationId && isBlacklisted(conversationId);
+      
+      if (!hasValidData || isCurrentConversationBlacklisted) {
+        console.log("🔄 Redirigiendo porque no hay datos válidos o la conversación está en lista negra");
+        setTimeout(() => {
+          router.replace('/(tabs)/mensajeria');
+        }, 500);
+      } else {
+        console.log("✅ Hay datos válidos, no redirigiendo. Simplemente deteniendo intervalos.");
+        // Si hay datos válidos, no redirigir, solo detener los intervalos problemáticos
+      }
+    }
+  }, [shouldStop, otherUser, conversationId]);
+
+  // Efecto para manejar IDs que se agregan a la lista negra
+  useEffect(() => {
+    if (conversationId && isBlacklisted(conversationId)) {
+      console.log("🚫 Conversación actual está en lista negra, activando shouldStop");
+      setShouldStop(true);
+    }
+  }, [blacklistedIds, conversationId]);
 
   useEffect(() => {
     const setup = async () => {
       try {
         console.log("🔄 Iniciando configuración del chat con ID o username:", id);
+        console.log("📊 Estado inicial:", {
+          shouldStop,
+          blacklistedCount: blacklistedIds.size,
+          isCurrentIdBlacklisted: id ? isBlacklisted(id.toString()) : false
+        });
+        
+        // Si el ID ya está en lista negra, redirigir inmediatamente
+        if (id && isBlacklisted(id.toString())) {
+          console.log("🚫 ID ya está en lista negra, redirigiendo sin hacer peticiones");
+          router.replace('/(tabs)/mensajeria');
+          return;
+        }
         
         // Establecer un timeout para evitar carga infinita
         const timeoutId = setTimeout(() => {
@@ -98,7 +212,7 @@ export default function ChatScreen() {
             console.log("⚠️ Hay datos parciales, no activando cleanup");
             setLoading(false);
           }
-        }, 15000); // Aumentar timeout a 15 segundos
+        }, 25000); // Aumentar timeout a 25 segundos para dar más tiempo
         
         try {
           const currentUserId = await getCurrentUserId();
@@ -124,37 +238,76 @@ export default function ChatScreen() {
           if (/^\d+$/.test(id)) {
             console.log("🔍 Usando ID numérico de conversación directamente:", id);
             const conversationIdStr = id.toString();
+            
+            // Verificar si el ID está en la lista negra
+            if (isBlacklisted(conversationIdStr)) {
+              console.log("🚫 ID está en lista negra, redirigiendo inmediatamente:", conversationIdStr);
+              clearTimeout(timeoutId);
+              router.replace('/(tabs)/mensajeria');
+              return;
+            }
+            
             setConversationId(conversationIdStr);
             
             try {
-              // Buscar detalles de la conversación para obtener información del otro usuario
+              // Primero verificar si la conversación existe
+              console.log("🔍 Verificando existencia de conversación:", conversationIdStr);
+              const testRes = await apiFetch(`/conversations/details/${conversationIdStr}`) as Response;
+              
+              if (!testRes.ok) {
+                console.log("❌ Conversación no existe, agregando a lista negra y redirigiendo");
+                addToBlacklist(conversationIdStr);
+                clearTimeout(timeoutId);
+                router.replace('/(tabs)/mensajeria');
+                return;
+              }
+              
+              // Si la conversación existe, proceder con la carga
               const success = await fetchOtherUserInfo(conversationIdStr, currentUserId);
               
               if (success) {
-                // Continuar con la carga de mensajes
-                setTimeout(fetchMessages, 500);
+                // Continuar con la carga de mensajes inmediatamente
+                console.log("✅ Información de usuario obtenida, cargando mensajes...");
+                await fetchMessages();
+                
+                // Llamadas adicionales para asegurar carga
+                setTimeout(() => {
+                  fetchMessages();
+                }, 1000);
+                
+                setTimeout(() => {
+                  fetchMessages();
+                }, 2500);
               } else {
                 console.error("❌ No se pudo obtener información de la conversación:", conversationIdStr);
-                // Dar más tiempo antes de activar shouldStop
-                console.log("⚠️ Reintentando obtener información en 2 segundos...");
+                // Dar múltiples intentos antes de rendirse
+                console.log("⚠️ Primer intento fallido, reintentando en 3 segundos...");
                 setTimeout(async () => {
                   const retrySuccess = await fetchOtherUserInfo(conversationIdStr, currentUserId);
                   if (retrySuccess) {
-                    fetchMessages();
+                    console.log("✅ Segundo intento exitoso, cargando mensajes...");
+                    await fetchMessages();
                   } else {
-                    console.log("❌ Segundo intento fallido, activando cleanup");
-                    clearTimeout(timeoutId);
-                    cleanupAndRedirect();
+                    console.log("⚠️ Segundo intento fallido, reintentando una vez más en 5 segundos...");
+                    setTimeout(async () => {
+                      const finalRetrySuccess = await fetchOtherUserInfo(conversationIdStr, currentUserId);
+                      if (finalRetrySuccess) {
+                        console.log("✅ Tercer intento exitoso, cargando mensajes...");
+                        await fetchMessages();
+                      } else {
+                        console.log("❌ Todos los intentos fallaron, redirigiendo");
+                        clearTimeout(timeoutId);
+                        router.replace('/(tabs)/mensajeria');
+                      }
+                    }, 5000);
                   }
-                }, 2000);
+                }, 3000);
               }
             } catch (convError) {
-              console.error("❌ Error al obtener información de la conversación:", convError);
-              // Dar una oportunidad más antes de cleanup
-              setTimeout(() => {
-                clearTimeout(timeoutId);
-                cleanupAndRedirect();
-              }, 1000);
+              console.error("❌ Error al verificar conversación:", convError);
+              // Redirigir silenciosamente
+              clearTimeout(timeoutId);
+              router.push('/(tabs)/mensajeria');
             }
           } else {
             // Intentar crear una conversación con el usuario especificado
@@ -179,10 +332,34 @@ export default function ChatScreen() {
                 if (convRes.ok) {
                   const convData = await convRes.json();
                   console.log("✅ Conversación creada/encontrada:", convData);
-                  setConversationId(convData.id);
+                  console.log("🔄 Actualizando conversationId de", conversationId, "a", convData.id);
+                  setConversationId(convData.id.toString()); // Asegurar que sea string
                   setConversationStatus(convData.status || 'accepted');
                   setIsCreator(convData.created_by === currentUserId);
-                  setTimeout(fetchMessages, 500);
+                  
+                  // Limpiar lista negra para el nuevo ID
+                  if (convData.id) {
+                    setBlacklistedIds(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(convData.id.toString());
+                      return newSet;
+                    });
+                  }
+                  
+                  // Forzar carga de mensajes después de crear/encontrar conversación
+                  console.log("✅ Conversación configurada, forzando carga de mensajes para ID:", convData.id);
+                  setTimeout(async () => {
+                    await fetchMessages();
+                  }, 1000);
+                  
+                  // Llamadas adicionales para casos de conversaciones nuevas
+                  setTimeout(() => {
+                    fetchMessages();
+                  }, 2000);
+                  
+                  setTimeout(() => {
+                    fetchMessages();
+                  }, 4000);
                 } else {
                   console.error("❌ Error al crear conversación");
                   clearTimeout(timeoutId);
@@ -240,46 +417,24 @@ export default function ChatScreen() {
           }, (payload) => {
             console.log("📥 Nuevo mensaje recibido en tiempo real:", payload);
             
-            // En lugar de llamar a fetchMessages (que podría mostrar carga),
-            // integramos directamente el nuevo mensaje en el estado
-            if (payload.new) {
-              const newMessage = payload.new;
-              
-              // Transformar los datos si es necesario para garantizar un formato consistente
-              const formattedMessage = {
-                id: newMessage.id,
-                content: newMessage.content || newMessage.contenido,
-                contenido: newMessage.content || newMessage.contenido,
-                sender_id: newMessage.sender_id,
-                receiver_id: newMessage.receiver_id || otherUser?.id,
-                sent_at: newMessage.sent_at || newMessage.created_at,
-                conversation_id: newMessage.conversation_id || conversationId
-              };
-              
-              // Actualizar el estado sin mostrar indicador de carga
-              setMessages(prevMessages => [...prevMessages, formattedMessage]);
-              
-              // Desplazarse al último mensaje
-              setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-              }, 100);
-            } else {
-              // Si por alguna razón no tenemos los datos del nuevo mensaje, 
-              // hacemos una actualización completa en segundo plano
-              fetchMessages();
-            }
+            // Forzar actualización inmediata desde el servidor para asegurar consistencia
+            setTimeout(() => {
+              silentFetchMessages();
+            }, 500);
             
-            // Vibrar para notificar al usuario
-            try {
-              if (Haptics) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            // Vibrar para notificar al usuario si el mensaje no es propio
+            if (payload.new && payload.new.sender_id !== userId) {
+              try {
+                if (Haptics) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }
+              } catch (e) {
+                console.log("No se pudo hacer vibrar el dispositivo");
               }
-            } catch (e) {
-              console.log("No se pudo hacer vibrar el dispositivo");
             }
           })
           .subscribe((status) => {
-            console.log("🔌 Estado de suscripción:", status);
+            console.log("🔌 Estado de suscripción en tiempo real:", status);
           });
         
         return () => {
@@ -297,38 +452,60 @@ export default function ChatScreen() {
       if (shouldStop) {
         console.log("🛑 Deteniendo intervalo de mensajes por shouldStop");
         clearInterval(interval);
+        messageIntervalRef.current = null;
         return;
       }
 
       // No ejecutar si no hay conversationId válido
       if (!conversationId || !isValidId(conversationId)) {
         console.log("🛑 Deteniendo intervalo de mensajes por conversationId inválido");
-        setShouldStop(true);
         clearInterval(interval);
+        messageIntervalRef.current = null;
+        return;
+      }
+
+      // Verificar si el ID está en la lista negra - DETENER INMEDIATAMENTE
+      if (isBlacklisted(conversationId)) {
+        console.log("🚫 ID está en lista negra, deteniendo intervalo de mensajes:", conversationId);
+        clearInterval(interval);
+        messageIntervalRef.current = null;
+        setShouldStop(true);
         return;
       }
 
       // No ejecutar si no hay userId
       if (!userId) {
         console.log("🛑 Deteniendo intervalo de mensajes por userId inexistente");
-        setShouldStop(true);
         clearInterval(interval);
+        messageIntervalRef.current = null;
         return;
       }
 
       // Ejecutar una versión silenciosa de fetchMessages
       silentFetchMessages().catch((error) => {
-        console.error("❌ Error en silentFetchMessages desde intervalo:", error);
+        console.error("❌ Error crítico en intervalo - deteniendo completamente");
+        // Detener TODO en caso de error en el intervalo
+        addToBlacklist(conversationId);
         setShouldStop(true);
         clearInterval(interval);
+        messageIntervalRef.current = null;
+        clearAllIntervals();
+        
+        setTimeout(() => {
+          router.replace('/(tabs)/mensajeria');
+        }, 1000);
       });
-    }, 2000); // Reducir frecuencia a 2 segundos
+    }, 500); // Cambiar a 500ms para actualización ultra-rápida
+    
+    // Guardar la referencia del intervalo
+    messageIntervalRef.current = interval;
     
     // Iniciar suscripción en tiempo real
     const cleanupSubscription = setupRealtimeSubscription();
     
     return () => {
       clearInterval(interval);
+      messageIntervalRef.current = null;
       if (cleanupSubscription) cleanupSubscription();
     };
   }, [id, conversationId]); // Añadir conversationId como dependencia para reiniciar suscripción cuando cambie
@@ -336,6 +513,15 @@ export default function ChatScreen() {
   const fetchMessages = async () => {
     // Si ya se completó la carga inicial, no mostrar el indicador de carga para actualizaciones
     const isInitialLoad = !initialLoadComplete;
+    
+    console.log("🔍 === INICIO FETCH MESSAGES ===");
+    console.log("📊 Estado actual de fetchMessages:", {
+      conversationId,
+      isInitialLoad,
+      shouldStop,
+      userId,
+      otherUser: otherUser?.nombre
+    });
     
     if (!conversationId) {
       console.log("⏳ Esperando ID de conversación para buscar mensajes");
@@ -353,48 +539,100 @@ export default function ChatScreen() {
     }
     
     try {
-      console.log("🔍 Buscando mensajes para conversación:", conversationId);
+      console.log("🔍 === DEBUGGING DETALLADO ===");
+      console.log("🆔 conversationId usado:", conversationId);
+      console.log("🆔 tipo de conversationId:", typeof conversationId);
+      console.log("👤 userId:", userId);
+      console.log("👥 otherUser:", otherUser);
       
-      // Intentar primero con la ruta correcta del API
-      let res = await apiFetch(`/mensajes/${conversationId}`, {
+      // Usar apiFetch con la configuración correcta
+      console.log("🌐 Usando apiFetch para:", `/mensajes/${conversationId}`);
+      
+      const res = await apiFetch(`/mensajes/${conversationId}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
-      });
+      }) as Response;
       
-      // Si falla, intentar con el método alternativo
-      if (!res.ok) {
-        console.log("⚠️ Primer intento fallido, probando ruta alternativa");
-        res = await apiFetch(`/api/mensajes/${conversationId}`, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-      }
+      console.log("📡 Respuesta de la API:", {
+        ok: res.ok,
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url
+      });
       
       if (res.ok) {
         const data = await res.json();
-        console.log(`✅ ${data.length} mensajes encontrados`);
+        console.log("✅ Datos RAW de la API:", data);
+        console.log("📊 Cantidad total:", data.length);
         
-        // Transformar los datos si es necesario para garantizar un formato consistente
-        const formattedMessages = data.map((msg: any) => ({
-          id: msg.id,
-          content: msg.content || msg.contenido,
-          contenido: msg.content || msg.contenido,
-          sender_id: msg.sender_id,
-          receiver_id: msg.receiver_id || otherUser?.id, 
-          sent_at: msg.sent_at || msg.created_at,
-          conversation_id: msg.conversation_id || conversationId
-        }));
+        if (data.length > 0) {
+          console.log("📝 Primer mensaje completo:", data[0]);
+          console.log("📝 Último mensaje completo:", data[data.length - 1]);
+        } else {
+          console.log("⚠️ LA API DEVOLVIÓ ARRAY VACÍO");
+          console.log("🔍 Verificando en base de datos si hay mensajes con conversation_id:", conversationId);
+        }
         
-        setMessages(formattedMessages);
+        // Verificar si hay cambios reales comparando el último mensaje
+        const hasNewMessages = data.length !== messages.length || 
+          (data.length > 0 && messages.length > 0 && 
+           data[data.length - 1].id !== messages[messages.length - 1]?.id);
+        
+        // Solo logear cuando hay cambios para evitar spam
+        if (hasNewMessages) {
+          console.log("🔄 Nuevos mensajes detectados:", {
+            antes: messages.length,
+            ahora: data.length
+          });
+        }
+        
+        // Actualizar siempre para mantenerse sincronizado
+        setMessages(data);
+        console.log("✅ Estado actualizado con", data.length, "mensajes");
+        
+        // Desplazarse al último mensaje solo si hay mensajes nuevos
+        if (hasNewMessages) {
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 50);
+        }
       } else {
-        console.error("❌ Error al obtener mensajes");
+        // CUALQUIER error HTTP detiene todo
+        console.log(`🚫 Error HTTP ${res.status} en fetchMessages - deteniendo procesos`);
+        addToBlacklist(conversationId);
+        setShouldStop(true);
+        clearAllIntervals();
+        
+        // Si es error de autenticación, redirigir a login
+        if (res.status === 401) {
+          setTimeout(() => {
+            router.replace('/login');
+          }, 1000);
+        } else {
+          // Para otros errores, redirigir a mensajería
+          setTimeout(() => {
+            router.replace('/(tabs)/mensajeria');
+          }, 1000);
+        }
+        
         // En caso de error, establecer mensajes vacíos
         setMessages([]);
       }
     } catch (err) {
       console.error("❌ Error al obtener mensajes:", err);
+      
+      // CUALQUIER error de fetch detiene todo
+      console.log("🚫 Error de fetch en fetchMessages - deteniendo procesos");
+      addToBlacklist(conversationId);
+      setShouldStop(true);
+      clearAllIntervals();
+      
+      setTimeout(() => {
+        router.replace('/(tabs)/mensajeria');
+      }, 1000);
+      
       setMessages([]);
     } finally {
       // Marcar que la carga inicial está completa
@@ -402,6 +640,7 @@ export default function ChatScreen() {
         setLoading(false);
         setInitialLoadComplete(true);
       }
+      console.log("🔍 === FIN FETCH MESSAGES ===");
     }
   };
 
@@ -409,55 +648,114 @@ export default function ChatScreen() {
   const silentFetchMessages = async () => {
     if (!conversationId || shouldStop) return;
     
+    // Verificar si el ID está en la lista negra
+    if (isBlacklisted(conversationId)) {
+      return;
+    }
+    
     try {
-      console.log("🔄 Actualizando mensajes silenciosamente...");
+      console.log("🔍 === DEBUGGING DETALLADO ===");
+      console.log("🆔 conversationId usado:", conversationId);
+      console.log("🆔 tipo de conversationId:", typeof conversationId);
+      console.log("👤 userId:", userId);
+      console.log("👥 otherUser:", otherUser);
+      
+      // Usar apiFetch con la configuración correcta
+      console.log("🌐 Usando apiFetch para:", `/mensajes/${conversationId}`);
       
       const res = await apiFetch(`/mensajes/${conversationId}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
       }) as Response;
       
+      console.log("📡 Respuesta de la API:", {
+        ok: res.ok,
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url
+      });
+      
       if (res.ok) {
         const data = await res.json();
+        console.log("✅ Datos RAW de la API:", data);
+        console.log("📊 Cantidad total:", data.length);
         
-        // Solo actualizar si hay diferencia en la cantidad de mensajes
-        if (data.length !== messages.length) {
-          console.log(`✅ Se encontraron ${data.length} mensajes (antes: ${messages.length})`);
-          
-          // Transformar los datos para garantizar consistencia
-          const formattedMessages = data.map((msg: any) => ({
-            id: msg.id,
-            content: msg.content || msg.contenido,
-            contenido: msg.content || msg.contenido,
-            sender_id: msg.sender_id,
-            receiver_id: msg.receiver_id || otherUser?.id, 
-            sent_at: msg.sent_at || msg.created_at,
-            conversation_id: msg.conversation_id || conversationId
-          }));
-          
-          // Actualizar el estado sin mostrar carga
-          setMessages(formattedMessages);
-          
-          // Desplazarse al último mensaje
+        if (data.length > 0) {
+          console.log("📝 Primer mensaje completo:", data[0]);
+          console.log("📝 Último mensaje completo:", data[data.length - 1]);
+        } else {
+          console.log("⚠️ LA API DEVOLVIÓ ARRAY VACÍO");
+          console.log("🔍 Verificando en base de datos si hay mensajes con conversation_id:", conversationId);
+        }
+        
+        // Verificar si hay cambios reales comparando el último mensaje
+        const hasNewMessages = data.length !== messages.length || 
+          (data.length > 0 && messages.length > 0 && 
+           data[data.length - 1].id !== messages[messages.length - 1]?.id);
+        
+        // Solo logear cuando hay cambios para evitar spam
+        if (hasNewMessages) {
+          console.log("🔄 Nuevos mensajes detectados:", {
+            antes: messages.length,
+            ahora: data.length
+          });
+        }
+        
+        // Actualizar siempre para mantenerse sincronizado
+        setMessages(data);
+        console.log("✅ Estado actualizado con", data.length, "mensajes");
+        
+        // Desplazarse al último mensaje solo si hay mensajes nuevos
+        if (hasNewMessages) {
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
-          }, 100);
+          }, 50);
         }
-      } else if (res.status === 404 || res.status === 500) {
-        // Si la conversación no existe, activar shouldStop
-        console.log("🛑 Conversación no encontrada en silentFetchMessages, activando shouldStop");
+      } else {
+        // CUALQUIER error HTTP detiene todo
+        console.log(`🚫 Error HTTP ${res.status} en fetchMessages - deteniendo procesos`);
+        addToBlacklist(conversationId);
         setShouldStop(true);
+        clearAllIntervals();
+        
+        // Si es error de autenticación, redirigir a login
+        if (res.status === 401) {
+          setTimeout(() => {
+            router.replace('/login');
+          }, 1000);
+        } else {
+          // Para otros errores, redirigir a mensajería
+          setTimeout(() => {
+            router.replace('/(tabs)/mensajeria');
+          }, 1000);
+        }
+        return;
       }
     } catch (err) {
-      console.error("❌ Error en actualización silenciosa:", err);
-      // Activar shouldStop en caso de errores persistentes
+      // CUALQUIER error de red/fetch detiene todo
+      console.log("🚫 Error de red/fetch - deteniendo todos los procesos");
+      addToBlacklist(conversationId);
       setShouldStop(true);
+      clearAllIntervals();
+      
+      setTimeout(() => {
+        router.replace('/(tabs)/mensajeria');
+      }, 1000);
     }
   };
 
   const sendMessage = async () => {
     if (!input.trim() || !conversationId || !userId) return;
+    
+    console.log("📤 Iniciando envío de mensaje...");
+    console.log("📊 Estado actual:", {
+      conversationId,
+      userId,
+      otherUserId: otherUser?.id,
+      input: input.substring(0, 20) + (input.length > 20 ? '...' : '')
+    });
     
     // No permitir enviar mensajes si la conversación está pendiente
     if (conversationStatus === 'pending') {
@@ -488,6 +786,16 @@ export default function ChatScreen() {
         Alert.alert("Error", "No hay una conversación activa");
         return;
       }
+      
+      // DEBUGGING: Verificar el conversation_id antes de enviar
+      console.log("📤 === ENVIANDO MENSAJE ===");
+      console.log("🆔 conversationId a usar:", conversationId);
+      console.log("🆔 tipo de conversationId:", typeof conversationId);
+      console.log("👤 sender_id:", userId);
+      console.log("👥 receiver_id:", otherUser.id);
+      
+      // Verificar y actualizar el conversationId antes de enviar
+      await checkAndUpdateConversationId();
       
       console.log("📤 Preparando mensaje con los siguientes datos:", {
         sender_id: userId,
@@ -525,21 +833,24 @@ export default function ChatScreen() {
       if (res.ok) {
         console.log("✅ Mensaje enviado con éxito");
         
-        // Limpiar el input y añadir el mensaje localmente para feedback inmediato
+        // Limpiar el input
         setInput('');
         
-        // Añadir mensaje a la lista local
-        const newMessage: Message = {
-          id: Date.now(),
-          content: input,
-          contenido: input,
-          sender_id: userId,
-          receiver_id: otherUser.id,
-          sent_at: new Date().toISOString(),
-          conversation_id: conversationId
-        };
+        // Actualizar mensajes inmediatamente - sin delay
+        silentFetchMessages();
         
-        setMessages(prevMessages => [...prevMessages, newMessage]);
+        // Múltiples actualizaciones rápidas para asegurar que aparezca
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 100);
+        
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 300);
+        
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 600);
         
         // Hacer vibrar el dispositivo como feedback
         try {
@@ -549,15 +860,24 @@ export default function ChatScreen() {
         } catch (e) {
           console.log("No se pudo hacer vibrar el dispositivo");
         }
-        
-        // Actualizar mensajes desde el servidor después de un breve retraso
-        // pero usando la versión silenciosa para no mostrar la rueda de carga
-        setTimeout(silentFetchMessages, 1000);
       } else {
         // Intentar obtener el texto del error
         try {
           const errorText = await res.text();
           console.error("❌ Error al enviar mensaje. Respuesta:", errorText);
+          
+          // Si el error es que la conversación no se encontró, intentar actualizar
+          if (errorText.includes("no encontrada") || res.status === 404) {
+            console.log("🔄 Conversación no encontrada, intentando actualizar...");
+            await checkAndUpdateConversationId();
+            
+            Alert.alert(
+              "Conversación actualizada", 
+              "Se ha detectado una nueva conversación. Intenta enviar el mensaje nuevamente.",
+              [{ text: "OK" }]
+            );
+            return;
+          }
           
           try {
             // Si el error es un JSON, parsearlo
@@ -584,7 +904,12 @@ export default function ChatScreen() {
     const messageDate = item.sent_at || item.created_at;
     
     // Depuración para ayudar a entender por qué los mensajes no se clasifican correctamente
-    console.log(`🔍 Renderizando mensaje ${item.id}: sender=${item.sender_id}, userId=${userId}, isMine=${isMine}`);
+    console.log(`🔍 === RENDERIZANDO MENSAJE ${item.id} ===`);
+    console.log(`📝 Contenido: "${item.content || item.contenido}"`);
+    console.log(`👤 Sender: ${item.sender_id}, Usuario actual: ${userId}`);
+    console.log(`💬 Es mío: ${isMine}`);
+    console.log(`📅 Fecha: ${messageDate}`);
+    console.log(`🆔 Conversation ID: ${item.conversation_id}`);
     
     return (
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
@@ -600,16 +925,22 @@ export default function ChatScreen() {
 
   // Función para obtener información actualizada del otro usuario
   const fetchOtherUserInfo = async (conversationId: string, currentUserId: string) => {
-    // Si ya se determinó que debemos parar, no hacer más peticiones
+    // Verificar inmediatamente si el ID está en la lista negra
+    if (isBlacklisted(conversationId)) {
+      console.log("🚫 ID está en lista negra, no buscando información de usuario:", conversationId);
+      return false;
+    }
+
+    // Si shouldStop está activado, no continuar
     if (shouldStop) {
-      console.log("🛑 Deteniendo fetchOtherUserInfo debido a shouldStop");
+      console.log("🛑 shouldStop está activado, no buscando información de usuario");
       return false;
     }
 
     try {
-      if (!conversationId || !isValidId(conversationId)) {
+      // Validar que el ID de conversación parece válido
+      if (!conversationId || conversationId === 'null' || conversationId === 'undefined') {
         console.error("❌ ID de conversación inválido:", conversationId);
-        // No activar shouldStop inmediatamente, dar una oportunidad más
         return false;
       }
 
@@ -620,16 +951,35 @@ export default function ChatScreen() {
         
         if (!res.ok) {
           console.error("❌ Error al obtener detalles de conversación:", res.status, res.statusText);
+          console.log("🔍 ID de conversación que falló:", conversationId);
           
-          // Solo activar shouldStop en casos definitivos (404 y 500)
-          if (res.status === 404) {
-            console.log("📝 Conversación no encontrada (404), activando shouldStop");
+          // Manejo específico de errores
+          if (res.status === 401) {
+            console.log("🚫 Token expirado - redirigiendo a login");
             setShouldStop(true);
-            cleanupAndRedirect();
+            clearAllIntervals();
+            setTimeout(() => {
+              router.replace('/login');
+            }, 1000);
             return false;
           }
           
-          // Para otros errores, no activar shouldStop inmediatamente
+          // Si es 404, solo agregar a lista negra después de múltiples fallos
+          if (res.status === 404) {
+            console.log("📝 Conversación no encontrada (404)");
+            // Solo agregar a lista negra si no tenemos datos del usuario ya cargados
+            if (!otherUser) {
+              console.log("📝 No hay datos de usuario cargados, agregando a lista negra");
+              addToBlacklist(conversationId);
+              setShouldStop(true);
+              clearAllIntervals();
+            } else {
+              console.log("📝 Ya tenemos datos de usuario, no agregando a lista negra");
+            }
+            return false;
+          }
+          
+          // Para otros errores, solo logear
           if (res.status === 500) {
             console.log("⚠️ Error de servidor (500), reintentando más tarde...");
           }
@@ -640,7 +990,7 @@ export default function ChatScreen() {
         const conversation = await res.json();
         console.log("✅ Detalles de conversación:", conversation);
         
-        // Verificar que los datos son válidos pero con más tolerancia
+        // Verificar que los datos son válidos
         if (!conversation) {
           console.error("❌ Respuesta de conversación vacía");
           return false;
@@ -665,15 +1015,6 @@ export default function ChatScreen() {
         
         if (!userRes.ok) {
           console.error("❌ Error al obtener información del usuario:", userRes.status);
-          
-          // Solo activar shouldStop para 404 definitivos
-          if (userRes.status === 404) {
-            console.log("📝 Usuario no encontrado (404), posible inconsistencia de datos");
-            setShouldStop(true);
-            cleanupAndRedirect();
-            return false;
-          }
-          
           return false;
         }
         
@@ -697,17 +1038,47 @@ export default function ChatScreen() {
         console.log("✅ Usuario formateado:", formattedUser);
         setOtherUser(formattedUser);
         
+        // Cargar mensajes inmediatamente después de obtener info del usuario
+        console.log("🔄 Cargando mensajes inmediatamente después de obtener usuario");
+        setTimeout(() => {
+          fetchMessages();
+        }, 500);
+        
+        // Segundo intento para asegurar carga
+        setTimeout(() => {
+          fetchMessages();
+        }, 1500);
+        
+        // Tercer intento para casos donde la primera carga no funciona
+        setTimeout(() => {
+          fetchMessages();
+        }, 3000);
+        
         return true;
       } catch (apiError) {
         console.error("❌ Error en la petición API:", apiError);
-        // No activar shouldStop por errores de red, dar más oportunidades
         return false;
       }
     } catch (err) {
       console.error("❌ Error general al obtener información de usuario:", err);
-      // No activar shouldStop por errores generales
       return false;
     }
+  };
+
+  // Función auxiliar para forzar actualización de información de usuario
+  const forceUpdateUserInfo = async () => {
+    if (!conversationId || !userId) return;
+    
+    console.log("🔄 Forzando actualización de información de usuario");
+    const success = await fetchOtherUserInfo(conversationId, userId);
+    
+    if (!success && !otherUser) {
+      // Si no tenemos información del usuario, intentar obtenerla de la lista de conversaciones
+      console.log("🔄 Intentando obtener info de usuario desde lista de conversaciones");
+      await checkAndUpdateConversationId();
+    }
+    
+    return success;
   };
 
   useEffect(() => {
@@ -715,11 +1086,17 @@ export default function ChatScreen() {
     if (conversationId && userId && !shouldStop && initialLoadComplete) {
       // Esperar un poco antes de iniciar el intervalo para dar tiempo a la carga inicial
       const delayTimeout = setTimeout(() => {
+        
+        // Determinar intervalo basado en si tenemos datos del usuario
+        const intervalTime = otherUser ? 10000 : 3000; // 3 segundos si no hay usuario, 10 si ya lo tenemos
+        console.log("🔄 Configurando intervalo de usuario cada", intervalTime/1000, "segundos");
+        
         const userInfoInterval = setInterval(async () => {
           // No ejecutar si shouldStop está activado
           if (shouldStop) {
             console.log("🛑 Deteniendo intervalo de actualización de usuario por shouldStop");
             clearInterval(userInfoInterval);
+            userInfoIntervalRef.current = null;
             return;
           }
 
@@ -727,42 +1104,206 @@ export default function ChatScreen() {
           if (!conversationId || !isValidId(conversationId)) {
             console.log("🛑 Deteniendo intervalo de actualización por conversationId inválido");
             clearInterval(userInfoInterval);
+            userInfoIntervalRef.current = null;
+            return;
+          }
+
+          // Verificar si el ID está en la lista negra
+          if (isBlacklisted(conversationId)) {
+            console.log("🚫 ID está en lista negra, deteniendo intervalo de actualización de usuario:", conversationId);
+            clearInterval(userInfoInterval);
+            userInfoIntervalRef.current = null;
             return;
           }
 
           if (!userId) {
             console.log("🛑 Deteniendo intervalo de actualización por userId inexistente");
             clearInterval(userInfoInterval);
+            userInfoIntervalRef.current = null;
             return;
           }
 
           // Actualizar información del usuario periódicamente pero con manejo de errores silencioso
           try {
             const success = await fetchOtherUserInfo(conversationId, userId);
-            // Si no se pudo obtener la información y ya han pasado múltiples intentos, detener
-            if (!success && otherUser === null) {
-              console.log("🔄 No se pudo obtener información del usuario después de múltiples intentos");
-              clearInterval(userInfoInterval);
+            // Si no se pudo obtener la información, solo logear, no detener el intervalo
+            if (!success) {
+              console.log("⚠️ No se pudo actualizar información del usuario, reintentando en el próximo intervalo");
             }
           } catch (error) {
             console.error("❌ Error en intervalo de actualización:", error);
-            // Solo limpiar intervalo, no activar shouldStop
+            // Solo limpiar intervalo en caso de errores persistentes
             clearInterval(userInfoInterval);
+            userInfoIntervalRef.current = null;
           }
-        }, 10000); // Aumentar intervalo a 10 segundos
+        }, intervalTime);
+        
+        // Guardar la referencia del intervalo
+        userInfoIntervalRef.current = userInfoInterval;
         
         // Limpiar intervalos cuando el componente se desmonte
         return () => {
           console.log("🧹 Limpiando intervalo de actualización de usuario");
           clearInterval(userInfoInterval);
+          userInfoIntervalRef.current = null;
         };
-      }, 5000); // Esperar 5 segundos antes de iniciar el intervalo
+      }, 2000); // Reducir delay inicial a 2 segundos
+      
+      // Guardar la referencia del timeout
+      userInfoTimeoutRef.current = delayTimeout;
       
       return () => {
         clearTimeout(delayTimeout);
+        userInfoTimeoutRef.current = null;
       };
     }
-  }, [conversationId, userId, shouldStop, initialLoadComplete]);
+  }, [conversationId, userId, shouldStop, initialLoadComplete, otherUser]); // Agregar otherUser como dependencia
+
+  // Efecto de limpieza cuando el componente se desmonta
+  useEffect(() => {
+    return () => {
+      console.log("🧹 Componente de chat desmontándose - limpiando procesos");
+      setShouldStop(true);
+      clearAllIntervals();
+    };
+  }, []);
+
+  // Función para verificar y actualizar el conversationId actual
+  const checkAndUpdateConversationId = async () => {
+    if (!userId || !otherUser?.id) return;
+    
+    try {
+      console.log("🔍 Verificando conversación actual entre", userId, "y", otherUser.id);
+      
+      // Buscar la conversación más reciente entre estos usuarios
+      const res = await apiFetch(`/conversations/user/${userId}`) as Response;
+      
+      if (res.ok) {
+        const conversations = await res.json();
+        
+        // Encontrar la conversación con el otro usuario
+        const currentConversation = conversations.find((conv: any) => 
+          conv.user.id === otherUser.id
+        );
+        
+        if (currentConversation) {
+          console.log("🔄 Conversación encontrada:", currentConversation);
+          
+          // Actualizar conversationId si es diferente
+          if (currentConversation.id !== conversationId) {
+            console.log("🔄 Conversación actualizada detectada:", {
+              anterior: conversationId,
+              nueva: currentConversation.id
+            });
+            
+            setConversationId(currentConversation.id);
+            
+            // Limpiar lista negra para el nuevo ID
+            setBlacklistedIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(currentConversation.id);
+              return newSet;
+            });
+          }
+          
+          // Actualizar estado de la conversación
+          const newStatus = currentConversation.status || 'accepted';
+          if (newStatus !== conversationStatus) {
+            console.log("🔄 Estado de conversación actualizado:", {
+              anterior: conversationStatus,
+              nuevo: newStatus
+            });
+            setConversationStatus(newStatus);
+          }
+          
+          // Actualizar si soy el creador
+          const newIsCreator = currentConversation.isCreator || false;
+          if (newIsCreator !== isCreator) {
+            setIsCreator(newIsCreator);
+          }
+          
+          // Cargar mensajes si el ID cambió
+          if (currentConversation.id !== conversationId) {
+            setTimeout(() => {
+              fetchMessages();
+            }, 500);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("❌ Error al verificar conversación actual:", err);
+    }
+  };
+
+  // Efecto para verificar periódicamente si hay una nueva conversación
+  useEffect(() => {
+    if (userId && otherUser?.id) {
+      // Verificar inmediatamente
+      console.log("🔄 Iniciando verificación periódica de conversación");
+      checkAndUpdateConversationId();
+      
+      // Luego verificar cada 5 segundos para actualizaciones más rápidas
+      const interval = setInterval(() => {
+        checkAndUpdateConversationId();
+      }, 5000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [userId, otherUser?.id]);
+
+  // Efecto adicional para verificar cuando se completa la carga inicial
+  useEffect(() => {
+    if (initialLoadComplete && userId && otherUser?.id) {
+      console.log("🔄 Carga inicial completa, verificando conversación");
+      setTimeout(() => {
+        checkAndUpdateConversationId();
+      }, 1000);
+    }
+  }, [initialLoadComplete, userId, otherUser?.id]);
+
+  // Efecto para reaccionar a cambios en el estado de conversación
+  useEffect(() => {
+    if (conversationStatus === 'accepted' && conversationId && userId) {
+      console.log("✅ Conversación aceptada, actualizando información inmediatamente");
+      // Actualizar información del usuario inmediatamente
+      fetchOtherUserInfo(conversationId, userId);
+      // También verificar conversación por si hay cambios
+      checkAndUpdateConversationId();
+      // Cargar mensajes
+      setTimeout(() => {
+        fetchMessages();
+      }, 500);
+    }
+  }, [conversationStatus]);
+
+  // Efecto para cargar mensajes cuando se obtiene conversationId o información del usuario
+  useEffect(() => {
+    if (conversationId && otherUser && userId && !shouldStop) {
+      console.log("🔄 Detectado conversationId y otherUser - cargando mensajes automáticamente");
+      
+      // Carga inmediata múltiple para asegurar que aparezcan
+      silentFetchMessages();
+      silentFetchMessages(); // Doble llamada inmediata
+      
+      // Llamadas de respaldo rápidas
+      setTimeout(() => {
+        silentFetchMessages();
+      }, 200);
+      
+      setTimeout(() => {
+        silentFetchMessages();
+      }, 500);
+    }
+  }, [conversationId, otherUser, userId]); // Se ejecuta cuando cualquiera de estos cambie
+
+  // Debugging: mostrar cuando cambia conversationId
+  useEffect(() => {
+    console.log("🆔 === CONVERSATION ID CAMBIÓ ===");
+    console.log("🆔 Nuevo conversationId:", conversationId);
+    console.log("🆔 Tipo:", typeof conversationId);
+    console.log("🆔 Es válido:", conversationId && isValidId(conversationId));
+    console.log("🆔 Está en lista negra:", conversationId ? isBlacklisted(conversationId) : false);
+  }, [conversationId]);
 
   return (
     <ImageBackground  source={require("../../../assets/images/fondo.png")}
@@ -807,8 +1348,37 @@ export default function ChatScreen() {
                 color: '#FEF7FF', 
                 marginLeft: 12 
               }}>
-                {otherUser?.nombre || 'Usuario'}
+                {otherUser?.nombre || (shouldStop ? 'Redirigiendo...' : 'Cargando usuario...')}
               </Text>
+              
+              {/* Botón para forzar actualización si no hay usuario */}
+              {!otherUser && !shouldStop && (
+                <TouchableOpacity 
+                  onPress={forceUpdateUserInfo}
+                  style={{ marginLeft: 10, padding: 5 }}
+                >
+                  <Ionicons name="refresh" size={20} color="#FEF7FF" />
+                </TouchableOpacity>
+              )}
+              
+              {/* Botón temporal para debugging */}
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log("🔍 === VERIFICACIÓN MANUAL ===");
+                  console.log("Estado actual completo:", {
+                    conversationId,
+                    userId,
+                    otherUser,
+                    messagesLength: messages.length,
+                    shouldStop,
+                    blacklistedIds: Array.from(blacklistedIds)
+                  });
+                  fetchMessages();
+                }}
+                style={{ marginLeft: 10, padding: 5, backgroundColor: 'orange', borderRadius: 5 }}
+              >
+                <Text style={{ color: '#FEF7FF', fontSize: 10 }}>CHECK</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -840,42 +1410,75 @@ export default function ChatScreen() {
             backgroundColor: '#f9f9f9',
             paddingBottom: Platform.OS === 'ios' ? 160 : 140
           }}>
-            {loading && !initialLoadComplete ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#403796" />
-                <Text style={{ marginTop: 10, color: '#403796' }}>Cargando...</Text>
-              </View>
-            ) : messages.length === 0 ? (
-              <View style={{ 
-                flex: 1, 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                marginBottom: Platform.OS === 'ios' ? 80 : 60
-              }}>
-                <Ionicons name="chatbubble-ellipses-outline" size={60} color="#C76F40" />
-                <Text style={{ 
-                  marginTop: 16, 
-                  fontSize: 18, 
-                  fontWeight: 'bold', 
-                  color: '#403796' 
-                }}>
-                  No hay mensajes aún
-                </Text>
-                <Text style={{ fontSize: 14, color: '#888', marginBottom: 70 }}>
-                  ¡Envía el primer mensaje!
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                ref={flatListRef}
-                data={messages}
-                keyExtractor={item => item.id?.toString() || Math.random().toString()}
-                renderItem={renderItem}
-                contentContainerStyle={{ padding: 16, paddingBottom: Platform.OS === 'ios' ? 160 : 140 }}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-              />
-            )}
+            {(() => {
+              console.log("🔍 === INICIO RENDER MESSAGES ===");
+              console.log("🔍 Estado actual en render:", {
+                loading,
+                initialLoadComplete,
+                messagesLength: messages.length,
+                conversationId,
+                userId,
+                otherUser: otherUser?.nombre,
+                shouldStop
+              });
+              
+              // Log detallado de los mensajes para debugging
+              if (messages.length > 0) {
+                console.log("📋 Mensajes a renderizar:", messages.map(msg => ({
+                  id: msg.id,
+                  content: msg.content || msg.contenido,
+                  sender_id: msg.sender_id,
+                  conversation_id: msg.conversation_id
+                })));
+              }
+              
+              if (loading && !initialLoadComplete) {
+                console.log("🔄 Mostrando pantalla de carga");
+                return (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#403796" />
+                    <Text style={{ marginTop: 10, color: '#403796' }}>Cargando...</Text>
+                  </View>
+                );
+              } else if (messages.length === 0) {
+                console.log("📭 Mostrando pantalla de mensajes vacíos");
+                return (
+                  <View style={{ 
+                    flex: 1, 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    marginBottom: Platform.OS === 'ios' ? 80 : 60
+                  }}>
+                    <Ionicons name="chatbubble-ellipses-outline" size={60} color="#C76F40" />
+                    <Text style={{ 
+                      marginTop: 16, 
+                      fontSize: 18, 
+                      fontWeight: 'bold', 
+                      color: '#403796' 
+                    }}>
+                      No hay mensajes aún
+                    </Text>
+                    <Text style={{ fontSize: 14, color: '#888', marginBottom: 70 }}>
+                      ¡Envía el primer mensaje!
+                    </Text>
+                  </View>
+                );
+              } else {
+                console.log("📱 Renderizando FlatList con", messages.length, "mensajes");
+                console.log("🔍 === FIN RENDER MESSAGES ===");
+                return (
+                  <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={item => item.id?.toString() || Math.random().toString()}
+                    renderItem={renderItem}
+                    contentContainerStyle={{ padding: 16, paddingBottom: Platform.OS === 'ios' ? 160 : 140 }}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                  />
+                );
+              }
+            })()}
           </View>
 
           {/* Fixed Input Bar - Height: 60 ensures visibility */}

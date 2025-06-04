@@ -74,7 +74,14 @@ export default function ChatsCreados() {
       
       if (res.ok) {
         const data = await res.json();
-        setConversations(data);
+        
+        // Filtrar conversaciones válidas (que tienen datos de usuario)
+        const validConversations = data.filter((conv: Conversation) => 
+          conv.user && conv.user.id && conv.user.nombre && conv.user.nombre !== 'Usuario desconocido'
+        );
+        
+        console.log(`✅ Se encontraron ${data.length} conversaciones, ${validConversations.length} válidas`);
+        setConversations(validConversations);
       } else {
         console.error("❌ Error al obtener conversaciones:", res.status);
         // No limpiar conversaciones en caso de error para evitar parpadeos
@@ -196,28 +203,39 @@ export default function ChatsCreados() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("🗑️ Eliminando conversación:", conversation.id);
+              
+              // Eliminar inmediatamente de la lista local para feedback instantáneo
+              setConversations(prevConversations => 
+                prevConversations.filter(conv => conv.id !== conversation.id)
+              );
+              
               const res = await apiFetch(`/conversations/${conversation.id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
               }) as Response;
               
-              if (!res.ok) {
-                const errorData = await res.text();
-                console.error("Error al eliminar chat:", res.status, errorData);
-                Alert.alert("Error", "No se pudo eliminar el chat");
-                return;
+              if (res.ok) {
+                console.log("✅ Conversación eliminada exitosamente del servidor");
+                // Actualizar la lista para asegurar consistencia
+                if (userId) {
+                  setTimeout(() => fetchConversations(userId, false), 500);
+                }
+              } else {
+                console.error("❌ Error al eliminar chat en servidor:", res.status);
+                // Si falló en el servidor, restaurar la conversación en la lista
+                if (userId) {
+                  fetchConversations(userId, false);
+                }
+                Alert.alert("Error", "No se pudo eliminar el chat en el servidor");
               }
-              
-              // Eliminar la conversación de la lista local inmediatamente
-              setConversations(prevConversations => 
-                prevConversations.filter(conv => conv.id !== conversation.id)
-              );
-              
-              // Mostrar confirmación
-              Alert.alert("Éxito", "Chat eliminado correctamente");
             } catch (err) {
-              console.error("Error al eliminar chat:", err);
-              Alert.alert("Error", "No se pudo eliminar el chat");
+              console.error("❌ Error al eliminar chat:", err);
+              // Si hubo error, actualizar la lista para mostrar el estado real
+              if (userId) {
+                fetchConversations(userId, false);
+              }
+              Alert.alert("Error", "Ocurrió un error al eliminar el chat");
             }
           }
         }

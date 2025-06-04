@@ -67,12 +67,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, retr
       }
     }
 
-    // Make the request with a timeout
+    // Crear un AbortController para timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      console.warn(`⏱️ La petición a ${normalizedEndpoint} ha excedido el tiempo límite de ${DEFAULT_TIMEOUT/1000} segundos`);
-    }, DEFAULT_TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
     
     const response = await fetch(url, {
       ...requestOptions,
@@ -103,7 +100,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, retr
     
     // Handle timeout errors with retry logic
     if (error.name === 'AbortError') {
-      console.error(`⏱️ Timeout en la petición a ${normalizedEndpoint}`);
+      console.error(`⏰ Timeout en petición a ${normalizedEndpoint}`);
       
       // Retry logic
       if (retryCount < MAX_RETRIES) {

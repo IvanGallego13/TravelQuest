@@ -400,4 +400,34 @@ export const deleteConversation = async (req, res) => {
     console.error("❌ Error general al eliminar conversación:", err);
     res.status(500).json({ error: err.message });
   }
+};
+
+// DEBUGGING: Listar todas las conversaciones existentes
+export const debugListAllConversations = async (req, res) => {
+  try {
+    console.log("🔍 DEBUG: Listando todas las conversaciones en la base de datos");
+    
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error("❌ Error al obtener conversaciones:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    console.log(`🔍 DEBUG: Se encontraron ${data.length} conversaciones`);
+    data.forEach((conv, index) => {
+      console.log(`${index + 1}. ID: ${conv.id} | User1: ${conv.user_1_id} | User2: ${conv.user_2_id} | Status: ${conv.status}`);
+    });
+    
+    res.json({
+      total: data.length,
+      conversations: data
+    });
+  } catch (err) {
+    console.error("❌ Error general en debug:", err);
+    res.status(500).json({ error: err.message });
+  }
 }; 
