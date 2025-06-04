@@ -82,6 +82,7 @@ export default function ChatScreen() {
   const [conversationStatus, setConversationStatus] = useState<string>('accepted');
   const [isCreator, setIsCreator] = useState(false);
   const [shouldStop, setShouldStop] = useState(false);
+  const [lastMessageSentAt, setLastMessageSentAt] = useState<number | null>(null);
 
   // Lista negra de IDs de conversaciones que no existen para evitar bucles infinitos
   const [blacklistedIds, setBlacklistedIds] = useState<Set<string>>(new Set());
@@ -448,54 +449,17 @@ export default function ChatScreen() {
     
     // Configurar intervalo de polling como respaldo
     const interval = setInterval(() => {
-      // No ejecutar si shouldStop está activado
-      if (shouldStop) {
-        console.log("🛑 Deteniendo intervalo de mensajes por shouldStop");
-        clearInterval(interval);
-        messageIntervalRef.current = null;
-        return;
+      // Solo verificar condiciones básicas necesarias
+      if (!conversationId || !userId) {
+        return; // No detener el intervalo, solo saltar esta ejecución
       }
 
-      // No ejecutar si no hay conversationId válido
-      if (!conversationId || !isValidId(conversationId)) {
-        console.log("🛑 Deteniendo intervalo de mensajes por conversationId inválido");
-        clearInterval(interval);
-        messageIntervalRef.current = null;
-        return;
-      }
-
-      // Verificar si el ID está en la lista negra - DETENER INMEDIATAMENTE
-      if (isBlacklisted(conversationId)) {
-        console.log("🚫 ID está en lista negra, deteniendo intervalo de mensajes:", conversationId);
-        clearInterval(interval);
-        messageIntervalRef.current = null;
-        setShouldStop(true);
-        return;
-      }
-
-      // No ejecutar si no hay userId
-      if (!userId) {
-        console.log("🛑 Deteniendo intervalo de mensajes por userId inexistente");
-        clearInterval(interval);
-        messageIntervalRef.current = null;
-        return;
-      }
-
-      // Ejecutar una versión silenciosa de fetchMessages
+      // Ejecutar actualización de mensajes de forma más simple
       silentFetchMessages().catch((error) => {
-        console.error("❌ Error crítico en intervalo - deteniendo completamente");
-        // Detener TODO en caso de error en el intervalo
-        addToBlacklist(conversationId);
-        setShouldStop(true);
-        clearInterval(interval);
-        messageIntervalRef.current = null;
-        clearAllIntervals();
-        
-        setTimeout(() => {
-          router.replace('/(tabs)/mensajeria');
-        }, 1000);
+        console.error("❌ Error en intervalo de mensajes:", error);
+        // No detener el intervalo por errores ocasionales, solo logear
       });
-    }, 500); // Cambiar a 500ms para actualización ultra-rápida
+    }, 1000); // Cambiar a 1 segundo para balance entre velocidad y performance
     
     // Guardar la referencia del intervalo
     messageIntervalRef.current = interval;
@@ -508,7 +472,7 @@ export default function ChatScreen() {
       messageIntervalRef.current = null;
       if (cleanupSubscription) cleanupSubscription();
     };
-  }, [id, conversationId]); // Añadir conversationId como dependencia para reiniciar suscripción cuando cambie
+  }, [id, conversationId, userId]); // Agregar userId como dependencia también
 
   const fetchMessages = async () => {
     // Si ya se completó la carga inicial, no mostrar el indicador de carga para actualizaciones
@@ -646,22 +610,10 @@ export default function ChatScreen() {
 
   // Versión silenciosa de fetchMessages que no actualiza el estado de carga
   const silentFetchMessages = async () => {
-    if (!conversationId || shouldStop) return;
-    
-    // Verificar si el ID está en la lista negra
-    if (isBlacklisted(conversationId)) {
-      return;
-    }
+    if (!conversationId || !userId) return;
     
     try {
-      console.log("🔍 === DEBUGGING DETALLADO ===");
-      console.log("🆔 conversationId usado:", conversationId);
-      console.log("🆔 tipo de conversationId:", typeof conversationId);
-      console.log("👤 userId:", userId);
-      console.log("👥 otherUser:", otherUser);
-      
-      // Usar apiFetch con la configuración correcta
-      console.log("🌐 Usando apiFetch para:", `/mensajes/${conversationId}`);
+      console.log("🔄 Actualizando mensajes silenciosamente para:", conversationId);
       
       const res = await apiFetch(`/mensajes/${conversationId}`, {
         method: 'GET',
@@ -670,79 +622,31 @@ export default function ChatScreen() {
         }
       }) as Response;
       
-      console.log("📡 Respuesta de la API:", {
-        ok: res.ok,
-        status: res.status,
-        statusText: res.statusText,
-        url: res.url
-      });
-      
       if (res.ok) {
         const data = await res.json();
-        console.log("✅ Datos RAW de la API:", data);
-        console.log("📊 Cantidad total:", data.length);
-        
-        if (data.length > 0) {
-          console.log("📝 Primer mensaje completo:", data[0]);
-          console.log("📝 Último mensaje completo:", data[data.length - 1]);
-        } else {
-          console.log("⚠️ LA API DEVOLVIÓ ARRAY VACÍO");
-          console.log("🔍 Verificando en base de datos si hay mensajes con conversation_id:", conversationId);
-        }
         
         // Verificar si hay cambios reales comparando el último mensaje
         const hasNewMessages = data.length !== messages.length || 
           (data.length > 0 && messages.length > 0 && 
            data[data.length - 1].id !== messages[messages.length - 1]?.id);
         
-        // Solo logear cuando hay cambios para evitar spam
-        if (hasNewMessages) {
-          console.log("🔄 Nuevos mensajes detectados:", {
-            antes: messages.length,
-            ahora: data.length
-          });
-        }
-        
         // Actualizar siempre para mantenerse sincronizado
         setMessages(data);
-        console.log("✅ Estado actualizado con", data.length, "mensajes");
         
         // Desplazarse al último mensaje solo si hay mensajes nuevos
         if (hasNewMessages) {
+          console.log("✅ Nuevos mensajes actualizados:", data.length);
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
           }, 50);
         }
       } else {
-        // CUALQUIER error HTTP detiene todo
-        console.log(`🚫 Error HTTP ${res.status} en fetchMessages - deteniendo procesos`);
-        addToBlacklist(conversationId);
-        setShouldStop(true);
-        clearAllIntervals();
-        
-        // Si es error de autenticación, redirigir a login
-        if (res.status === 401) {
-          setTimeout(() => {
-            router.replace('/login');
-          }, 1000);
-        } else {
-          // Para otros errores, redirigir a mensajería
-          setTimeout(() => {
-            router.replace('/(tabs)/mensajeria');
-          }, 1000);
-        }
-        return;
+        console.log(`⚠️ Error HTTP ${res.status} en silentFetchMessages - continuando sin detener`);
+        // No detener por errores HTTP, solo logear y continuar
       }
     } catch (err) {
-      // CUALQUIER error de red/fetch detiene todo
-      console.log("🚫 Error de red/fetch - deteniendo todos los procesos");
-      addToBlacklist(conversationId);
-      setShouldStop(true);
-      clearAllIntervals();
-      
-      setTimeout(() => {
-        router.replace('/(tabs)/mensajeria');
-      }, 1000);
+      console.error("⚠️ Error en silentFetchMessages - continuando:", err);
+      // No detener por errores de red, solo logear y continuar
     }
   };
 
@@ -836,13 +740,17 @@ export default function ChatScreen() {
         // Limpiar el input
         setInput('');
         
-        // Actualizar mensajes inmediatamente - sin delay
+        // Actualizar mensajes inmediatamente con múltiples estrategias
         silentFetchMessages();
         
-        // Múltiples actualizaciones rápidas para asegurar que aparezca
+        // Actualizaciones escalonadas para asegurar que aparezca
         setTimeout(() => {
           silentFetchMessages();
-        }, 100);
+        }, 50);
+        
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 150);
         
         setTimeout(() => {
           silentFetchMessages();
@@ -852,6 +760,14 @@ export default function ChatScreen() {
           silentFetchMessages();
         }, 600);
         
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 1000);
+        
+        setTimeout(() => {
+          silentFetchMessages();
+        }, 2000);
+        
         // Hacer vibrar el dispositivo como feedback
         try {
           if (Haptics) {
@@ -860,6 +776,9 @@ export default function ChatScreen() {
         } catch (e) {
           console.log("No se pudo hacer vibrar el dispositivo");
         }
+
+        // Actualizar el tiempo del último mensaje enviado
+        setLastMessageSentAt(Date.now());
       } else {
         // Intentar obtener el texto del error
         try {
@@ -1305,6 +1224,32 @@ export default function ChatScreen() {
     console.log("🆔 Está en lista negra:", conversationId ? isBlacklisted(conversationId) : false);
   }, [conversationId]);
 
+  // Efecto adicional para actualizaciones más frecuentes después de enviar mensaje
+  useEffect(() => {
+    if (lastMessageSentAt && conversationId && userId) {
+      console.log("🚀 Iniciando actualizaciones frecuentes después de enviar mensaje");
+      
+      // Intervalo más agresivo por 10 segundos después de enviar mensaje
+      const aggressiveInterval = setInterval(() => {
+        const timeSinceLastMessage = Date.now() - lastMessageSentAt;
+        
+        // Solo hacer actualizaciones frecuentes por 10 segundos
+        if (timeSinceLastMessage > 10000) {
+          console.log("⏰ 10 segundos pasados, deteniendo actualizaciones frecuentes");
+          clearInterval(aggressiveInterval);
+          setLastMessageSentAt(null);
+          return;
+        }
+        
+        silentFetchMessages();
+      }, 300); // Cada 300ms por 10 segundos
+      
+      return () => {
+        clearInterval(aggressiveInterval);
+      };
+    }
+  }, [lastMessageSentAt, conversationId, userId]);
+
   return (
     <ImageBackground  source={require("../../../assets/images/fondo.png")}
     style={{ flex: 1 }}
@@ -1360,25 +1305,6 @@ export default function ChatScreen() {
                   <Ionicons name="refresh" size={20} color="#FEF7FF" />
                 </TouchableOpacity>
               )}
-              
-              {/* Botón temporal para debugging */}
-              <TouchableOpacity 
-                onPress={() => {
-                  console.log("🔍 === VERIFICACIÓN MANUAL ===");
-                  console.log("Estado actual completo:", {
-                    conversationId,
-                    userId,
-                    otherUser,
-                    messagesLength: messages.length,
-                    shouldStop,
-                    blacklistedIds: Array.from(blacklistedIds)
-                  });
-                  fetchMessages();
-                }}
-                style={{ marginLeft: 10, padding: 5, backgroundColor: 'orange', borderRadius: 5 }}
-              >
-                <Text style={{ color: '#FEF7FF', fontSize: 10 }}>CHECK</Text>
-              </TouchableOpacity>
             </View>
           </View>
 
