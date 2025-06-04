@@ -667,6 +667,20 @@ export default function ChatScreen() {
       input: input.substring(0, 20) + (input.length > 20 ? '...' : '')
     });
     
+    // VERIFICACIÓN CRÍTICA: Actualizar conversationId antes de enviar
+    console.log("🔍 Verificando conversationId antes de enviar mensaje...");
+    await checkAndUpdateConversationId();
+    
+    // Esperar un momento para que se procese la actualización
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verificar de nuevo el conversationId después de la actualización
+    if (!conversationId) {
+      console.error("❌ No hay conversationId después de verificación");
+      Alert.alert("Error", "No hay una conversación activa");
+      return;
+    }
+    
     // No permitir enviar mensajes si la conversación está pendiente
     if (conversationStatus === 'pending') {
       if (isCreator) {
@@ -699,13 +713,10 @@ export default function ChatScreen() {
       
       // DEBUGGING: Verificar el conversation_id antes de enviar
       console.log("📤 === ENVIANDO MENSAJE ===");
-      console.log("🆔 conversationId a usar:", conversationId);
+      console.log("🆔 conversationId FINAL a usar:", conversationId);
       console.log("🆔 tipo de conversationId:", typeof conversationId);
       console.log("👤 sender_id:", userId);
       console.log("👥 receiver_id:", otherUser.id);
-      
-      // Verificar y actualizar el conversationId antes de enviar
-      await checkAndUpdateConversationId();
       
       console.log("📤 Preparando mensaje con los siguientes datos:", {
         sender_id: userId,
@@ -875,6 +886,16 @@ export default function ChatScreen() {
         const res = await apiFetch(`/conversations/details/${conversationId}`) as Response;
         
         if (!res.ok) {
+          // Manejo silencioso de errores 404 (conversación eliminada)
+          if (res.status === 404) {
+            console.log("📝 Conversación no encontrada (404) - posiblemente eliminada:", conversationId);
+            // Agregar silenciosamente a lista negra para evitar futuras peticiones
+            addToBlacklist(conversationId);
+            // Detener procesos para esta conversación específica
+            setShouldStop(true);
+            return false;
+          }
+          
           console.error("❌ Error al obtener detalles de conversación:", res.status, res.statusText);
           console.log("🔍 ID de conversación que falló:", conversationId);
           
@@ -889,26 +910,15 @@ export default function ChatScreen() {
             return false;
           }
           
-          // Si es 404, solo agregar a lista negra después de múltiples fallos
-          if (res.status === 404) {
-            console.log("📝 Conversación no encontrada (404)");
-            // Solo agregar a lista negra si no tenemos datos del usuario ya cargados
-            if (!otherUser) {
-              console.log("📝 No hay datos de usuario cargados, agregando a lista negra");
-              addToBlacklist(conversationId);
-              setShouldStop(true);
-              clearAllIntervals();
-            } else {
-              console.log("📝 Ya tenemos datos de usuario, no agregando a lista negra");
-            }
-            return false;
+          // Para otros errores, solo agregar a lista negra después de múltiples fallos
+          if (!otherUser) {
+            console.log("📝 No hay datos de usuario cargados, agregando a lista negra");
+            addToBlacklist(conversationId);
+            setShouldStop(true);
+            clearAllIntervals();
+          } else {
+            console.log("📝 Ya tenemos datos de usuario, no agregando a lista negra");
           }
-          
-          // Para otros errores, solo logear
-          if (res.status === 500) {
-            console.log("⚠️ Error de servidor (500), reintentando más tarde...");
-          }
-          
           return false;
         }
         
@@ -993,6 +1003,13 @@ export default function ChatScreen() {
         
         return true;
       } catch (apiError) {
+        // Manejo silencioso de errores de parsing JSON (puede ser 404 con respuesta vacía)
+        if (apiError instanceof Error && (apiError.message?.includes('JSON') || apiError.message?.includes('Unexpected end of input'))) {
+          console.log("📝 Error de parsing JSON - posiblemente conversación eliminada:", conversationId);
+          addToBlacklist(conversationId);
+          setShouldStop(true);
+          return false;
+        }
         console.error("❌ Error en la petición API:", apiError);
         return false;
       }
@@ -1118,6 +1135,12 @@ export default function ChatScreen() {
       if (res.ok) {
         const conversations = await res.json();
         
+        console.log("📋 Conversaciones obtenidas:", conversations.map((conv: any) => ({
+          id: conv.id,
+          user: conv.user.nombre,
+          status: conv.status
+        })));
+        
         // Encontrar la conversación con el otro usuario
         const currentConversation = conversations.find((conv: any) => 
           conv.user.id === otherUser.id
@@ -1125,22 +1148,37 @@ export default function ChatScreen() {
         
         if (currentConversation) {
           console.log("🔄 Conversación encontrada:", currentConversation);
+          console.log("🔍 Comparando IDs:", {
+            actual: conversationId,
+            nuevo: currentConversation.id,
+            sonIguales: currentConversation.id === conversationId
+          });
           
           // Actualizar conversationId si es diferente
           if (currentConversation.id !== conversationId) {
-            console.log("🔄 Conversación actualizada detectada:", {
+            console.log("🔄 ¡CONVERSACIÓN ACTUALIZADA DETECTADA!");
+            console.log("📊 Cambio de ID:", {
               anterior: conversationId,
-              nueva: currentConversation.id
+              nueva: currentConversation.id,
+              tipo_anterior: typeof conversationId,
+              tipo_nuevo: typeof currentConversation.id
             });
             
-            setConversationId(currentConversation.id);
+            // FORZAR actualización inmediata
+            const newId = currentConversation.id.toString();
+            setConversationId(newId);
+            
+            console.log("✅ ConversationId actualizado a:", newId);
             
             // Limpiar lista negra para el nuevo ID
             setBlacklistedIds(prev => {
               const newSet = new Set(prev);
-              newSet.delete(currentConversation.id);
+              newSet.delete(newId);
+              console.log("🧹 Limpiando lista negra para ID:", newId);
               return newSet;
             });
+          } else {
+            console.log("✅ ConversationId ya está actualizado:", conversationId);
           }
           
           // Actualizar estado de la conversación SIEMPRE (esto es clave)
@@ -1183,13 +1221,32 @@ export default function ChatScreen() {
             }, 300);
           }
         } else {
-          console.log("⚠️ No se encontró conversación activa con este usuario");
+          console.log("⚠️ No se encontró conversación activa con este usuario - posiblemente eliminada");
+          // Si la conversación actual no se encuentra, agregar a lista negra
+          if (conversationId) {
+            addToBlacklist(conversationId);
+            setShouldStop(true);
+          }
         }
       } else {
-        console.error("❌ Error al obtener conversaciones:", res.status);
+        // Manejo silencioso de errores
+        if (res.status === 404) {
+          console.log("📝 Lista de conversaciones no encontrada (404) - posiblemente usuario sin conversaciones");
+        } else {
+          console.error("❌ Error al obtener conversaciones:", res.status);
+        }
       }
     } catch (err) {
-      console.error("❌ Error al verificar conversación actual:", err);
+      // Manejo silencioso de errores de parsing JSON
+      if (err instanceof Error && (err.message?.includes('JSON') || err.message?.includes('Unexpected end of input'))) {
+        console.log("📝 Error de parsing JSON en verificación de conversación - posiblemente datos eliminados");
+        if (conversationId) {
+          addToBlacklist(conversationId);
+          setShouldStop(true);
+        }
+      } else {
+        console.error("❌ Error al verificar conversación actual:", err);
+      }
     }
   };
 
